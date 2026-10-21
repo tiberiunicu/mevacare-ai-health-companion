@@ -1,7 +1,6 @@
 # Tool calling (function calling)
 
-> **Status: implemented in Phase 3.** Four tools; `GetWeightHistory` (needs measurements, Phase 5) and
-> `SearchMedicalKnowledge` (needs RAG, Phase 4) are intentionally **not** registered yet.
+> **Status: implemented (Phase 3, extended in Phase 4).** Five tools. `GetWeightHistory` needs measurements (Phase 5) and is intentionally **not** registered yet.
 
 ## What problem it solves
 
@@ -33,6 +32,7 @@ user message ──► AiChatService ──► FunctionInvokingChatClient(IChatC
 | `GetDailyNutritionSummary(date)` | Read | totals, targets and remaining for one local day, plus meals (name, grams, kcal) |
 | `GetNutritionSummary(from, to)` | Read | per-day totals and the average over *logged* days (≤ 366 days) |
 | `PrepareMeal(description)` | Write (proposal only) | extract, match, calculate; **writes nothing** |
+| `SearchMedicalKnowledge(query)` | Read | searches the approved reference documents (not the user's data); returns numbered passages labelled as data, to be cited with `[n]`; query ≤ 1,000 characters; registered only if `Knowledge:Enabled`. See [rag-embeddings-memory.md](rag-embeddings-memory.md) |
 
 ### The rules and where they are enforced
 

@@ -51,6 +51,14 @@ weights, household units, a Romanian sentence, a missing amount, and an instruct
 stated raw/cooked wording, and that injected items are not extracted. The dataset shape is validated in every run; the model run needs
 `MEVACARE_EVAL_LIVE=1` like the adversarial set.
 
+### 4. Retrieval evaluation (Phase 4, runs everywhere)
+
+`RetrievalEvaluationTests` runs the real chunker, embedding service and retrieval service (in-memory vector store) over a gold set: for each question the expected source and passage terms, plus unanswerable questions that must return nothing. It reports recall@1/3/5, MRR, source-hit@3 and false positives, printing every question with its hits and scores.
+
+- Synthetic corpus (`Datasets/synthetic-knowledge`, five fictional documents; `retrieval-gold-synthetic.json`): enforces recall@3 ≥ 0.90, source-hit@3 ≥ 0.90, MRR ≥ 0.85 and 0 false positives with the Lexical baseline.
+- Real corpus: `MEVACARE_KNOWLEDGE_DIR=<folder with sources.json>` (optionally `MEVACARE_EVAL_MIN_RECALL_AT3`, default 0.75) with a gold set shaped like `retrieval-gold-demo-corpus.json`. On the five US-government sample pages with the Lexical baseline: recall@3 83 %, MRR 0.74, 0/3 false positives; the two misses are a synonym question and a short query.
+- Use it to calibrate `Knowledge:Retrieval:MinScore` whenever the embedding model changes (scores are not comparable between models). **This has not been done for OpenAI or Ollama embeddings.**
+
 ## How to use it when changing things
 
 1. Change a prompt or model → run the live evaluation before and after; read the printed answers, not only the pass rate.
@@ -65,4 +73,5 @@ stated raw/cooked wording, and that injected items are not extracted. The datase
 - The live suites (adversarial and meal extraction) have **not been run** yet: no provider was available in the authoring environment.
 - Tool-selection accuracy (does the model call `PrepareMeal` for "I ate..." and a summary tool for "how many calories today") is covered only with a scripted
   model plus manual runs against a mock server; a live tool-selection evaluation is still to be written.
-- Planned: retrieval accuracy evaluation (Phase 4: recall@k, citation correctness on a small gold set) and an LLM-as-judge option with human spot checks.
+- Retrieval evaluation (Phase 4) measures the retriever, not the model's answer: whether the model cites faithfully and does not misread a passage is **not evaluated**. The synthetic gold set has 17 answerable and 4 unanswerable questions; the real-corpus numbers come from 5 pages and 15 questions. Treat them as a regression alarm.
+- Planned: an LLM-as-judge option with human spot checks.

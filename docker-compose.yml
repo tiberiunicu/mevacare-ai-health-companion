@@ -20,9 +20,10 @@ services:
       retries: 10
       start_period: 20s
 
-  # Vector database for the medical-knowledge RAG module (Phase 4). Not used by the application yet.
+  # Vector database for the medical-knowledge RAG module (Phase 4); see docs/ai/rag-embeddings-memory.md.
+  # This compose file was never run; the Qdrant REST usage was verified against the v1.19.2 binary.
   qdrant:
-    image: qdrant/qdrant:v1.12.0
+    image: qdrant/qdrant:v1.19.2
     ports:
       - "${QDRANT_HTTP_PORT:-6333}:6333"
       - "${QDRANT_GRPC_PORT:-6334}:6334"

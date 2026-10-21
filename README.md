@@ -7,7 +7,7 @@ diagnose, prescribe or replace a physician, and it is not an emergency service.
 This is a brand-new, standalone product. It shares nothing (code, database, infrastructure) with any other MevaCare
 application.
 
-> **Status: Phase 1 (foundation), Phase 2 (AI chat) and Phase 3 (nutrition vertical slice) are implemented and tested. Phases 4–6 are not started.**
+> **Status: Phase 1 (foundation), Phase 2 (AI chat), Phase 3 (nutrition) and Phase 4 (medical knowledge RAG) are implemented and tested. Phases 5–6 are not started.**
 > See [What works today](#what-works-today) and [Roadmap](#roadmap).
 
 ## What works today
@@ -22,8 +22,9 @@ application.
 | AI chat: `IChatClient` with OpenAI or Ollama, SSE streaming, persisted history, safety screen, rate limit | Done (see *AI provider testing* below) |
 | Nutrition: USDA food data import, deterministic nutrient calculation, food journal, daily/range summaries, targets, custom (estimated) items | Done |
 | AI meal logging: structured extraction → food match → proposal card → user confirmation → journal (tool calling) | Done (scripted-model tests and a mock OpenAI server; see *AI provider testing*) |
-| React app: sign in/up, dashboard (real calories and macros), profile, preferences, privacy, AI settings, chat with tool status and meal cards, nutrition pages; light/dark; English + Romanian | Done |
-| Weight/sleep/activity measurements, medical-knowledge RAG, wearables, insights | **Not implemented.** The UI shows an explicit "not available yet" state, never fake data |
+| Medical knowledge RAG: operator-run ingestion of approved, licensed documents → chunking → embeddings → Qdrant, grounded answers with numbered citations, retrieval evaluation | Done; **no documents are shipped**, you supply a corpus (see *Medical knowledge* below). Real OpenAI/Ollama embeddings never run |
+| React app: sign in/up, dashboard (real calories and macros), profile, preferences, privacy, AI settings (incl. the approved sources list), chat with tool status, meal cards and source citations, nutrition pages; light/dark; English + Romanian | Done |
+| Weight/sleep/activity measurements, wearables, insights, AI memory | **Not implemented.** The UI shows an explicit "not available yet" state, never fake data |
 
 **AI provider testing.** Automated tests use a scripted fake model. The OpenAI provider code path was additionally
 exercised end-to-end (SDK → HTTP → streaming → browser, including **tool calls and JSON-schema structured output**) against a local OpenAI-compatible mock server. It has **not**
@@ -41,6 +42,7 @@ src/backend/
   MevaCare.AI.HealthCompanion.Modules.HealthProfile profile, goals, preferences
   MevaCare.AI.HealthCompanion.Modules.Nutrition    foods, meals, targets, summaries, USDA importer, meal proposals back end
   MevaCare.AI.HealthCompanion.Modules.Assistant    AI chat, providers, safety, conversations, tools, meal parsing
+  MevaCare.AI.HealthCompanion.Modules.Knowledge    medical-knowledge RAG: ingestion, embeddings, vector store (Qdrant), retrieval
 src/frontend/mevacare-ai-web                       React + TypeScript + Vite + Tailwind
 tests/UnitTests | IntegrationTests | AIEvaluationTests
 docs/architecture | decisions (ADRs) | ai | api
@@ -48,9 +50,9 @@ infrastructure/docker, docker-compose.yml, scripts/
 ```
 
 Differences from the suggested structure (reasons in [ADR-0001](docs/decisions/0001-modular-monolith.md) and
-[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): the Measurements, Knowledge and
+[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): the Measurements and
 Integrations module projects are not created yet — each is added in the phase that implements it, together with its
-tables. The `GetWeightHistory` and `SearchMedicalKnowledge` tools wait for those modules.
+tables. The `GetWeightHistory` tool waits for the Measurements module.
 
 ## Prerequisites
 
@@ -98,7 +100,7 @@ Open http://localhost:5173, create an account, tick the consents you want (they 
 
 ```powershell
 Copy-Item .env.example .env        # then set MSSQL_SA_PASSWORD to a strong password of your choice
-docker compose up -d sqlserver     # Qdrant is only needed from Phase 4: docker compose up -d qdrant
+docker compose up -d sqlserver     # add Qdrant for the medical knowledge: docker compose up -d qdrant
 ./scripts/setup-dev.ps1 -SqlServer 'localhost,14330' -SqlUser sa -SqlPassword (Read-Host -AsSecureString)
 ```
 
@@ -119,6 +121,7 @@ Configuration is layered: `appsettings.json` (safe defaults) → `appsettings.De
 | `Ai:OpenAI:ApiKey` / `Ai:OpenAI:Model` | OpenAI credentials and model (`Ai:OpenAI:Endpoint` optional, for compatible gateways) |
 | `Ai:MaxOutputTokens`, `Ai:Temperature`, `Ai:HistoryMessageLimit`, `Ai:HistoryCharacterBudget`, `Ai:RequestTimeoutSeconds` | generation and cost limits |
 | `Ai:ToolsEnabled`, `Ai:MaxToolIterations` | turn tool calling off (models without tool support) / cap model-tool round trips |
+| `Knowledge:Enabled`, `Knowledge:Embeddings:*`, `Knowledge:VectorStore:*`, `Knowledge:Chunking:*`, `Knowledge:Retrieval:*` | medical-knowledge RAG; defaults work offline (Lexical embeddings, Qdrant on `localhost:6333`). See [docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md#configuration-knowledge) |
 | `Auth:*`, `RateLimiting:*`, `Cors:AllowedOrigins` | see `appsettings.json` |
 
 Examples:
@@ -136,13 +139,24 @@ dotnet user-secrets set "Ai:OpenAI:ApiKey" "<your key>" --project $api
 dotnet user-secrets set "Ai:OpenAI:Model" "<model id>" --project $api
 ```
 
+### Medical knowledge (RAG)
+
+The assistant answers reference questions ("what is HRV?", "how much activity do adults need?") from **approved documents** and cites them. The repository contains **no medical documents**: you choose them, check their licence (the allow-list is public domain US-government works, CC0, CC-BY, CC-BY-SA) and ingest them on the server. Without any, the assistant says it has no approved source.
+
+1. Start Qdrant: `docker compose up -d qdrant` (unverified compose file) or a local Qdrant binary on port 6333.
+2. Put the documents (`html`, `md`, `txt`; no PDF) and a `sources.json` with their provenance in a folder (format and example in [docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md#operating-it)).
+3. Ingest: `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- ingest-knowledge "C:\path\to\corpus"` (re-running is safe; changed content becomes a new version). Other commands: `reindex-knowledge [--recreate]` (after changing the embedding model) and `retire-knowledge <source-guid>`.
+4. Ask the assistant a reference question; the sources appear under the answer and in *Settings → AI*.
+
+The default embeddings are an **offline lexical baseline** (matches words, not meaning). For better retrieval set `Knowledge:Embeddings:Provider` to `OpenAI` or `Ollama` plus `Model` and `Dimensions`, run `reindex-knowledge --recreate`, and re-calibrate `Knowledge:Retrieval:MinScore` with the retrieval evaluation. Those providers are implemented but were **not run** against a real service.
+
 Without a configured provider everything except chat works; chat answers HTTP 503 `ai_not_configured` and the UI
 shows "The AI service is not available right now".
 
 ## Database and migrations
 
 Code-first EF Core; the single `AppDbContext` loads the entity configurations of every module and keeps each module's
-tables in its own schema (`identity`, `health_profile`, `nutrition`, `assistant`, `core`).
+tables in its own schema (`identity`, `health_profile`, `nutrition`, `assistant`, `knowledge`, `core`).
 
 ```powershell
 $infra = 'src/backend/MevaCare.AI.HealthCompanion.Infrastructure'
@@ -161,13 +175,15 @@ The design-time tools start the API host, so the connection string and `Jwt:Sign
 dotnet test MevaCare.AI.HealthCompanion.slnx          # unit + integration + deterministic AI evaluation
 dotnet test tests/UnitTests
 dotnet test tests/IntegrationTests                     # needs SQL Server; creates and drops a throw-away database per run
-dotnet test tests/AIEvaluationTests                    # emergency-screen evaluation; live model eval is skipped by default
+dotnet test tests/AIEvaluationTests                    # emergency-screen and retrieval evaluation; live model eval is skipped by default
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
-- No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`.
+- No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.
+- Qdrant integration tests are skipped unless `MEVACARE_QDRANT_URL` is set: `$env:MEVACARE_QDRANT_URL='http://localhost:6333'; dotnet test tests/IntegrationTests` (they create and drop their own collections).
+- Retrieval quality on your own corpus: `$env:MEVACARE_KNOWLEDGE_DIR='C:\path\to\corpus'; dotnet test tests/AIEvaluationTests --filter Retrieval` (needs a gold set shaped like `Datasets/retrieval-gold-demo-corpus.json`).
 - Live model evaluation (real provider, adversarial prompts, costs money):
   `$env:MEVACARE_EVAL_LIVE='1'; $env:Ai__Provider='Ollama'; $env:Ai__Ollama__Model='<model>'; dotnet test tests/AIEvaluationTests`.
   See [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md).
@@ -181,13 +197,13 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
 - AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·
   [structured outputs](docs/ai/structured-outputs.md) · [safety](docs/ai/ai-safety.md) · [evaluation](docs/ai/ai-evaluation.md) ·
-  planned: [RAG, embeddings and memory](docs/ai/rag-embeddings-memory.md)
+  [RAG, citations and (planned) memory](docs/ai/rag-embeddings-memory.md)
 - [HTTP API](docs/api/README.md)
 
 ## Roadmap
 
 1. ✅ Foundation  2. ✅ AI chat  3. ✅ Nutrition vertical slice (food data, meal logging via tools and confirmation)
-4. Medical knowledge RAG (Qdrant)  5. Wearables (WHOOP first) and measurements  6. Health intelligence (trends, insights)
+4. ✅ Medical knowledge RAG (Qdrant, citations)  5. Wearables (WHOOP first) and measurements  6. Health intelligence (trends, insights)
 
 ## Troubleshooting
 
@@ -196,3 +212,5 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
   (the Development settings do this). Behind HTTPS in production keep it `true`.
 - *Chat says the AI service is unavailable* — configure a provider (above) and, for Ollama, make sure it is running.
 - *Integration tests cannot connect* — set `MEVACARE_TEST_SQL` to a connection string that may create databases.
+- *The assistant says it has no approved source* — nothing is ingested yet, the question is outside the corpus, or the lexical baseline did not match your wording; check `GET /health/knowledge` and *Settings → AI*.
+- *"knowledge_unavailable" / "knowledge_reindex_required"* — Qdrant or the embedding provider is down, or the embedding model changed: run `reindex-knowledge --recreate`.

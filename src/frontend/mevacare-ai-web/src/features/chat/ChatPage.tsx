@@ -10,9 +10,10 @@ import remarkGfm from 'remark-gfm'
 import { Alert, Button, PageHeader, Spinner } from '../../components/ui'
 import { ApiError } from '../../lib/api'
 import { toOffsetIso } from '../../lib/dates'
-import type { ProposalCard as ProposalCardData } from '../../lib/types'
+import type { Citation, ProposalCard as ProposalCardData } from '../../lib/types'
 import { useConsents } from '../profile/hooks'
 import { chatKeys, fetchMessages, fetchProposals, useConversations, useDeleteConversation } from './hooks'
+import { Citations } from './Citations'
 import { ProposalCard } from './ProposalCard'
 import { streamChat } from './stream'
 
@@ -31,6 +32,8 @@ interface LocalMessage {
   tools?: { name: string; status: string }[]
   /** Meals the assistant prepared in this answer, waiting for the user's confirmation. */
   proposals?: ProposalCardData[]
+  /** Approved sources used for this answer. */
+  citations?: Citation[]
 }
 
 export function ChatPage() {
@@ -75,6 +78,7 @@ export function ChatPage() {
             isSafety: m.isSafetyResponse,
             state: m.status === 'Complete' ? 'done' : m.status === 'Failed' ? 'failed' : 'interrupted',
             proposals: m.role === 'Assistant' ? proposals.filter((p) => p.assistantMessageSequence === m.sequence) : undefined,
+            citations: m.citations,
           })),
         )
       } catch {
@@ -135,6 +139,9 @@ export function ChatPage() {
                   ? [...(m.tools ?? []), { name: event.name, status: 'running' }]
                   : (m.tools ?? []).map((tool) => (tool.name === event.name && tool.status === 'running' ? { ...tool, status: event.status } : tool)),
               }))
+              break
+            case 'citations':
+              patchLast((m) => ({ ...m, citations: event.items }))
               break
             case 'proposal':
               patchLast((m) => ({ ...m, proposals: [...(m.proposals ?? []), event.card] }))
@@ -403,6 +410,7 @@ function MessageBubble({ message, onProposalChange }: { message: LocalMessage; o
             ))}
           </ul>
         )}
+        {message.citations && message.citations.length > 0 && <Citations items={message.citations} />}
         {message.proposals?.map((card) => (
           <ProposalCard key={card.id} card={card} onChange={(patch) => onProposalChange(card.id, patch)} />
         ))}

@@ -205,3 +205,31 @@ export interface ProposalCard {
   mealId: string | null
   proposal: MealProposal
 }
+
+// ---- Medical knowledge ----
+
+export interface Citation {
+  number: number
+  sourceId: string
+  title: string
+  publisher: string
+  url: string
+  license: string
+  retrievedOn: string
+  excerpt: string
+  /** true = the answer references it with [n]; false = it was only consulted. */
+  cited: boolean
+}
+
+export interface KnowledgeSource {
+  id: string
+  title: string
+  publisher: string
+  url: string
+  license: string
+  licenseUrl: string | null
+  language: string
+  retrievedOn: string
+  version: number
+  chunkCount: number
+}

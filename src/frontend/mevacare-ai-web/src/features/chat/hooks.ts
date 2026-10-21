@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import type { ProposalCard } from '../../lib/types'
+import type { Citation, KnowledgeSource, ProposalCard } from '../../lib/types'
 
 export interface ConversationSummary {
   id: string
@@ -16,6 +16,7 @@ export interface StoredMessage {
   status: 'Complete' | 'Failed' | 'Interrupted'
   isSafetyResponse: boolean
   createdAtUtc: string
+  citations: Citation[]
 }
 
 export const chatKeys = {
@@ -45,4 +46,8 @@ export function fetchProposals(conversationId: string) {
 
 export function dismissProposal(proposalId: string) {
   return api<void>(`/api/assistant/proposals/${proposalId}/dismiss`, { method: 'POST' })
+}
+
+export function useKnowledgeSources() {
+  return useQuery({ queryKey: ['knowledge', 'sources'] as const, queryFn: () => api<KnowledgeSource[]>('/api/knowledge/sources') })
 }

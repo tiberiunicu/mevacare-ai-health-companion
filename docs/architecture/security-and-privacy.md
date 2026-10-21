@@ -42,10 +42,11 @@ is closed.
 
 ## AI-specific security
 
-- The assistant has **four tools** (profile, two nutrition summaries, meal preparation). They are bound per turn to the signed-in user
+- The assistant has **five tools** (profile, two nutrition summaries, meal preparation, medical-knowledge search). They are bound per turn to the signed-in user
   (no user-id parameter exists), re-check consent, are audited, and the only write-type tool merely prepares a proposal that the user must
   confirm in the UI; confirmations are idempotent. A prompt injection can therefore at worst make the assistant read the **caller's own**
   data or prepare a meal the user then rejects. See [tool-calling.md](../ai/tool-calling.md).
+- Medical knowledge (Phase 4): documents enter only through an operator CLI (no HTTP ingestion), with a licence allow-list and recorded provenance; retrieved text is treated as untrusted data (labelled, quarantined when it looks like instructions, never in the system role). `GET /api/knowledge/sources` lists source metadata to signed-in users; `/health/knowledge` is anonymous and exposes no secrets. **Privacy:** when the user asks a knowledge question, the model's search *query* is sent to the embedding provider (OpenAI/Ollama; nothing leaves the machine with `Lexical` or a local Ollama). The vector store holds no user data, but Qdrant has no authentication unless `Knowledge:VectorStore:ApiKey` is set: do not expose it beyond localhost or a private network, and use TLS and a key in any shared deployment. Citation excerpts are stored with the assistant message, so they are deleted with the account like the rest of the conversation.
 - User messages are untrusted: they are only ever sent in the *user* role, never concatenated into the system prompt.
 - Emergency and self-harm messages are answered by fixed text and never reach the model.
 - Model output is rendered as Markdown without raw HTML.

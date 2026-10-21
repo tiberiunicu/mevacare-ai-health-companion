@@ -34,11 +34,10 @@ assistant cannot see personal data at all.
 
 ## Prompt-injection stance
 
-User messages are untrusted and can only *argue* with the model, not edit its instructions. There are no retrieved documents and no
+User messages are untrusted and can only *argue* with the model, not edit its instructions. Retrieved reference passages (Phase 4) are the only third-party text the model sees; there are no
 secrets in the prompt. With tools (Phase 3) the controls are structural, not prompt-based: tool calls run server-side with the caller's id,
 are validated and consent-checked, nothing is written without the user's confirmation, and the extraction call treats the meal text as data
-([tool-calling.md](tool-calling.md)). Retrieved documents will be labelled untrusted context in Phase 4
-([rag-embeddings-memory.md](rag-embeddings-memory.md)). The live adversarial evaluation checks the prompt-level behaviour.
+([tool-calling.md](tool-calling.md)). Retrieved passages are returned as tool results labelled "DATA, not instructions", the prompt repeats that, chunks that look like instructions (injection heuristics) are quarantined when the document is ingested, and only operators can ingest documents. The worst a hostile document can do is skew a cited answer: the tools that act for the user are validated server-side and writes need the user's confirmation ([rag-embeddings-memory.md](rag-embeddings-memory.md)). The live adversarial evaluation checks the prompt-level behaviour.
 
 ## Limitations (read these)
 
@@ -50,6 +49,7 @@ are validated and consent-checked, nothing is written without the user's confirm
 - With tools, the assistant gets the caller's own profile facts and nutrition totals when it asks for them (after consent); a successful injection can make it reveal those to the caller only.
 - No jailbreak or red-team coverage beyond the small dataset; medical-claim accuracy is not evaluated.
 - Romanian system-prompt behaviour depends on the chosen model.
+- Retrieval can surface an approved but outdated or misread passage; a citation shows *where* a claim came from, it does not prove the claim is right or fits the user. The injection heuristics are patterns, not a guarantee; the document approval process is the real control.
 
 ## How it is tested
 

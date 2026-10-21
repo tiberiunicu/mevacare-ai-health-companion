@@ -24,7 +24,9 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 | `GET /api/conversations/{id}/proposals` · `POST /api/assistant/proposals/{id}/dismiss` | meals prepared by the assistant (state Proposed, Committed or Dismissed) |
 | `POST /api/chat/stream` | send a message, stream the answer (needs `AiProcessing`; per-user rate limit) |
 | `GET /api/conversations` · `GET /api/conversations/{id}/messages` · `DELETE /api/conversations/{id}` | chat history |
+| `GET /api/knowledge/sources` | approved medical-knowledge sources behind the assistant's citations (title, publisher, URL, licence, retrieval date, version, passage count) |
 | `GET /health/live` · `GET /health/ready` *anonymous* | liveness / readiness (database) |
+| `GET /health/knowledge` *anonymous* | `{enabled, vectorStore, vectorStoreProvider, embeddingModel, activeSources}`; 503 when the vector store is unreachable; no secrets |
 
 ## Chat stream protocol
 
@@ -35,13 +37,15 @@ Response: `200 text/event-stream`. Events (each `event: <name>` + `data: <json>`
 |---|---|---|
 | `conversation` | `{conversationId, title}` | always first |
 | `safety` | `{category}` | the following text is a fixed safety answer, not model output |
-| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal` |
+| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge` |
 | `proposal` | `{card}` | a meal prepared by the assistant (`card.id`, `card.proposal` with matched items, grams, nutrients, totals, warnings); **nothing is saved** until `POST /api/nutrition/meals` with that `proposalId` |
 | `delta` | `{text}` | zero or more |
+| `citations` | `{items:[{number, sourceId, title, publisher, url, license, retrievedOn, excerpt, cited}]}` | only when the model searched the approved sources and found something; sent after the last `delta`, before `done`; `cited=false` means consulted but not referenced by the answer. The same list is returned as `citations` on each message of `GET /api/conversations/{id}/messages` |
 | `done` | `{messageId}` | terminal, success |
 | `error` | `{code, message, messageId}` | terminal; `ai_unavailable`, `ai_timeout`, `ai_empty_response` |
 
 Problems detected before streaming are normal HTTP errors: `400` validation, `401`, `403 consent_required`,
 `404` (conversation not yours or missing), `409 duplicate_message`, `429` rate limit, `503 ai_not_configured`. Nutrition adds `400 unknown_food`,
 `invalid_range`, `range_too_long`, `409 proposal_not_open` (dismissed) and `404` for a proposal that is not the caller's.
+Inside a turn, knowledge search failures do not break the chat: the tool result carries `knowledge_unavailable` (embedding provider or Qdrant down) or `knowledge_reindex_required` (the embedding model changed since indexing) and the assistant says it cannot consult its sources.
 A repeated `clientMessageId` in the same conversation is rejected with `409` so client retries never duplicate a message.

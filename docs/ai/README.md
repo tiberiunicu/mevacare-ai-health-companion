@@ -8,11 +8,12 @@ what problem it solves, why it is needed, how it works here, why this implementa
 | LLM integration (`IChatClient`, providers, streaming, history, persistence) | **Implemented (Phase 2)** | [llm-integration.md](llm-integration.md) |
 | Prompt engineering and AI safety (system prompt, emergency screen, injection handling) | **Implemented (Phase 2)** | [ai-safety.md](ai-safety.md) |
 | AI evaluation (deterministic emergency evaluation, live adversarial evaluation) | **Implemented (Phase 2)** | [ai-evaluation.md](ai-evaluation.md) |
-| Function calling / tools | **Implemented (Phase 3)** | [tool-calling.md](tool-calling.md) |
+| Function calling / tools (five tools, including `SearchMedicalKnowledge`) | **Implemented (Phase 3–4)** | [tool-calling.md](tool-calling.md) |
 | Structured outputs (meal extraction) | **Implemented (Phase 3)** | [structured-outputs.md](structured-outputs.md) |
-| Embeddings, vector search, RAG, citations, AI memory | Designed, **not implemented** (Phase 4+) | [rag-embeddings-memory.md](rag-embeddings-memory.md) |
+| Embeddings, vector search, RAG, citations, retrieval evaluation | **Implemented (Phase 4)**; real embedding providers never run | [rag-embeddings-memory.md](rag-embeddings-memory.md) |
+| AI memory | Designed, **not implemented** | [rag-embeddings-memory.md](rag-embeddings-memory.md#ai-memory-later--designed-not-implemented) |
 
-Pages marked *designed* (currently only [RAG, embeddings and memory](rag-embeddings-memory.md)) describe the intended approach so later phases stay consistent; they must be revisited and
+Pages or sections marked *designed* (currently only AI memory in [RAG, embeddings and memory](rag-embeddings-memory.md)) describe the intended approach so later phases stay consistent; they must be revisited and
 checked against the then-current package APIs when implemented.
 
 ## Reading order for a .NET developer new to AI engineering
@@ -21,7 +22,8 @@ checked against the then-current package APIs when implemented.
 2. `Modules.Assistant/Features/AiChatService.cs` — one turn from request to persisted answer, including failure paths.
 3. `Modules.Assistant/Safety/` — the system prompt and the deterministic screen.
 4. `Modules.Assistant/Tools/` — per-turn tools and structured extraction; `tests/IntegrationTests/ChatTests.cs`, `ChatToolTests.cs` + `Support/ScriptedChatClient.cs` — how to test LLM code (including tool calls) without an LLM.
-5. `tests/AIEvaluationTests` — how to measure behaviour that unit tests cannot pin down.
+5. `Modules.Knowledge/` — ingestion → chunking → embeddings → vector store → retrieval, then `Tools/TurnTools.cs` (`SearchMedicalKnowledge`) for how retrieved text reaches the model.
+6. `tests/AIEvaluationTests` — how to measure behaviour that unit tests cannot pin down (including retrieval recall).
 
 ## Principles used across the project
 

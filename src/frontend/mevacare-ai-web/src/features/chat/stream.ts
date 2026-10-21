@@ -1,5 +1,5 @@
 import { apiFetchRaw, toApiError } from '../../lib/api'
-import type { ProposalCard } from '../../lib/types'
+import type { Citation, ProposalCard } from '../../lib/types'
 
 export type ChatStreamEvent =
   | { type: 'conversation'; conversationId: string; title: string }
@@ -7,6 +7,7 @@ export type ChatStreamEvent =
   | { type: 'safety'; category: string }
   | { type: 'tool'; name: string; status: 'running' | 'done' | 'failed' }
   | { type: 'proposal'; card: ProposalCard }
+  | { type: 'citations'; items: Citation[] }
   | { type: 'done'; messageId: string }
   | { type: 'error'; code: string; message: string; messageId: string | null }
 

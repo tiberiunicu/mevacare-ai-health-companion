@@ -204,7 +204,11 @@
     "limits1": "The assistant gives wellness information. It does not diagnose, prescribe or change medication.",
     "limits2": "It can make mistakes. Check important information with a qualified professional.",
     "providerTitle": "Provider",
-    "providerBody": "The model provider is configured on the server by the operator of this installation."
+    "providerBody": "The model provider is configured on the server by the operator of this installation.",
+    "knowledgeTitle": "Medical knowledge sources",
+    "knowledgeBody": "When you ask about health terms or guidance, the assistant can answer from these approved documents and cites them. It never uses other sources for those answers.",
+    "knowledgeEmpty": "No approved sources are indexed yet, so the assistant has no reference documents.",
+    "knowledgeMeta": "{{publisher}} · {{license}} · retrieved {{date}} · {{count}} passages"
   },
   "chat": {
     "title": "AI Companion",
@@ -233,7 +237,13 @@
       "sleep": "Give me practical tips for better sleep.",
       "plateau": "Why might weight loss slow down?"
     },
-    "tools": "Tools used"
+    "tools": "Tools used",
+    "sources": "Sources",
+    "alsoConsulted": "Also consulted",
+    "openSource": "Open source",
+    "showExcerpt": "Show passage",
+    "license": "Licence",
+    "retrieved": "retrieved {{date}}"
   },
   "nutrition": {
     "mealTypes": {
@@ -354,7 +364,8 @@
     "GetHealthProfile": "Reading your profile",
     "GetDailyNutritionSummary": "Looking up your day",
     "GetNutritionSummary": "Looking up your nutrition summary",
-    "PrepareMeal": "Preparing your meal"
+    "PrepareMeal": "Preparing your meal",
+    "SearchMedicalKnowledge": "Searching approved medical sources"
   },
   "dashboardNutrition": {
     "calories": "{{value}} kcal",

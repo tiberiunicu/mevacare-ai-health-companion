@@ -205,7 +205,11 @@
     "limits1": "Asistentul oferă informații de wellness. Nu pune diagnostice, nu prescrie și nu modifică medicația.",
     "limits2": "Poate greși. Verifică informațiile importante cu un profesionist calificat.",
     "providerTitle": "Furnizor",
-    "providerBody": "Furnizorul de model este configurat pe server de operatorul acestei instalări."
+    "providerBody": "Furnizorul de model este configurat pe server de operatorul acestei instalări.",
+    "knowledgeTitle": "Surse de cunoștințe medicale",
+    "knowledgeBody": "Când întrebi despre termeni de sănătate sau recomandări, asistentul poate răspunde din aceste documente aprobate și le citează. Pentru astfel de răspunsuri nu folosește alte surse.",
+    "knowledgeEmpty": "Nu este indexată nicio sursă aprobată, deci asistentul nu are documente de referință.",
+    "knowledgeMeta": "{{publisher}} · {{license}} · preluat {{date}} · {{count}} pasaje"
   },
   "chat": {
     "title": "Companion AI",
@@ -234,7 +238,13 @@
       "sleep": "Dă-mi sfaturi practice pentru un somn mai bun.",
       "plateau": "De ce ar putea încetini scăderea în greutate?"
     },
-    "tools": "Instrumente folosite"
+    "tools": "Instrumente folosite",
+    "sources": "Surse",
+    "alsoConsulted": "Consultate suplimentar",
+    "openSource": "Deschide sursa",
+    "showExcerpt": "Arată pasajul",
+    "license": "Licență",
+    "retrieved": "preluat {{date}}"
   },
   "nutrition": {
     "mealTypes": {
@@ -356,7 +366,8 @@
     "GetHealthProfile": "Se citește profilul tău",
     "GetDailyNutritionSummary": "Se caută ziua ta",
     "GetNutritionSummary": "Se caută rezumatul nutrițional",
-    "PrepareMeal": "Se pregătește masa"
+    "PrepareMeal": "Se pregătește masa",
+    "SearchMedicalKnowledge": "Se caută în surse medicale aprobate"
   },
   "dashboardNutrition": {
     "calories": "{{value}} kcal",

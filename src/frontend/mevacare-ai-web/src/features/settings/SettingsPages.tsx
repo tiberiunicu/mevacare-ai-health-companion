@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom'
 import { SubNav } from '../../components/AppShell'
 import { Alert, Button, Card, Field, PageHeader, SelectInput, Spinner, TextInput, Toggle } from '../../components/ui'
 import { api, ApiError, apiFetchRaw, toApiError } from '../../lib/api'
+import { safeHref } from '../../lib/links'
 import type { ConsentType, HealthPreferences, ThemePreference, UnitSystem } from '../../lib/types'
 import { useAuthStore } from '../../stores/auth'
 import { SETTINGS_NAV } from '../profile/navigation'
+import { useKnowledgeSources } from '../chat/hooks'
 import { useConsents, usePreferences, useSetConsent, useUpdatePreferences } from '../profile/hooks'
 
 export function PreferencesPage() {
@@ -251,6 +253,7 @@ export function AiSettingsPage() {
               <li>{t('aiSettings.limits2')}</li>
             </ul>
           </Card>
+          <KnowledgeSourcesCard />
           <Card>
             <h2 className="mb-1 font-semibold">{t('aiSettings.providerTitle')}</h2>
             <p className="text-sm text-muted">{t('aiSettings.providerBody')}</p>
@@ -258,5 +261,49 @@ export function AiSettingsPage() {
         </div>
       )}
     </>
+  )
+}
+
+function KnowledgeSourcesCard() {
+  const { t, i18n } = useTranslation()
+  const sources = useKnowledgeSources()
+
+  return (
+    <Card>
+      <h2 className="mb-1 font-semibold">{t('aiSettings.knowledgeTitle')}</h2>
+      <p className="mb-3 text-sm text-muted">{t('aiSettings.knowledgeBody')}</p>
+      {sources.isPending ? (
+        <Spinner label={t('common.loading')} />
+      ) : sources.data && sources.data.length > 0 ? (
+        <ul className="divide-y divide-line rounded-xl border border-line text-sm">
+          {sources.data.map((s) => {
+            const href = safeHref(s.url)
+            return (
+              <li key={s.id} className="p-3">
+                <p className="font-medium">
+                  {href ? (
+                    <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      {s.title}
+                    </a>
+                  ) : (
+                    s.title
+                  )}
+                </p>
+                <p className="text-xs text-muted">
+                  {t('aiSettings.knowledgeMeta', {
+                    publisher: s.publisher,
+                    license: s.license,
+                    date: new Date(s.retrievedOn).toLocaleDateString(i18n.language),
+                    count: s.chunkCount,
+                  })}
+                </p>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted">{t('aiSettings.knowledgeEmpty')}</p>
+      )}
+    </Card>
   )
 }
