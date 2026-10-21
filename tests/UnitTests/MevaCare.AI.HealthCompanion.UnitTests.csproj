@@ -11,6 +11,9 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Nutrition\Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
@@ -18,5 +21,6 @@
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Identity\MevaCare.AI.HealthCompanion.Modules.Identity.csproj" />
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.HealthProfile\MevaCare.AI.HealthCompanion.Modules.HealthProfile.csproj" />
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Assistant\MevaCare.AI.HealthCompanion.Modules.Assistant.csproj" />
+    <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Nutrition\MevaCare.AI.HealthCompanion.Modules.Nutrition.csproj" />
   </ItemGroup>
 </Project>

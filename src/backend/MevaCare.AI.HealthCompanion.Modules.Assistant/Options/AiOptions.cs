@@ -30,6 +30,12 @@ public sealed class AiOptions
     [Range(0, 100_000)] public int HistoryCharacterBudget { get; init; } = 12_000;
 
     [Range(5, 600)] public int RequestTimeoutSeconds { get; init; } = 90;
+
+    /// <summary>Lets the model call backend tools. Turn off for models without tool-calling support.</summary>
+    public bool ToolsEnabled { get; init; } = true;
+
+    /// <summary>Upper bound on model/tool round trips within one answer.</summary>
+    [Range(1, 10)] public int MaxToolIterations { get; init; } = 6;
 }
 
 public sealed class OpenAiOptions

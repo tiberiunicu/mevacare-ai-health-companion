@@ -36,3 +36,21 @@ internal sealed class ConversationMessageConfiguration : IEntityTypeConfiguratio
             .HasFilter("[ClientMessageId] IS NOT NULL");
     }
 }
+
+internal sealed class ToolExecutionConfiguration : IEntityTypeConfiguration<ToolExecution>
+{
+    public void Configure(EntityTypeBuilder<ToolExecution> builder)
+    {
+        builder.ToTable("ToolExecutions", "assistant");
+        builder.HasKey(t => t.Id);
+        builder.Property(t => t.ToolName).HasMaxLength(60).IsRequired();
+        builder.Property(t => t.Kind).HasConversion<string>().HasMaxLength(10).IsRequired();
+        builder.Property(t => t.Outcome).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(t => t.ArgumentsJson).IsRequired();
+        builder.Property(t => t.ErrorCode).HasMaxLength(60);
+        builder.HasIndex(t => new { t.UserId, t.ConversationId });
+        builder.HasIndex(t => new { t.ConversationId, t.AssistantMessageSequence });
+        // Deleting a conversation (or, through it, the user) deletes its tool audit rows.
+        builder.HasOne<Conversation>().WithMany().HasForeignKey(t => t.ConversationId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

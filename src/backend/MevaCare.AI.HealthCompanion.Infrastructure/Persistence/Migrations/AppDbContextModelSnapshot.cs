@@ -134,6 +134,64 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.ToTable("ChatMessages", "assistant");
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.ToolExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ArgumentsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("AssistantMessageSequence")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("CommittedMealId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ResultJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ToolName")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "AssistantMessageSequence");
+
+                    b.HasIndex("UserId", "ConversationId");
+
+                    b.ToTable("ToolExecutions", "assistant");
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.HealthProfile.Domain.HealthGoal", b =>
                 {
                     b.Property<Guid>("Id")
@@ -394,6 +452,259 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.ToTable("UserRoles", "identity");
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Preparation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("SourceFoodId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Source", "SourceFoodId")
+                        .IsUnique();
+
+                    b.ToTable("Foods", "nutrition");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.FoodNutrient", b =>
+                {
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("AmountPer100g")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("decimal(12,4)");
+
+                    b.HasKey("FoodId", "Type");
+
+                    b.ToTable("FoodNutrients", "nutrition", t =>
+                        {
+                            t.HasCheckConstraint("CK_FoodNutrients_Amount", "[AmountPer100g] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.FoodPortion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("decimal(12,4)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("FoodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("GramWeight")
+                        .HasPrecision(12, 4)
+                        .HasColumnType("decimal(12,4)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodId");
+
+                    b.ToTable("FoodPortions", "nutrition", t =>
+                        {
+                            t.HasCheckConstraint("CK_FoodPortions_Weight", "[GramWeight] > 0 AND [Amount] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Meal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EatenAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("LocalDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("SourceProposalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UtcOffsetMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceProposalId")
+                        .IsUnique()
+                        .HasFilter("[SourceProposalId] IS NOT NULL");
+
+                    b.HasIndex("UserId", "LocalDate");
+
+                    b.ToTable("Meals", "nutrition");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.MealItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Calories")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("CarbohydratesG")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("FatG")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("FiberG")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid?>("FoodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsEstimated")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MealId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Preparation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("ProteinG")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("QuantityGrams")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("SourceLabel")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MealId");
+
+                    b.ToTable("MealItems", "nutrition", t =>
+                        {
+                            t.HasCheckConstraint("CK_MealItems_Nutrients", "([Calories] IS NULL OR [Calories] >= 0) AND ([ProteinG] IS NULL OR [ProteinG] >= 0) AND ([CarbohydratesG] IS NULL OR [CarbohydratesG] >= 0) AND ([FatG] IS NULL OR [FatG] >= 0) AND ([FiberG] IS NULL OR [FiberG] >= 0)");
+
+                            t.HasCheckConstraint("CK_MealItems_Quantity", "[QuantityGrams] > 0 AND [QuantityGrams] <= 10000");
+                        });
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.NutritionTarget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Calories")
+                        .HasPrecision(10, 1)
+                        .HasColumnType("decimal(10,1)");
+
+                    b.Property<decimal?>("CarbohydratesG")
+                        .HasPrecision(10, 1)
+                        .HasColumnType("decimal(10,1)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("FatG")
+                        .HasPrecision(10, 1)
+                        .HasColumnType("decimal(10,1)");
+
+                    b.Property<decimal?>("FiberG")
+                        .HasPrecision(10, 1)
+                        .HasColumnType("decimal(10,1)");
+
+                    b.Property<decimal?>("ProteinG")
+                        .HasPrecision(10, 1)
+                        .HasColumnType("decimal(10,1)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("NutritionTargets", "nutrition", t =>
+                        {
+                            t.HasCheckConstraint("CK_NutritionTargets_Values", "([Calories] IS NULL OR [Calories] BETWEEN 0 AND 20000) AND ([ProteinG] IS NULL OR [ProteinG] BETWEEN 0 AND 1000) AND ([CarbohydratesG] IS NULL OR [CarbohydratesG] BETWEEN 0 AND 2000) AND ([FatG] IS NULL OR [FatG] BETWEEN 0 AND 1000) AND ([FiberG] IS NULL OR [FiberG] BETWEEN 0 AND 300)");
+                        });
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", b =>
                 {
                     b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
@@ -407,6 +718,15 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                 {
                     b.HasOne("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", null)
                         .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.ToolExecution", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", null)
+                        .WithMany()
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -466,6 +786,51 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.FoodNutrient", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", null)
+                        .WithMany("Nutrients")
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.FoodPortion", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", null)
+                        .WithMany("Portions")
+                        .HasForeignKey("FoodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Meal", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.MealItem", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Meal", null)
+                        .WithMany("Items")
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.NutritionTarget", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", b =>
                 {
                     b.Navigation("Messages");
@@ -474,6 +839,18 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", b =>
                 {
                     b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", b =>
+                {
+                    b.Navigation("Nutrients");
+
+                    b.Navigation("Portions");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Meal", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

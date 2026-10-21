@@ -5,6 +5,7 @@ using MevaCare.AI.HealthCompanion.Api.Hosting;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Infrastructure;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
+using MevaCare.AI.HealthCompanion.Modules.Nutrition.Import;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +65,19 @@ try
     });
 
     var app = builder.Build();
+
+    // Maintenance command: dotnet run --project <Api> -- import-usda <folder with the extracted SR Legacy CSV files>
+    if (args is ["import-usda", var importDirectory])
+    {
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        var result = await scope.ServiceProvider.GetRequiredService<UsdaSrLegacyImporter>()
+            .ImportAsync(importDirectory, message => Log.Information("{Message}", message), CancellationToken.None);
+        Log.Information(
+            "USDA import finished: {Imported} foods imported, {Skipped} already present ({Nutrients} nutrient rows, {Portions} portion rows read)",
+            result.FoodsImported, result.FoodsSkipped, result.NutrientRows, result.PortionRows);
+        return 0;
+    }
 
     app.UseExceptionHandler();
     app.UseSerilogRequestLogging();

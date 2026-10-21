@@ -3,7 +3,8 @@ using MevaCare.AI.HealthCompanion.Modules.Assistant.Domain;
 
 namespace MevaCare.AI.HealthCompanion.Modules.Assistant.Features;
 
-public sealed record SendMessageRequest(Guid? ConversationId, string Message, Guid? ClientMessageId);
+/// <param name="ClientTime">The user's current local time with UTC offset; lets the assistant know today's date. Defaults to UTC.</param>
+public sealed record SendMessageRequest(Guid? ConversationId, string Message, Guid? ClientMessageId, DateTimeOffset? ClientTime = null);
 
 public sealed class SendMessageRequestValidator : AbstractValidator<SendMessageRequest>
 {
@@ -14,6 +15,8 @@ public sealed class SendMessageRequestValidator : AbstractValidator<SendMessageR
         RuleFor(x => x.Message).NotEmpty().Must(m => !string.IsNullOrWhiteSpace(m))
             .WithMessage("The message must not be blank.")
             .MaximumLength(MaxMessageLength);
+        RuleFor(x => x.ClientTime).Must(t => t is null || Math.Abs((t.Value - DateTimeOffset.UtcNow).TotalHours) <= 26)
+            .WithMessage("The client time is implausible.");
     }
 }
 
@@ -35,6 +38,12 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
     /// <summary>The answer is a fixed safety message, not model output. Sent before its text.</summary>
     public sealed record Safety(string Category) : ChatStreamEvent(Names.Safety);
 
+    /// <summary>A tool started or finished (Status: running, done, failed).</summary>
+    public sealed record Tool(string Name, string Status) : ChatStreamEvent(Names.Tool);
+
+    /// <summary>A meal prepared by the assistant that the user must confirm; nothing is saved yet.</summary>
+    public sealed record Proposal(ProposalDto Card) : ChatStreamEvent(Names.Proposal);
+
     public sealed record Done(Guid MessageId) : ChatStreamEvent(Names.Done);
 
     public sealed record Error(string Code, string Message, Guid? MessageId) : ChatStreamEvent(Names.Error);
@@ -44,6 +53,8 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
         public const string Conversation = "conversation";
         public const string Delta = "delta";
         public const string Safety = "safety";
+        public const string Tool = "tool";
+        public const string Proposal = "proposal";
         public const string Done = "done";
         public const string Error = "error";
     }

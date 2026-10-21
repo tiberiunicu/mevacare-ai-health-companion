@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Contracts\MevaCare.AI.HealthCompanion.Contracts.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Infrastructure\MevaCare.AI.HealthCompanion.Infrastructure.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.Identity\MevaCare.AI.HealthCompanion.Modules.Identity.csproj" />
+  </ItemGroup>
+</Project>

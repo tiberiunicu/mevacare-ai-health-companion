@@ -18,6 +18,8 @@ internal static class TestDb
         var modelOptions = new PersistenceModelOptions();
         modelOptions.ModelAssemblies.Add(typeof(IdentityModule).Assembly);
         modelOptions.ModelAssemblies.Add(typeof(HealthProfileModule).Assembly);
+        modelOptions.ModelAssemblies.Add(typeof(MevaCare.AI.HealthCompanion.Modules.Nutrition.NutritionModule).Assembly);
+        modelOptions.ModelAssemblies.Add(typeof(MevaCare.AI.HealthCompanion.Modules.Assistant.AssistantModule).Assembly);
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())

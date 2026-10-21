@@ -6,6 +6,8 @@ using MevaCare.AI.HealthCompanion.Contracts.Validation;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Features;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Options;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Providers;
+using MevaCare.AI.HealthCompanion.Modules.Assistant.Tools;
+using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -33,6 +35,9 @@ public sealed class AssistantModule : IModule
 
         services.AddScoped<AiChatService>();
         services.AddScoped<ConversationService>();
+        services.AddScoped<MealParser>();
+        services.AddScoped<IMealProposalGate, ProposalGate>();
+        services.AddScoped<ProposalService>();
         services.AddScoped<IUserDataExporter, AssistantExporter>();
         services.AddValidatorsFromAssemblyContaining<AssistantModule>();
     }
@@ -52,16 +57,30 @@ public sealed class AssistantModule : IModule
             .RequireRateLimiting(RateLimitPolicies.Chat)
             .WithValidation<SendMessageRequest>();
 
+        MapProposals(app);
+
         var conversations = app.MapGroup("/api/conversations").WithTags("Chat");
         conversations.MapGet("/", async (ICurrentUser user, ConversationService service, CancellationToken ct) =>
             TypedResults.Ok(await service.ListAsync(user.UserId, ct)));
         conversations.MapGet("/{id:guid}/messages", async (Guid id, ICurrentUser user, ConversationService service, CancellationToken ct) =>
             TypedResults.Ok(await service.GetMessagesAsync(user.UserId, id, ct)));
+        conversations.MapGet("/{id:guid}/proposals", async (Guid id, ICurrentUser user, ProposalService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.ListAsync(user.UserId, id, ct)));
         conversations.MapDelete("/{id:guid}", async (Guid id, ICurrentUser user, ConversationService service, CancellationToken ct) =>
         {
             await service.DeleteAsync(user.UserId, id, ct);
             return TypedResults.NoContent();
         });
+    }
+
+    private static void MapProposals(IEndpointRouteBuilder app)
+    {
+        app.MapPost("/api/assistant/proposals/{id:guid}/dismiss", async (Guid id, ICurrentUser user, ProposalService service, CancellationToken ct) =>
+            {
+                await service.DismissAsync(user.UserId, id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithTags("Chat");
     }
 
     private static async IAsyncEnumerable<SseItem<string>> ToSse(

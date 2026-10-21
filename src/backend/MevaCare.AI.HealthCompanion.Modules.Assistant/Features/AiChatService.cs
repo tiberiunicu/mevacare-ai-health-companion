@@ -2,11 +2,13 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
+using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Domain;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Options;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Providers;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Safety;
+using MevaCare.AI.HealthCompanion.Modules.Assistant.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -21,22 +23,28 @@ namespace MevaCare.AI.HealthCompanion.Modules.Assistant.Features;
 /// </summary>
 public sealed class ChatTurn
 {
+    public required Guid UserId { get; init; }
     public required Conversation Conversation { get; init; }
     public required string UserText { get; init; }
     public required IReadOnlyList<Microsoft.Extensions.AI.ChatMessage> History { get; init; }
     public required int NextSequence { get; init; }
+    public required DateTimeOffset UserNow { get; init; }
     public EmergencyAssessment? Emergency { get; init; }
 }
 
 /// <summary>
 /// The orchestrating assistant. One class, one LLM, no agents: it loads the authorised conversation context,
-/// applies the deterministic safety screen, calls the provider through <see cref="IChatClient"/>, streams the answer
-/// and persists every message (also when the provider fails or the user disconnects).
+/// applies the deterministic safety screen, calls the provider through <see cref="IChatClient"/> (with the per-turn
+/// tools wrapped in function invocation), streams the answer and persists every message, also when the provider fails
+/// or the user disconnects.
 /// </summary>
 public sealed class AiChatService(
     AppDbContext db,
     IConsentService consents,
     IChatClient chat,
+    INutritionAssistantApi nutrition,
+    IHealthProfileReader profiles,
+    MealParser mealParser,
     IOptions<AiOptions> options,
     IAuditLog audit,
     TimeProvider clock,
@@ -96,10 +104,12 @@ public sealed class AiChatService(
 
         return new ChatTurn
         {
+            UserId = userId,
             Conversation = conversation,
             UserText = text,
             History = history,
             NextSequence = nextSequence + 1,
+            UserNow = request.ClientTime ?? clock.GetUtcNow(),
             Emergency = emergency,
         };
     }
@@ -118,11 +128,29 @@ public sealed class AiChatService(
             yield break;
         }
 
-        var prompt = new List<Microsoft.Extensions.AI.ChatMessage> { new(ChatRole.System, SystemPrompts.Companion) };
+        var prompt = new List<Microsoft.Extensions.AI.ChatMessage>
+        {
+            new(ChatRole.System, SystemPrompts.Build(_options.ToolsEnabled, turn.UserNow)),
+        };
         prompt.AddRange(turn.History);
         prompt.Add(new Microsoft.Extensions.AI.ChatMessage(ChatRole.User, turn.UserText));
 
         var chatOptions = new ChatOptions { MaxOutputTokens = _options.MaxOutputTokens, Temperature = _options.Temperature };
+        IChatClient client = chat;
+        TurnTools? tools = null;
+        if (_options.ToolsEnabled)
+        {
+            // The tools are bound to THIS user and conversation; the model never supplies a user id.
+            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger);
+            chatOptions.Tools = [.. tools.Functions];
+            client = new FunctionInvokingChatClient(chat)
+            {
+                MaximumIterationsPerRequest = _options.MaxToolIterations,
+                AllowConcurrentInvocation = false,
+                IncludeDetailedErrors = false,
+            };
+        }
+
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(_options.RequestTimeoutSeconds));
 
@@ -130,11 +158,12 @@ public sealed class AiChatService(
         var model = ChatClientFactory.ModelOf(_options);
         var persisted = false;
         var started = TimeProvider.System.GetTimestamp();
+        var callNames = new Dictionary<string, string>();
 
         try
         {
             string? failureCode = null;
-            await using var updates = chat.GetStreamingResponseAsync(prompt, chatOptions, timeout.Token).GetAsyncEnumerator(timeout.Token);
+            await using var updates = client.GetStreamingResponseAsync(prompt, chatOptions, timeout.Token).GetAsyncEnumerator(timeout.Token);
 
             while (true)
             {
@@ -165,6 +194,24 @@ public sealed class AiChatService(
                     break;
                 }
 
+                foreach (var content in updates.Current.Contents)
+                {
+                    if (content is FunctionCallContent call)
+                    {
+                        callNames[call.CallId] = call.Name;
+                        yield return new ChatStreamEvent.Tool(call.Name, "running");
+                    }
+                    else if (content is FunctionResultContent result)
+                    {
+                        yield return new ChatStreamEvent.Tool(callNames.GetValueOrDefault(result.CallId, "tool"), result.Exception is null ? "done" : "failed");
+                    }
+                }
+
+                while (tools is { PendingEvents.Count: > 0 })
+                {
+                    yield return tools.PendingEvents.Dequeue();
+                }
+
                 var piece = updates.Current.Text;
                 if (string.IsNullOrEmpty(piece))
                 {
@@ -180,6 +227,14 @@ public sealed class AiChatService(
                 yield break; // finally block persists the partial answer
             }
 
+            if (failureCode is null && answer.Length == 0 && tools is { ProposalCount: > 0 })
+            {
+                // The model produced only a tool call. The card is on screen, so give a short deterministic sentence.
+                const string fallback = "I prepared this meal from what you wrote. Please check the items and confirm it below.";
+                answer.Append(fallback);
+                yield return new ChatStreamEvent.Delta(fallback);
+            }
+
             if (failureCode is null && answer.Length == 0)
             {
                 failureCode = "ai_empty_response";
@@ -189,8 +244,8 @@ public sealed class AiChatService(
             var stored = await PersistAssistantAsync(turn, answer.ToString(), status, isSafety: false, model);
             persisted = true;
             logger.LogInformation(
-                "Chat turn finished: status {Status}, {Characters} characters, {ElapsedMs} ms",
-                status, answer.Length, TimeProvider.System.GetElapsedTime(started).TotalMilliseconds);
+                "Chat turn finished: status {Status}, {Characters} characters, {Tools} tool calls, {ElapsedMs} ms",
+                status, answer.Length, callNames.Count, TimeProvider.System.GetElapsedTime(started).TotalMilliseconds);
 
             yield return failureCode is null
                 ? new ChatStreamEvent.Done(stored.Id)

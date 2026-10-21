@@ -10,13 +10,28 @@ namespace MevaCare.AI.HealthCompanion.IntegrationTests.Support;
 public sealed class ScriptedChatClient : IChatClient
 {
     private Func<IEnumerable<ChatResponseUpdate>> _script = () => throw new InvalidOperationException("No chat script configured for this test.");
+    private readonly Queue<Func<IReadOnlyList<ChatMessage>, IEnumerable<ChatResponseUpdate>>> _queue = new();
 
     public List<IReadOnlyList<ChatMessage>> Calls { get; } = [];
 
     public ChatOptions? LastOptions { get; private set; }
 
+    /// <summary>Scripts the NEXT model call (use several in a row for tool-calling flows: tool call, extraction, final answer).</summary>
+    public void Enqueue(Func<IReadOnlyList<ChatMessage>, IEnumerable<ChatResponseUpdate>> script) => _queue.Enqueue(script);
+
+    public void EnqueueToolCall(string tool, object arguments, string callId = "call-1") =>
+        Enqueue(_ => [new ChatResponseUpdate(ChatRole.Assistant, [new FunctionCallContent(callId, tool, ToDictionary(arguments))])]);
+
+    public void EnqueueText(params string[] chunks) =>
+        Enqueue(_ => chunks.Select(c => new ChatResponseUpdate(ChatRole.Assistant, c)));
+
+    private static Dictionary<string, object?> ToDictionary(object arguments) =>
+        System.Text.Json.JsonSerializer.SerializeToElement(arguments).EnumerateObject()
+            .ToDictionary(p => p.Name, p => (object?)p.Value.Clone());
+
     public void Reset()
     {
+        _queue.Clear();
         Calls.Clear();
         LastOptions = null;
         _script = () => throw new InvalidOperationException("No chat script configured for this test.");
@@ -51,7 +66,8 @@ public sealed class ScriptedChatClient : IChatClient
         Calls.Add(messages.ToList());
         LastOptions = options;
         await Task.Yield();
-        foreach (var update in _script())
+        var updates = _queue.Count > 0 ? _queue.Dequeue()(Calls[^1]) : _script();
+        foreach (var update in updates)
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return update;
