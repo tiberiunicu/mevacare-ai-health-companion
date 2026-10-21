@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MevaCare">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e7c7b" />
+      <stop offset="1" stop-color="#5666e6" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#g)" />
+  <path d="M32 47s-14-8.4-14-18.5C18 23 22 20 26 20c3 0 5 1.6 6 3.6C33 21.6 35 20 38 20c4 0 8 3 8 8.5C46 38.600 32 47 32 47z" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" />
+  <path d="M22 33h6l3-5 4 9 3-4h4" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

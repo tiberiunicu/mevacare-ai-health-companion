@@ -34,6 +34,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:RefreshCookieSecure", "false");
         builder.UseSetting("Auth:PasswordHashIterations", "100000");
         builder.UseSetting("Auth:MaxFailedLogins", "5");
+        builder.UseSetting("Auth:RefreshReuseGraceSeconds", "0");
         builder.UseSetting("RateLimiting:AuthRequestsPerMinute", "100000");
         builder.UseSetting("RateLimiting:ChatRequestsPerMinute", "100000");
     }

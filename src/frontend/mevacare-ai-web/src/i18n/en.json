@@ -1,0 +1,230 @@
+{
+  "app": {
+    "name": "MevaCare AI Health Companion",
+    "tagline": "Your personal health intelligence, explained calmly.",
+    "disclaimer": "MevaCare provides wellness information only. It does not diagnose, prescribe or replace a doctor. In an emergency call your local emergency number (112 in the EU)."
+  },
+  "common": {
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "optional": "optional",
+    "genericError": "Something went wrong. Please try again.",
+    "networkError": "Cannot reach the server. Check your connection and try again.",
+    "skipToContent": "Skip to content",
+    "notProvided": "Not provided"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "companion": "AI Companion",
+    "nutrition": "Nutrition",
+    "journal": "Food Journal",
+    "summary": "Daily Summary",
+    "nutritionGoals": "Goals",
+    "health": "Health",
+    "weight": "Weight",
+    "sleep": "Sleep",
+    "activity": "Activity",
+    "devices": "Connected Devices",
+    "settings": "Settings",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "privacy": "Privacy & Consent",
+    "aiSettings": "AI Settings",
+    "signOut": "Sign out",
+    "main": "Main navigation",
+    "toggleTheme": "Toggle theme"
+  },
+  "auth": {
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to continue to your health companion.",
+    "signUpTitle": "Create your account",
+    "signUpSubtitle": "Start with a private, secure space for your health data.",
+    "email": "E-mail address",
+    "password": "Password",
+    "passwordHint": "At least 10 characters. A long passphrase is best.",
+    "displayName": "Your name",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "createAccount": "Create account",
+    "creating": "Creating account…",
+    "noAccount": "New here?",
+    "haveAccount": "Already have an account?",
+    "acceptTerms": "I accept the Terms of Service and the Privacy Policy.",
+    "healthConsent": "I agree that MevaCare may process my health data (profile, nutrition, measurements) to provide the service.",
+    "aiConsent": "I agree that my messages and the minimum necessary context may be sent to the configured AI provider to generate answers.",
+    "consentsOptional": "The two optional consents can be changed at any time in Settings → Privacy & Consent.",
+    "invalidCredentials": "Invalid e-mail or password, or the account is temporarily locked.",
+    "emailInUse": "An account with this e-mail address already exists."
+  },
+  "dashboard": {
+    "greeting": "Hello, {{name}}",
+    "subtitle": "Here is what MevaCare knows about you today.",
+    "profileTitle": "Your health profile",
+    "profileEmpty": "Add your basic details so calorie targets and trends can be personalised.",
+    "profileComplete": "Profile saved. Height {{height}} cm.",
+    "profileAction": "Open profile",
+    "consentNeeded": "Health data processing is switched off. Turn it on in Privacy & Consent to use your profile.",
+    "goalsTitle": "Your goals",
+    "goalsEmpty": "You have not set any goals yet.",
+    "goalsCount_one": "{{count}} active goal",
+    "goalsCount_other": "{{count}} active goals",
+    "calories": "Calories today",
+    "macros": "Macronutrients",
+    "weightEvolution": "Weight evolution",
+    "sleepSummary": "Sleep summary",
+    "activitySummary": "Activity summary",
+    "insights": "AI insights",
+    "noDataYet": "No data yet",
+    "availableWith": "Available with the nutrition module (next phase).",
+    "availableWithMeasurements": "Available with health measurements and wearable integration (later phase).",
+    "availableWithInsights": "Available once enough of your own data has been collected (later phase)."
+  },
+  "comingSoon": {
+    "title": "Not available yet",
+    "body": "This area is planned but has not been built. Nothing shown here is real data.",
+    "phase": "Planned for: {{phase}}"
+  },
+  "phases": {
+    "nutrition": "Phase 3 — Nutrition",
+    "measurements": "Phase 5 — Wearables and measurements",
+    "devices": "Phase 5 — Wearables"
+  },
+  "profile": {
+    "title": "Health profile",
+    "subtitle": "Used to personalise targets and to give context to the AI companion. Only what you enter here is stored.",
+    "dateOfBirth": "Date of birth",
+    "sex": "Sex (for energy calculations)",
+    "height": "Height (cm)",
+    "activityLevel": "Activity level",
+    "timeZone": "Time zone",
+    "sexValues": {
+      "Unspecified": "Prefer not to say",
+      "Female": "Female",
+      "Male": "Male",
+      "Other": "Other"
+    },
+    "activityValues": {
+      "Unspecified": "Not specified",
+      "Sedentary": "Sedentary (little exercise)",
+      "LightlyActive": "Lightly active (1–3 days/week)",
+      "ModeratelyActive": "Moderately active (3–5 days/week)",
+      "VeryActive": "Very active (6–7 days/week)",
+      "ExtraActive": "Extra active (physical job or twice-daily training)"
+    },
+    "goals": "Goals",
+    "goalsHelp": "Goals are personal targets, not medical prescriptions.",
+    "goalType": "Goal",
+    "targetWeight": "Target weight (kg)",
+    "targetDate": "Target date",
+    "addGoal": "Add goal",
+    "noGoals": "No goals yet.",
+    "goalLimit": "You can have at most 5 goals.",
+    "goalValues": {
+      "WeightLoss": "Lose weight",
+      "WeightGain": "Gain weight",
+      "MaintainWeight": "Maintain weight",
+      "MuscleGain": "Build muscle",
+      "ImproveSleep": "Improve sleep",
+      "GeneralWellness": "General wellness"
+    },
+    "consentRequiredTitle": "Health data processing is switched off",
+    "consentRequiredBody": "To store your profile and goals, allow health data processing.",
+    "consentRequiredAction": "Open Privacy & Consent"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "subtitle": "How MevaCare looks and which units it uses.",
+    "language": "Language",
+    "units": "Units",
+    "theme": "Theme",
+    "unitValues": { "Metric": "Metric (kg, cm)", "Imperial": "Imperial (lb, in)" },
+    "themeValues": { "System": "Match my device", "Light": "Light", "Dark": "Dark" }
+  },
+  "privacy": {
+    "title": "Privacy & Consent",
+    "subtitle": "You decide how your data is used. Every change is recorded in an audit log.",
+    "policyVersion": "Policy version {{version}}",
+    "required": "Required",
+    "grantedOn": "Granted {{date}}",
+    "revokedOn": "Withdrawn {{date}}",
+    "notGranted": "Not granted",
+    "types": {
+      "TermsOfService": {
+        "title": "Terms of Service and Privacy Policy",
+        "body": "Required to have an account. It can only be withdrawn by deleting the account."
+      },
+      "HealthDataProcessing": {
+        "title": "Health data processing",
+        "body": "Allows MevaCare to store and use your health profile, goals, nutrition and measurements. Without it those features stay locked."
+      },
+      "AiProcessing": {
+        "title": "AI processing",
+        "body": "Allows sending your chat messages, and only the context needed to answer them, to the configured AI provider."
+      },
+      "ExternalIntegrations": {
+        "title": "External integrations",
+        "body": "Allows connecting wearables and other services (not available yet)."
+      }
+    },
+    "dataTitle": "Your data",
+    "exportTitle": "Export my data",
+    "exportBody": "Download everything MevaCare stores about you as a JSON file.",
+    "exportAction": "Download export",
+    "exporting": "Preparing…",
+    "deleteTitle": "Delete my account",
+    "deleteBody": "Permanently deletes your account and all associated data. This cannot be undone. A minimal audit record without personal data is kept for security.",
+    "deleteAction": "Delete account…",
+    "deleteConfirmPassword": "Confirm with your password",
+    "deleteConfirm": "Permanently delete",
+    "wrongPassword": "The password is incorrect."
+  },
+  "aiSettings": {
+    "title": "AI Settings",
+    "subtitle": "Control how the AI companion may use your information.",
+    "consentLabel": "Allow AI processing",
+    "consentOffHelp": "The AI companion is disabled until you allow AI processing.",
+    "whatIsSentTitle": "What is sent to the AI provider",
+    "whatIsSent1": "The messages you type in the chat and recent messages from the same conversation.",
+    "whatIsSent2": "Short safety and style instructions written by MevaCare.",
+    "whatIsSent3": "Never your e-mail address, password, tokens or your complete profile.",
+    "limitsTitle": "Limits",
+    "limits1": "The assistant gives wellness information. It does not diagnose, prescribe or change medication.",
+    "limits2": "It can make mistakes. Check important information with a qualified professional.",
+    "providerTitle": "Provider",
+    "providerBody": "The model provider is configured on the server by the operator of this installation."
+  },
+  "chat": {
+    "title": "AI Companion",
+    "subtitle": "Ask about wellness, sleep, food and health terms.",
+    "placeholder": "Ask anything about your wellness…",
+    "send": "Send",
+    "stop": "Stop",
+    "newChat": "New chat",
+    "history": "Conversations",
+    "noConversations": "No conversations yet.",
+    "emptyTitle": "How can I help today?",
+    "emptyBody": "I can explain health terms and help you think about habits. I cannot diagnose or prescribe.",
+    "thinking": "Thinking…",
+    "failed": "The answer could not be completed.",
+    "providerDown": "The AI service is not available right now. Please try again in a moment.",
+    "consentTitle": "AI processing is switched off",
+    "consentBody": "To use the AI companion, allow AI processing. Your messages are then sent to the configured AI provider.",
+    "consentAction": "Open AI Settings",
+    "deleteConversation": "Delete conversation",
+    "you": "You",
+    "assistant": "MevaCare",
+    "emergency": "If you think this may be an emergency, call your local emergency number now.",
+    "suggestions": {
+      "hrv": "Explain what HRV means.",
+      "protein": "How much protein does a healthy adult generally need?",
+      "sleep": "Give me practical tips for better sleep.",
+      "plateau": "Why might weight loss slow down?"
+    }
+  }
+}

@@ -119,9 +119,14 @@ public sealed class AuthService(
         var stored = await db.Set<RefreshToken>().SingleOrDefaultAsync(t => t.TokenHash == hash, ct)
             ?? throw new UnauthorizedException("Invalid refresh token.");
 
-        if (stored.RevokedAtUtc is not null)
+        if (stored.RevokedAtUtc is { } revokedAt)
         {
-            // A rotated token was presented again: assume theft and kill every token of this sign-in.
+            if (now - revokedAt <= TimeSpan.FromSeconds(authOptions.Value.RefreshReuseGraceSeconds))
+            {
+                throw new UnauthorizedException("Invalid refresh token."); // concurrent refresh race, not theft
+            }
+
+            // A rotated token was presented again long after rotation: assume theft and kill every token of this sign-in.
             var family = await db.Set<RefreshToken>().Where(t => t.FamilyId == stored.FamilyId).ToListAsync(ct);
             family.ForEach(t => t.Revoke(now));
             audit.Record("auth.refresh_reuse_detected", stored.UserId);

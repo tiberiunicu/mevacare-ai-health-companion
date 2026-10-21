@@ -24,6 +24,12 @@ public sealed class AuthOptions
     [Range(3, 20)] public int MaxFailedLogins { get; init; } = 5;
     [Range(1, 1440)] public int LockoutMinutes { get; init; } = 15;
 
+    /// <summary>
+    /// A rotated refresh token presented again within this window is rejected without revoking the session: it is
+    /// almost always two browser tabs refreshing at once. Later reuse is treated as theft. Set 0 to be strict.
+    /// </summary>
+    [Range(0, 60)] public int RefreshReuseGraceSeconds { get; init; } = 10;
+
     /// <summary>Set to false only for plain-http local development.</summary>
     public bool RefreshCookieSecure { get; init; } = true;
 

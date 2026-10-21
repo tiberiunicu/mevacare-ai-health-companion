@@ -1,0 +1,231 @@
+{
+  "app": {
+    "name": "MevaCare AI Health Companion",
+    "tagline": "Inteligența sănătății tale personale, explicată pe înțelesul tuturor.",
+    "disclaimer": "MevaCare oferă doar informații de wellness. Nu pune diagnostice, nu prescrie tratamente și nu înlocuiește medicul. În caz de urgență sună la numărul de urgență (112)."
+  },
+  "common": {
+    "save": "Salvează modificările",
+    "saving": "Se salvează…",
+    "saved": "Salvat",
+    "cancel": "Anulează",
+    "delete": "Șterge",
+    "add": "Adaugă",
+    "loading": "Se încarcă…",
+    "retry": "Încearcă din nou",
+    "optional": "opțional",
+    "genericError": "Ceva nu a funcționat. Încearcă din nou.",
+    "networkError": "Nu pot contacta serverul. Verifică conexiunea și încearcă din nou.",
+    "skipToContent": "Sari la conținut",
+    "notProvided": "Necompletat"
+  },
+  "nav": {
+    "dashboard": "Panou",
+    "companion": "Companion AI",
+    "nutrition": "Nutriție",
+    "journal": "Jurnal alimentar",
+    "summary": "Rezumat zilnic",
+    "nutritionGoals": "Obiective",
+    "health": "Sănătate",
+    "weight": "Greutate",
+    "sleep": "Somn",
+    "activity": "Activitate",
+    "devices": "Dispozitive conectate",
+    "settings": "Setări",
+    "profile": "Profil",
+    "preferences": "Preferințe",
+    "privacy": "Confidențialitate și consimțăminte",
+    "aiSettings": "Setări AI",
+    "signOut": "Deconectare",
+    "main": "Navigare principală",
+    "toggleTheme": "Schimbă tema"
+  },
+  "auth": {
+    "signInTitle": "Bine ai revenit",
+    "signInSubtitle": "Autentifică-te pentru a continua către companionul tău de sănătate.",
+    "signUpTitle": "Creează-ți contul",
+    "signUpSubtitle": "Începe cu un spațiu privat și sigur pentru datele tale de sănătate.",
+    "email": "Adresa de e-mail",
+    "password": "Parola",
+    "passwordHint": "Cel puțin 10 caractere. O frază lungă este cea mai bună alegere.",
+    "displayName": "Numele tău",
+    "signIn": "Autentificare",
+    "signingIn": "Se autentifică…",
+    "createAccount": "Creează cont",
+    "creating": "Se creează contul…",
+    "noAccount": "Ești nou aici?",
+    "haveAccount": "Ai deja un cont?",
+    "acceptTerms": "Accept Termenii și condițiile și Politica de confidențialitate.",
+    "healthConsent": "Sunt de acord ca MevaCare să-mi prelucreze datele de sănătate (profil, nutriție, măsurători) pentru a furniza serviciul.",
+    "aiConsent": "Sunt de acord ca mesajele mele și contextul minim necesar să fie trimise furnizorului AI configurat pentru a genera răspunsuri.",
+    "consentsOptional": "Cele două consimțăminte opționale pot fi modificate oricând în Setări → Confidențialitate și consimțăminte.",
+    "invalidCredentials": "E-mail sau parolă incorecte, ori contul este blocat temporar.",
+    "emailInUse": "Există deja un cont cu această adresă de e-mail."
+  },
+  "dashboard": {
+    "greeting": "Salut, {{name}}",
+    "subtitle": "Iată ce știe MevaCare despre tine astăzi.",
+    "profileTitle": "Profilul tău de sănătate",
+    "profileEmpty": "Adaugă detaliile de bază pentru a personaliza țintele calorice și tendințele.",
+    "profileComplete": "Profil salvat. Înălțime {{height}} cm.",
+    "profileAction": "Deschide profilul",
+    "consentNeeded": "Prelucrarea datelor de sănătate este oprită. Activeaz-o în Confidențialitate și consimțăminte pentru a folosi profilul.",
+    "goalsTitle": "Obiectivele tale",
+    "goalsEmpty": "Nu ai setat încă niciun obiectiv.",
+    "goalsCount_one": "{{count}} obiectiv activ",
+    "goalsCount_few": "{{count}} obiective active",
+    "goalsCount_other": "{{count}} de obiective active",
+    "calories": "Calorii astăzi",
+    "macros": "Macronutrienți",
+    "weightEvolution": "Evoluția greutății",
+    "sleepSummary": "Rezumatul somnului",
+    "activitySummary": "Rezumatul activității",
+    "insights": "Observații AI",
+    "noDataYet": "Încă nu există date",
+    "availableWith": "Disponibil odată cu modulul de nutriție (faza următoare).",
+    "availableWithMeasurements": "Disponibil odată cu măsurătorile de sănătate și integrarea dispozitivelor (fază ulterioară).",
+    "availableWithInsights": "Disponibil după ce se strâng suficiente date proprii (fază ulterioară)."
+  },
+  "comingSoon": {
+    "title": "Indisponibil încă",
+    "body": "Această zonă este planificată, dar nu a fost construită. Nimic din ce se afișează aici nu reprezintă date reale.",
+    "phase": "Planificat pentru: {{phase}}"
+  },
+  "phases": {
+    "nutrition": "Faza 3 — Nutriție",
+    "measurements": "Faza 5 — Dispozitive și măsurători",
+    "devices": "Faza 5 — Dispozitive purtabile"
+  },
+  "profile": {
+    "title": "Profil de sănătate",
+    "subtitle": "Folosit pentru a personaliza țintele și pentru a oferi context companionului AI. Se stochează doar ce introduci aici.",
+    "dateOfBirth": "Data nașterii",
+    "sex": "Sex (pentru calculele energetice)",
+    "height": "Înălțime (cm)",
+    "activityLevel": "Nivel de activitate",
+    "timeZone": "Fus orar",
+    "sexValues": {
+      "Unspecified": "Prefer să nu spun",
+      "Female": "Feminin",
+      "Male": "Masculin",
+      "Other": "Altul"
+    },
+    "activityValues": {
+      "Unspecified": "Nespecificat",
+      "Sedentary": "Sedentar (puțin exercițiu)",
+      "LightlyActive": "Ușor activ (1–3 zile/săptămână)",
+      "ModeratelyActive": "Moderat activ (3–5 zile/săptămână)",
+      "VeryActive": "Foarte activ (6–7 zile/săptămână)",
+      "ExtraActive": "Extrem de activ (muncă fizică sau antrenament de două ori pe zi)"
+    },
+    "goals": "Obiective",
+    "goalsHelp": "Obiectivele sunt ținte personale, nu prescripții medicale.",
+    "goalType": "Obiectiv",
+    "targetWeight": "Greutate țintă (kg)",
+    "targetDate": "Data țintă",
+    "addGoal": "Adaugă obiectiv",
+    "noGoals": "Niciun obiectiv încă.",
+    "goalLimit": "Poți avea cel mult 5 obiective.",
+    "goalValues": {
+      "WeightLoss": "Slăbire",
+      "WeightGain": "Creștere în greutate",
+      "MaintainWeight": "Menținerea greutății",
+      "MuscleGain": "Creștere musculară",
+      "ImproveSleep": "Somn mai bun",
+      "GeneralWellness": "Stare generală de bine"
+    },
+    "consentRequiredTitle": "Prelucrarea datelor de sănătate este oprită",
+    "consentRequiredBody": "Pentru a stoca profilul și obiectivele, permite prelucrarea datelor de sănătate.",
+    "consentRequiredAction": "Deschide Confidențialitate și consimțăminte"
+  },
+  "preferences": {
+    "title": "Preferințe",
+    "subtitle": "Cum arată MevaCare și ce unități de măsură folosește.",
+    "language": "Limba",
+    "units": "Unități",
+    "theme": "Temă",
+    "unitValues": { "Metric": "Metric (kg, cm)", "Imperial": "Imperial (lb, in)" },
+    "themeValues": { "System": "Ca dispozitivul meu", "Light": "Deschisă", "Dark": "Întunecată" }
+  },
+  "privacy": {
+    "title": "Confidențialitate și consimțăminte",
+    "subtitle": "Tu decizi cum sunt folosite datele tale. Fiecare modificare este înregistrată într-un jurnal de audit.",
+    "policyVersion": "Versiunea politicii {{version}}",
+    "required": "Obligatoriu",
+    "grantedOn": "Acordat {{date}}",
+    "revokedOn": "Retras {{date}}",
+    "notGranted": "Neacordat",
+    "types": {
+      "TermsOfService": {
+        "title": "Termeni și condiții și Politica de confidențialitate",
+        "body": "Necesar pentru a avea un cont. Poate fi retras doar prin ștergerea contului."
+      },
+      "HealthDataProcessing": {
+        "title": "Prelucrarea datelor de sănătate",
+        "body": "Permite MevaCare să stocheze și să folosească profilul de sănătate, obiectivele, nutriția și măsurătorile tale. Fără el, aceste funcții rămân blocate."
+      },
+      "AiProcessing": {
+        "title": "Prelucrare AI",
+        "body": "Permite trimiterea mesajelor tale din chat, și doar a contextului necesar pentru a răspunde, către furnizorul AI configurat."
+      },
+      "ExternalIntegrations": {
+        "title": "Integrări externe",
+        "body": "Permite conectarea dispozitivelor purtabile și a altor servicii (indisponibil încă)."
+      }
+    },
+    "dataTitle": "Datele tale",
+    "exportTitle": "Exportă datele mele",
+    "exportBody": "Descarcă tot ce stochează MevaCare despre tine într-un fișier JSON.",
+    "exportAction": "Descarcă exportul",
+    "exporting": "Se pregătește…",
+    "deleteTitle": "Șterge contul meu",
+    "deleteBody": "Șterge definitiv contul și toate datele asociate. Acțiunea nu poate fi anulată. Se păstrează o înregistrare minimă de audit, fără date personale, pentru securitate.",
+    "deleteAction": "Șterge contul…",
+    "deleteConfirmPassword": "Confirmă cu parola ta",
+    "deleteConfirm": "Șterge definitiv",
+    "wrongPassword": "Parola este incorectă."
+  },
+  "aiSettings": {
+    "title": "Setări AI",
+    "subtitle": "Controlează cum poate folosi companionul AI informațiile tale.",
+    "consentLabel": "Permite prelucrarea AI",
+    "consentOffHelp": "Companionul AI este dezactivat până când permiți prelucrarea AI.",
+    "whatIsSentTitle": "Ce se trimite către furnizorul AI",
+    "whatIsSent1": "Mesajele pe care le scrii în chat și mesajele recente din aceeași conversație.",
+    "whatIsSent2": "Instrucțiuni scurte de siguranță și stil scrise de MevaCare.",
+    "whatIsSent3": "Niciodată adresa ta de e-mail, parola, token-urile sau profilul tău complet.",
+    "limitsTitle": "Limite",
+    "limits1": "Asistentul oferă informații de wellness. Nu pune diagnostice, nu prescrie și nu modifică medicația.",
+    "limits2": "Poate greși. Verifică informațiile importante cu un profesionist calificat.",
+    "providerTitle": "Furnizor",
+    "providerBody": "Furnizorul de model este configurat pe server de operatorul acestei instalări."
+  },
+  "chat": {
+    "title": "Companion AI",
+    "subtitle": "Întreabă despre wellness, somn, alimentație și termeni medicali.",
+    "placeholder": "Întreabă orice despre starea ta de bine…",
+    "send": "Trimite",
+    "stop": "Oprește",
+    "newChat": "Conversație nouă",
+    "history": "Conversații",
+    "noConversations": "Nicio conversație încă.",
+    "emptyTitle": "Cu ce te pot ajuta astăzi?",
+    "emptyBody": "Pot explica termeni de sănătate și te pot ajuta să te gândești la obiceiuri. Nu pot pune diagnostice sau prescrie.",
+    "thinking": "Se gândește…",
+    "failed": "Răspunsul nu a putut fi finalizat.",
+    "providerDown": "Serviciul AI nu este disponibil momentan. Încearcă din nou peste puțin timp.",
+    "consentTitle": "Prelucrarea AI este oprită",
+    "consentBody": "Pentru a folosi companionul AI, permite prelucrarea AI. Mesajele tale vor fi trimise furnizorului AI configurat.",
+    "consentAction": "Deschide Setări AI",
+    "deleteConversation": "Șterge conversația",
+    "you": "Tu",
+    "assistant": "MevaCare",
+    "emergency": "Dacă crezi că poate fi o urgență, sună acum la numărul local de urgență.",
+    "suggestions": {
+      "hrv": "Explică-mi ce înseamnă HRV.",
+      "protein": "Câtă proteină are nevoie în general un adult sănătos?",
+      "sleep": "Dă-mi sfaturi practice pentru un somn mai bun.",
+      "plateau": "De ce ar putea încetini scăderea în greutate?"
+    }
+  }
+}
