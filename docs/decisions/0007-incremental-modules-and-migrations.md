@@ -6,9 +6,9 @@
 `ToolExecutions`) and Integrations "initially", but also says: do not implement future phases prematurely, avoid unused
 infrastructure, prefer a working vertical slice, and never create placeholder features that appear functional.
 
-**Decision.** Phase 1 creates the Identity and HealthProfile tables; Phase 2 adds `Conversations` and `ChatMessages`.
-Nutrition, Measurements, `ToolExecutions`, Integrations tables and their module projects are created with the feature
-that uses them. Their design is documented in [overview.md](../architecture/overview.md#designed-not-yet-created).
+**Decision.** Phase 1 creates the Identity and HealthProfile tables; Phase 2 adds `Conversations` and `ChatMessages`; Phase 3 adds the Nutrition tables
+(`Foods`, `FoodNutrients`, `FoodPortions`, `Meals`, `MealItems`, `NutritionTargets`) and `ToolExecutions`.
+Measurements and Integrations tables and their module projects are created with the feature that uses them. Their design is documented in [overview.md](../architecture/overview.md#designed-not-yet-created).
 Empty UI sections say "Not available yet" and name the phase; the dashboard never shows demonstration numbers.
 
 **Consequences.** Smaller migrations and no dead tables; the data model for later modules can still change after

@@ -10,3 +10,5 @@
 | [0006](0006-deterministic-safety-screen.md) | Deterministic emergency screen before the model | Accepted |
 | [0007](0007-incremental-modules-and-migrations.md) | Modules and tables are added in the phase that needs them | Accepted |
 | [0008](0008-frontend-token-handling-and-stack.md) | SPA stack and in-memory access token | Accepted |
+| [0009](0009-tool-calling-and-confirmed-writes.md) | Per-turn tools bound to the user; AI prepares, the user confirms | Accepted |
+| [0010](0010-food-data-source-and-matching.md) | USDA SR Legacy imported locally; transparent matching heuristic | Accepted |

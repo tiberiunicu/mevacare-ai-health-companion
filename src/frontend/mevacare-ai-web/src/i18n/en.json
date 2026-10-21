@@ -143,8 +143,15 @@
     "language": "Language",
     "units": "Units",
     "theme": "Theme",
-    "unitValues": { "Metric": "Metric (kg, cm)", "Imperial": "Imperial (lb, in)" },
-    "themeValues": { "System": "Match my device", "Light": "Light", "Dark": "Dark" }
+    "unitValues": {
+      "Metric": "Metric (kg, cm)",
+      "Imperial": "Imperial (lb, in)"
+    },
+    "themeValues": {
+      "System": "Match my device",
+      "Light": "Light",
+      "Dark": "Dark"
+    }
   },
   "privacy": {
     "title": "Privacy & Consent",
@@ -225,6 +232,141 @@
       "protein": "How much protein does a healthy adult generally need?",
       "sleep": "Give me practical tips for better sleep.",
       "plateau": "Why might weight loss slow down?"
+    },
+    "tools": "Tools used"
+  },
+  "nutrition": {
+    "mealTypes": {
+      "Breakfast": "Breakfast",
+      "Lunch": "Lunch",
+      "Dinner": "Dinner",
+      "Snack": "Snack"
+    },
+    "nutrients": {
+      "calories": "Calories",
+      "proteinG": "Protein",
+      "carbohydratesG": "Carbohydrates",
+      "fatG": "Fat",
+      "fiberG": "Fibre",
+      "kcal": "kcal",
+      "g": "g"
+    },
+    "prepValues": {
+      "Unspecified": "Not specified",
+      "Raw": "Raw",
+      "Cooked": "Cooked"
+    },
+    "journal": {
+      "title": "Food Journal",
+      "subtitle": "Everything you ate, with nutrients calculated from a verified food database.",
+      "date": "Day",
+      "today": "Today",
+      "previous": "Previous day",
+      "next": "Next day",
+      "addMeal": "Add meal",
+      "emptyDay": "Nothing logged for this day yet. Add a meal here or tell the AI companion what you ate.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "estimatedBadge": "Estimated",
+      "assistantBadge": "Prepared by the assistant",
+      "incomplete": "Some values are not reported for these foods, so totals may be incomplete.",
+      "includesEstimates": "Includes values you estimated yourself.",
+      "dayTotal": "Day total",
+      "consentTitle": "Health data processing is switched off",
+      "consentBody": "To keep a food journal, allow health data processing.",
+      "consentAction": "Open Privacy & Consent"
+    },
+    "editor": {
+      "newMeal": "New meal",
+      "editMeal": "Edit meal",
+      "mealType": "Meal",
+      "time": "Time",
+      "notes": "Notes",
+      "items": "Foods",
+      "addFood": "Add food",
+      "addCustom": "Add custom item",
+      "searchLabel": "Search the food database",
+      "searchPlaceholder": "e.g. chicken breast, cooked rice",
+      "searching": "Searching…",
+      "noResults": "No matching food found. Nothing is guessed: refine the search or add a custom item.",
+      "grams": "Weight (g)",
+      "name": "Name",
+      "customHint": "Values you enter are saved and marked as estimated.",
+      "per100": "per 100 g",
+      "unresolved": "Not matched. Search for a food or use a custom item.",
+      "needsGrams": "Enter the weight in grams.",
+      "assumedPrep": "Raw or cooked was not stated; assumed {{state}}. Weights of raw and cooked food are not interchangeable.",
+      "ambiguous": "Several foods match about equally. Please check this one.",
+      "change": "Change food",
+      "remove": "Remove",
+      "previewNote": "Preview. The server recalculates the exact values when you save.",
+      "total": "Total",
+      "incompletePreview": "Some values are unknown.",
+      "save": "Save meal",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "confirm": "Confirm and save",
+      "atLeastOne": "Add at least one food.",
+      "saveError": "The meal could not be saved."
+    },
+    "summary": {
+      "title": "Daily Summary",
+      "subtitle": "Your day compared with the targets you set.",
+      "target": "Target",
+      "remaining": "Remaining",
+      "over": "{{value}} over target",
+      "noTarget": "No target set",
+      "setTargets": "Set targets",
+      "last7": "Last 7 days",
+      "average": "Average per logged day",
+      "averageNote": "Only days with logged meals are counted.",
+      "noMeals": "Nothing logged",
+      "mealsCount_one": "{{count}} meal",
+      "mealsCount_other": "{{count}} meals"
+    },
+    "goals": {
+      "title": "Nutrition Goals",
+      "subtitle": "Daily targets are your own choice. MevaCare does not prescribe them; talk to a dietitian or doctor if unsure.",
+      "calories": "Calories (kcal)",
+      "proteinG": "Protein (g)",
+      "carbohydratesG": "Carbohydrates (g)",
+      "fatG": "Fat (g)",
+      "fiberG": "Fibre (g)",
+      "hint": "Leave a field empty for no target.",
+      "saved": "Targets saved"
     }
+  },
+  "proposal": {
+    "title": "Meal prepared by the assistant",
+    "notSaved": "Not saved yet. Check it and confirm.",
+    "review": "Review and confirm",
+    "dismiss": "Dismiss",
+    "dismissed": "Dismissed",
+    "saved": "Saved to your journal",
+    "openJournal": "Open food journal",
+    "warnings": "Please check",
+    "unmatched": "Not found in the food database",
+    "needsQuantity": "Weight needed",
+    "total": "Total",
+    "confirmError": "Could not save the meal. Please try again."
+  },
+  "tools": {
+    "GetHealthProfile": "Reading your profile",
+    "GetDailyNutritionSummary": "Looking up your day",
+    "GetNutritionSummary": "Looking up your nutrition summary",
+    "PrepareMeal": "Preparing your meal"
+  },
+  "dashboardNutrition": {
+    "calories": "{{value}} kcal",
+    "ofTarget": "of {{target}} kcal",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "fiber": "Fibre",
+    "grams": "{{value}} g",
+    "nothingLogged": "Nothing logged today yet.",
+    "open": "Open food journal",
+    "setTargets": "Set targets to see progress bars",
+    "incomplete": "Totals may be incomplete."
   }
 }

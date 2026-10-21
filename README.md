@@ -7,7 +7,7 @@ diagnose, prescribe or replace a physician, and it is not an emergency service.
 This is a brand-new, standalone product. It shares nothing (code, database, infrastructure) with any other MevaCare
 application.
 
-> **Status: Phase 1 (foundation) and Phase 2 (AI chat) are implemented and tested. Phases 3–6 are not started.**
+> **Status: Phase 1 (foundation), Phase 2 (AI chat) and Phase 3 (nutrition vertical slice) are implemented and tested. Phases 4–6 are not started.**
 > See [What works today](#what-works-today) and [Roadmap](#roadmap).
 
 ## What works today
@@ -20,11 +20,13 @@ application.
 | GDPR export and account deletion | Done |
 | Health profile, goals, display preferences | Done |
 | AI chat: `IChatClient` with OpenAI or Ollama, SSE streaming, persisted history, safety screen, rate limit | Done (see *AI provider testing* below) |
-| React app: sign in/up, dashboard, profile, preferences, privacy, AI settings, chat; light/dark; English + Romanian | Done |
-| Nutrition, measurements, tool calling, RAG, wearables, insights | **Not implemented.** The UI shows an explicit "not available yet" state, never fake data |
+| Nutrition: USDA food data import, deterministic nutrient calculation, food journal, daily/range summaries, targets, custom (estimated) items | Done |
+| AI meal logging: structured extraction → food match → proposal card → user confirmation → journal (tool calling) | Done (scripted-model tests and a mock OpenAI server; see *AI provider testing*) |
+| React app: sign in/up, dashboard (real calories and macros), profile, preferences, privacy, AI settings, chat with tool status and meal cards, nutrition pages; light/dark; English + Romanian | Done |
+| Weight/sleep/activity measurements, medical-knowledge RAG, wearables, insights | **Not implemented.** The UI shows an explicit "not available yet" state, never fake data |
 
 **AI provider testing.** Automated tests use a scripted fake model. The OpenAI provider code path was additionally
-exercised end-to-end (SDK → HTTP → streaming → browser) against a local OpenAI-compatible mock server. It has **not**
+exercised end-to-end (SDK → HTTP → streaming → browser, including **tool calls and JSON-schema structured output**) against a local OpenAI-compatible mock server. It has **not**
 been run against the real OpenAI API or a real Ollama model, because no API key or Ollama installation was available
 while building it. Run the [live evaluation](#tests) once you configure a provider.
 
@@ -37,7 +39,8 @@ src/backend/
   MevaCare.AI.HealthCompanion.Infrastructure       AppDbContext, interceptors, audit log, EF migrations
   MevaCare.AI.HealthCompanion.Modules.Identity     users, auth, consents, GDPR export/delete
   MevaCare.AI.HealthCompanion.Modules.HealthProfile profile, goals, preferences
-  MevaCare.AI.HealthCompanion.Modules.Assistant    AI chat, providers, safety, conversations
+  MevaCare.AI.HealthCompanion.Modules.Nutrition    foods, meals, targets, summaries, USDA importer, meal proposals back end
+  MevaCare.AI.HealthCompanion.Modules.Assistant    AI chat, providers, safety, conversations, tools, meal parsing
 src/frontend/mevacare-ai-web                       React + TypeScript + Vite + Tailwind
 tests/UnitTests | IntegrationTests | AIEvaluationTests
 docs/architecture | decisions (ADRs) | ai | api
@@ -45,9 +48,9 @@ infrastructure/docker, docker-compose.yml, scripts/
 ```
 
 Differences from the suggested structure (reasons in [ADR-0001](docs/decisions/0001-modular-monolith.md) and
-[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): the Nutrition, Measurements, Knowledge and
+[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): the Measurements, Knowledge and
 Integrations module projects are not created yet — each is added in the phase that implements it, together with its
-tables.
+tables. The `GetWeightHistory` and `SearchMedicalKnowledge` tools wait for those modules.
 
 ## Prerequisites
 
@@ -70,6 +73,10 @@ dotnet tool restore                      # installs the pinned dotnet-ef
 
 # 3. Database (creates MevaCareAIHealthCompanion from the migrations)
 dotnet ef database update --project src/backend/MevaCare.AI.HealthCompanion.Infrastructure --startup-project src/backend/MevaCare.AI.HealthCompanion.Api
+
+# 3b. Food data (once). Download the USDA FoodData Central "SR Legacy" CSV zip from https://fdc.nal.usda.gov/download-datasets,
+#     extract it, then import it (public domain; takes ~15 s; safe to repeat). Without it the food search finds nothing.
+dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-usda "C:\path\to\FoodData_Central_sr_legacy_food_csv_2018-04"
 
 # 4. API   -> http://localhost:5080  (OpenAPI: /openapi/v1.json, reference UI: /scalar)
 dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api --launch-profile http
@@ -111,6 +118,7 @@ Configuration is layered: `appsettings.json` (safe defaults) → `appsettings.De
 | `Ai:Ollama:Endpoint` / `Ai:Ollama:Model` | local model, e.g. after `ollama pull <model>` |
 | `Ai:OpenAI:ApiKey` / `Ai:OpenAI:Model` | OpenAI credentials and model (`Ai:OpenAI:Endpoint` optional, for compatible gateways) |
 | `Ai:MaxOutputTokens`, `Ai:Temperature`, `Ai:HistoryMessageLimit`, `Ai:HistoryCharacterBudget`, `Ai:RequestTimeoutSeconds` | generation and cost limits |
+| `Ai:ToolsEnabled`, `Ai:MaxToolIterations` | turn tool calling off (models without tool support) / cap model-tool round trips |
 | `Auth:*`, `RateLimiting:*`, `Cors:AllowedOrigins` | see `appsettings.json` |
 
 Examples:
@@ -134,7 +142,7 @@ shows "The AI service is not available right now".
 ## Database and migrations
 
 Code-first EF Core; the single `AppDbContext` loads the entity configurations of every module and keeps each module's
-tables in its own schema (`identity`, `health_profile`, `assistant`, `core`).
+tables in its own schema (`identity`, `health_profile`, `nutrition`, `assistant`, `core`).
 
 ```powershell
 $infra = 'src/backend/MevaCare.AI.HealthCompanion.Infrastructure'
@@ -170,15 +178,16 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 
 - [Architecture overview](docs/architecture/overview.md) · [Security and privacy](docs/architecture/security-and-privacy.md)
 - [Architecture decision records](docs/decisions/)
-- AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [safety](docs/ai/ai-safety.md) ·
-  [evaluation](docs/ai/ai-evaluation.md) · planned: [tool calling](docs/ai/tool-calling.md),
-  [structured outputs](docs/ai/structured-outputs.md), [RAG, embeddings and memory](docs/ai/rag-embeddings-memory.md)
+- [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
+- AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·
+  [structured outputs](docs/ai/structured-outputs.md) · [safety](docs/ai/ai-safety.md) · [evaluation](docs/ai/ai-evaluation.md) ·
+  planned: [RAG, embeddings and memory](docs/ai/rag-embeddings-memory.md)
 - [HTTP API](docs/api/README.md)
 
 ## Roadmap
 
-1. ✅ Foundation  2. ✅ AI chat  3. Nutrition vertical slice (food data, meal logging via tools and confirmation)
-4. Medical knowledge RAG (Qdrant)  5. Wearables (WHOOP first)  6. Health intelligence (trends, insights)
+1. ✅ Foundation  2. ✅ AI chat  3. ✅ Nutrition vertical slice (food data, meal logging via tools and confirmation)
+4. Medical knowledge RAG (Qdrant)  5. Wearables (WHOOP first) and measurements  6. Health intelligence (trends, insights)
 
 ## Troubleshooting
 

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
+import type { ProposalCard } from '../../lib/types'
 
 export interface ConversationSummary {
   id: string
@@ -36,4 +37,12 @@ export function useDeleteConversation() {
     mutationFn: (id: string) => api<void>(`/api/conversations/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.conversations }),
   })
+}
+
+export function fetchProposals(conversationId: string) {
+  return api<ProposalCard[]>(`/api/conversations/${conversationId}/proposals`)
+}
+
+export function dismissProposal(proposalId: string) {
+  return api<void>(`/api/assistant/proposals/${proposalId}/dismiss`, { method: 'POST' })
 }

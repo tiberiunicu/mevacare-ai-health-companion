@@ -213,6 +213,19 @@ public static partial class FoodRanking
         return Math.Round(score, 2);
     }
 
+    /// <summary>
+    /// The words that make a food a different product (white vs brown rice, soy vs dairy yogurt), ignoring the query,
+    /// raw/cooked wording and boilerplate. Two near-tied matches with the same kind are variants of one food (for example
+    /// "roasted" vs "stewed" chicken breast) and are not worth warning about.
+    /// </summary>
+    public static bool IsAmbiguous(Food best, double bestScore, Food second, double secondScore, IReadOnlyList<string> tokens, double margin = 2.0) =>
+        bestScore - secondScore < margin && !KindOf(best, tokens).SetEquals(KindOf(second, tokens));
+
+    public static HashSet<string> KindOf(Food food, IReadOnlyList<string> tokens) =>
+        Segments(food.Description).Take(3).SelectMany(s => s)
+            .Where(w => w.Length > 1 && !IsNeutral(w) && !PreferredBonus.ContainsKey(w) && !tokens.Any(t => WordMatches(w, t)))
+            .ToHashSet(StringComparer.Ordinal);
+
     private static bool IsNeutral(string word) =>
         NeutralWords.Contains(word) || CookedWords.Contains(word) || RawWords.Contains(word);
 

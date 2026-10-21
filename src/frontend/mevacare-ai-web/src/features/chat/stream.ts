@@ -1,9 +1,12 @@
 import { apiFetchRaw, toApiError } from '../../lib/api'
+import type { ProposalCard } from '../../lib/types'
 
 export type ChatStreamEvent =
   | { type: 'conversation'; conversationId: string; title: string }
   | { type: 'delta'; text: string }
   | { type: 'safety'; category: string }
+  | { type: 'tool'; name: string; status: 'running' | 'done' | 'failed' }
+  | { type: 'proposal'; card: ProposalCard }
   | { type: 'done'; messageId: string }
   | { type: 'error'; code: string; message: string; messageId: string | null }
 
@@ -39,6 +42,8 @@ export interface StreamChatRequest {
   conversationId: string | null
   message: string
   clientMessageId: string
+  /** The user's local time with UTC offset, so the assistant knows today's date. */
+  clientTime?: string
   signal: AbortSignal
   onEvent: (event: ChatStreamEvent) => void
 }
@@ -48,10 +53,10 @@ export interface StreamChatRequest {
  * configured...) reject with an ApiError before any event is emitted; problems after the stream started arrive as
  * an "error" event.
  */
-export async function streamChat({ conversationId, message, clientMessageId, signal, onEvent }: StreamChatRequest) {
+export async function streamChat({ conversationId, message, clientMessageId, clientTime, signal, onEvent }: StreamChatRequest) {
   const response = await apiFetchRaw('/api/chat/stream', {
     method: 'POST',
-    body: { conversationId, message, clientMessageId },
+    body: { conversationId, message, clientMessageId, clientTime },
     signal,
   })
   if (!response.ok) throw await toApiError(response)

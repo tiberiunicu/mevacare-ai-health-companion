@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
-import { Bot, History, MessageSquarePlus, SendHorizontal, ShieldAlert, Square, Trash2, UserRound } from 'lucide-react'
+import { Bot, Check, History, Loader2, MessageSquarePlus, SendHorizontal, ShieldAlert, Square, Trash2, UserRound } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,8 +9,11 @@ import { Link } from 'react-router-dom'
 import remarkGfm from 'remark-gfm'
 import { Alert, Button, PageHeader, Spinner } from '../../components/ui'
 import { ApiError } from '../../lib/api'
+import { toOffsetIso } from '../../lib/dates'
+import type { ProposalCard as ProposalCardData } from '../../lib/types'
 import { useConsents } from '../profile/hooks'
-import { chatKeys, fetchMessages, useConversations, useDeleteConversation } from './hooks'
+import { chatKeys, fetchMessages, fetchProposals, useConversations, useDeleteConversation } from './hooks'
+import { ProposalCard } from './ProposalCard'
 import { streamChat } from './stream'
 
 const MAX_MESSAGE_LENGTH = 4000
@@ -24,6 +27,10 @@ interface LocalMessage {
   state: 'pending' | 'streaming' | 'done' | 'failed' | 'interrupted'
   isSafety?: boolean
   errorCode?: string
+  /** Tools the assistant used while answering (status: running | done | failed). */
+  tools?: { name: string; status: string }[]
+  /** Meals the assistant prepared in this answer, waiting for the user's confirmation. */
+  proposals?: ProposalCardData[]
 }
 
 export function ChatPage() {
@@ -59,7 +66,7 @@ export function ChatPage() {
       setConversationId(id)
       setLoadingHistory(true)
       try {
-        const stored = await fetchMessages(id)
+        const [stored, proposals] = await Promise.all([fetchMessages(id), fetchProposals(id).catch(() => [] as ProposalCardData[])])
         setMessages(
           stored.map((m) => ({
             key: m.id,
@@ -67,6 +74,7 @@ export function ChatPage() {
             content: m.content,
             isSafety: m.isSafetyResponse,
             state: m.status === 'Complete' ? 'done' : m.status === 'Failed' ? 'failed' : 'interrupted',
+            proposals: m.role === 'Assistant' ? proposals.filter((p) => p.assistantMessageSequence === m.sequence) : undefined,
           })),
         )
       } catch {
@@ -109,6 +117,7 @@ export function ChatPage() {
         conversationId,
         message,
         clientMessageId: crypto.randomUUID(),
+        clientTime: toOffsetIso(new Date()),
         signal: controller.signal,
         onEvent: (event) => {
           switch (event.type) {
@@ -118,6 +127,17 @@ export function ChatPage() {
               break
             case 'safety':
               patchLast((m) => ({ ...m, isSafety: true }))
+              break
+            case 'tool':
+              patchLast((m) => ({
+                ...m,
+                tools: event.status === 'running'
+                  ? [...(m.tools ?? []), { name: event.name, status: 'running' }]
+                  : (m.tools ?? []).map((tool) => (tool.name === event.name && tool.status === 'running' ? { ...tool, status: event.status } : tool)),
+              }))
+              break
+            case 'proposal':
+              patchLast((m) => ({ ...m, proposals: [...(m.proposals ?? []), event.card] }))
               break
             case 'delta':
               patchLast((m) => ({ ...m, content: m.content + event.text, state: 'streaming' }))
@@ -161,6 +181,13 @@ export function ChatPage() {
       void send(draft)
     }
   }
+
+  const changeProposal = (messageKey: string, proposalId: string, patch: Partial<ProposalCardData>) =>
+    setMessages((current) =>
+      current.map((m) =>
+        m.key === messageKey ? { ...m, proposals: m.proposals?.map((p) => (p.id === proposalId ? { ...p, ...patch } : p)) } : m,
+      ),
+    )
 
   const remove = async (id: string) => {
     await deleteConversation.mutateAsync(id)
@@ -230,7 +257,9 @@ export function ChatPage() {
             ) : messages.length === 0 ? (
               <EmptyChat onPick={(text) => void send(text)} disabled={!aiAllowed || streaming} />
             ) : (
-              messages.map((m) => <MessageBubble key={m.key} message={m} />)
+              messages.map((m) => (
+                <MessageBubble key={m.key} message={m} onProposalChange={(proposalId, patch) => changeProposal(m.key, proposalId, patch)} />
+              ))
             )}
             <div ref={bottomRef} />
           </div>
@@ -315,7 +344,7 @@ function EmptyChat({ onPick, disabled }: { onPick: (text: string) => void; disab
   )
 }
 
-function MessageBubble({ message }: { message: LocalMessage }) {
+function MessageBubble({ message, onProposalChange }: { message: LocalMessage; onProposalChange: (proposalId: string, patch: Partial<ProposalCardData>) => void }) {
   const { t } = useTranslation()
   const isUser = message.role === 'User'
   return (
@@ -356,6 +385,27 @@ function MessageBubble({ message }: { message: LocalMessage }) {
             </div>
           )}
         </div>
+        {message.tools && message.tools.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5" aria-label={t('chat.tools')}>
+            {message.tools.map((tool, index) => (
+              <li
+                key={`${tool.name}-${index}`}
+                className={clsx(
+                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs',
+                  tool.status === 'failed' ? 'bg-danger-soft text-danger' : 'bg-ai-soft text-ai',
+                )}
+              >
+                {tool.status === 'running' && <Loader2 className="size-3 animate-spin" aria-hidden />}
+                {tool.status === 'done' && <Check className="size-3" aria-hidden />}
+                {t(`tools.${tool.name}`, { defaultValue: tool.name })}
+                {tool.status === 'running' ? '…' : ''}
+              </li>
+            ))}
+          </ul>
+        )}
+        {message.proposals?.map((card) => (
+          <ProposalCard key={card.id} card={card} onChange={(patch) => onProposalChange(card.id, patch)} />
+        ))}
         {message.state === 'failed' && (
           <p role="alert" className="text-xs text-danger">
             {message.errorCode === 'ai_unavailable' ? t('chat.providerDown') : t('chat.failed')}

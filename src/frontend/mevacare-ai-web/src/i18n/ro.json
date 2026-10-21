@@ -144,8 +144,15 @@
     "language": "Limba",
     "units": "Unități",
     "theme": "Temă",
-    "unitValues": { "Metric": "Metric (kg, cm)", "Imperial": "Imperial (lb, in)" },
-    "themeValues": { "System": "Ca dispozitivul meu", "Light": "Deschisă", "Dark": "Întunecată" }
+    "unitValues": {
+      "Metric": "Metric (kg, cm)",
+      "Imperial": "Imperial (lb, in)"
+    },
+    "themeValues": {
+      "System": "Ca dispozitivul meu",
+      "Light": "Deschisă",
+      "Dark": "Întunecată"
+    }
   },
   "privacy": {
     "title": "Confidențialitate și consimțăminte",
@@ -226,6 +233,142 @@
       "protein": "Câtă proteină are nevoie în general un adult sănătos?",
       "sleep": "Dă-mi sfaturi practice pentru un somn mai bun.",
       "plateau": "De ce ar putea încetini scăderea în greutate?"
+    },
+    "tools": "Instrumente folosite"
+  },
+  "nutrition": {
+    "mealTypes": {
+      "Breakfast": "Mic dejun",
+      "Lunch": "Prânz",
+      "Dinner": "Cină",
+      "Snack": "Gustare"
+    },
+    "nutrients": {
+      "calories": "Calorii",
+      "proteinG": "Proteine",
+      "carbohydratesG": "Carbohidrați",
+      "fatG": "Grăsimi",
+      "fiberG": "Fibre",
+      "kcal": "kcal",
+      "g": "g"
+    },
+    "prepValues": {
+      "Unspecified": "Nespecificat",
+      "Raw": "Crud",
+      "Cooked": "Gătit"
+    },
+    "journal": {
+      "title": "Jurnal alimentar",
+      "subtitle": "Tot ce ai mâncat, cu nutrienți calculați dintr-o bază de date alimentară verificată.",
+      "date": "Ziua",
+      "today": "Astăzi",
+      "previous": "Ziua precedentă",
+      "next": "Ziua următoare",
+      "addMeal": "Adaugă masă",
+      "emptyDay": "Nu ai înregistrat nimic pentru această zi. Adaugă o masă aici sau spune-i companionului AI ce ai mâncat.",
+      "edit": "Editează",
+      "delete": "Șterge",
+      "estimatedBadge": "Estimat",
+      "assistantBadge": "Pregătit de asistent",
+      "incomplete": "Unele valori nu sunt raportate pentru aceste alimente, deci totalurile pot fi incomplete.",
+      "includesEstimates": "Include valori estimate de tine.",
+      "dayTotal": "Total zilnic",
+      "consentTitle": "Prelucrarea datelor de sănătate este oprită",
+      "consentBody": "Pentru a ține un jurnal alimentar, permite prelucrarea datelor de sănătate.",
+      "consentAction": "Deschide Confidențialitate și consimțăminte"
+    },
+    "editor": {
+      "newMeal": "Masă nouă",
+      "editMeal": "Editează masa",
+      "mealType": "Masa",
+      "time": "Ora",
+      "notes": "Note",
+      "items": "Alimente",
+      "addFood": "Adaugă aliment",
+      "addCustom": "Adaugă element personalizat",
+      "searchLabel": "Caută în baza de date alimentară",
+      "searchPlaceholder": "ex. piept de pui, orez fiert",
+      "searching": "Se caută…",
+      "noResults": "Niciun aliment potrivit. Nu se ghicește nimic: rafinează căutarea sau adaugă un element personalizat.",
+      "grams": "Greutate (g)",
+      "name": "Nume",
+      "customHint": "Valorile introduse sunt salvate și marcate ca estimate.",
+      "per100": "la 100 g",
+      "unresolved": "Nepotrivit. Caută un aliment sau folosește un element personalizat.",
+      "needsGrams": "Introdu greutatea în grame.",
+      "assumedPrep": "Nu s-a precizat crud sau gătit; s-a presupus: {{state}}. Greutățile alimentelor crude și gătite nu sunt interschimbabile.",
+      "ambiguous": "Mai multe alimente se potrivesc aproape la fel. Verifică acesta.",
+      "change": "Schimbă alimentul",
+      "remove": "Elimină",
+      "previewNote": "Previzualizare. Serverul recalculează valorile exacte la salvare.",
+      "total": "Total",
+      "incompletePreview": "Unele valori sunt necunoscute.",
+      "save": "Salvează masa",
+      "saving": "Se salvează…",
+      "cancel": "Anulează",
+      "confirm": "Confirmă și salvează",
+      "atLeastOne": "Adaugă cel puțin un aliment.",
+      "saveError": "Masa nu a putut fi salvată."
+    },
+    "summary": {
+      "title": "Rezumat zilnic",
+      "subtitle": "Ziua ta comparată cu țintele stabilite de tine.",
+      "target": "Țintă",
+      "remaining": "Rămas",
+      "over": "{{value}} peste țintă",
+      "noTarget": "Nicio țintă setată",
+      "setTargets": "Setează ținte",
+      "last7": "Ultimele 7 zile",
+      "average": "Media pe zi înregistrată",
+      "averageNote": "Se numără doar zilele cu mese înregistrate.",
+      "noMeals": "Nimic înregistrat",
+      "mealsCount_one": "{{count}} masă",
+      "mealsCount_few": "{{count}} mese",
+      "mealsCount_other": "{{count}} de mese"
+    },
+    "goals": {
+      "title": "Obiective nutriționale",
+      "subtitle": "Țintele zilnice sunt alegerea ta. MevaCare nu le prescrie; consultă un nutriționist sau un medic dacă ai dubii.",
+      "calories": "Calorii (kcal)",
+      "proteinG": "Proteine (g)",
+      "carbohydratesG": "Carbohidrați (g)",
+      "fatG": "Grăsimi (g)",
+      "fiberG": "Fibre (g)",
+      "hint": "Lasă câmpul gol pentru nicio țintă.",
+      "saved": "Ținte salvate"
     }
+  },
+  "proposal": {
+    "title": "Masă pregătită de asistent",
+    "notSaved": "Încă nesalvată. Verific-o și confirm-o.",
+    "review": "Verifică și confirmă",
+    "dismiss": "Renunță",
+    "dismissed": "Respinsă",
+    "saved": "Salvată în jurnalul tău",
+    "openJournal": "Deschide jurnalul alimentar",
+    "warnings": "Te rog verifică",
+    "unmatched": "Negăsit în baza de date alimentară",
+    "needsQuantity": "Este necesară greutatea",
+    "total": "Total",
+    "confirmError": "Masa nu a putut fi salvată. Încearcă din nou."
+  },
+  "tools": {
+    "GetHealthProfile": "Se citește profilul tău",
+    "GetDailyNutritionSummary": "Se caută ziua ta",
+    "GetNutritionSummary": "Se caută rezumatul nutrițional",
+    "PrepareMeal": "Se pregătește masa"
+  },
+  "dashboardNutrition": {
+    "calories": "{{value}} kcal",
+    "ofTarget": "din {{target}} kcal",
+    "protein": "Proteine",
+    "carbs": "Carbohidrați",
+    "fat": "Grăsimi",
+    "fiber": "Fibre",
+    "grams": "{{value}} g",
+    "nothingLogged": "Nimic înregistrat astăzi încă.",
+    "open": "Deschide jurnalul alimentar",
+    "setTargets": "Setează ținte pentru a vedea barele de progres",
+    "incomplete": "Totalurile pot fi incomplete."
   }
 }

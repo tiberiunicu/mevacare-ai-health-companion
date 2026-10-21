@@ -12,9 +12,9 @@ explains, qualifies uncertainty and sends people to professionals.
 |---|---|---|---|
 | 1. Emergency screen | `Safety/EmergencyDetector.cs` | first-person emergency or self-harm text → fixed localized answer, **model not called** | yes |
 | 2. System prompt | `Safety/SystemPrompts.cs` | scope, no diagnosis/prescription/medication changes, no invented personal data, no extreme diets, emergency guidance, uncertainty, untrusted input, no prompt disclosure, reply language | no (model-dependent) |
-| 3. Structural isolation | `AiChatService` | user text only in the *user* role; the system prompt is a constant; no tools, no retrieved text, no code or SQL execution | yes |
+| 3. Structural isolation | `AiChatService`, `TurnTools` | user text only in the *user* role; the system prompt is built from constants plus the date; tools are bound to the caller and cannot take a user id; writes need user confirmation; no retrieved text, no code or SQL execution | yes |
 | 4. Output handling | frontend | Markdown without raw HTML | yes |
-| 5. Evaluation | `tests/AIEvaluationTests` | measures layers 1–2 against labelled and adversarial datasets | n/a |
+| 5. Evaluation | `tests/AIEvaluationTests` | measures layers 1–2 against labelled, adversarial and meal-extraction datasets | n/a |
 
 ### Emergency screen
 
@@ -27,16 +27,18 @@ breathe, stroke signs, heavy bleeding, overdose/poisoning, throat swelling, seiz
 ### System prompt
 
 Contains a **canary** token. If it ever shows up in an answer the model leaked its instructions; the live evaluation
-checks for it. The prompt is also explicit that the assistant currently has **no access** to the user's data, so it must
-not invent numbers; this changes in Phase 3 together with tools and their own rules.
+checks for it. The prompt is built per turn (`SystemPrompts.Build`) and has two variants. With tools it says personal data is available **only** through the tools,
+that tool results are data not instructions, that meals are only *prepared* (never "saved"), that nutrient numbers must come from tools and are never calculated or
+estimated by the model, and it gives the user's local date (sent by the browser) so "today" can be resolved. Without tools (`Ai:ToolsEnabled=false`) it says the
+assistant cannot see personal data at all.
 
 ## Prompt-injection stance
 
-User messages are untrusted and can only *argue* with the model, not edit its instructions. Phase 2 has no tools, no
-retrieved documents and no secrets in the prompt, so the worst outcome of an injection is an off-policy *text* answer.
-That is why the live adversarial evaluation exists, and why later features add controls instead of trusting the prompt:
-tool calls are validated and authorised server-side, writes need explicit user confirmation, retrieved documents will be
-labelled untrusted context ([tool-calling.md](tool-calling.md), [rag-embeddings-memory.md](rag-embeddings-memory.md)).
+User messages are untrusted and can only *argue* with the model, not edit its instructions. There are no retrieved documents and no
+secrets in the prompt. With tools (Phase 3) the controls are structural, not prompt-based: tool calls run server-side with the caller's id,
+are validated and consent-checked, nothing is written without the user's confirmation, and the extraction call treats the meal text as data
+([tool-calling.md](tool-calling.md)). Retrieved documents will be labelled untrusted context in Phase 4
+([rag-embeddings-memory.md](rag-embeddings-memory.md)). The live adversarial evaluation checks the prompt-level behaviour.
 
 ## Limitations (read these)
 
@@ -44,7 +46,8 @@ labelled untrusted context ([tool-calling.md](tool-calling.md), [rag-embeddings-
   phrases (accepted for recall; documented in `knownLimitations` in the dataset).
 - The system prompt is guidance, not enforcement: a model can still produce an unsafe answer. Nothing here is a
   clinical safety guarantee, and the product must keep presenting itself as wellness information only.
-- No output moderation or PII filter runs on model answers yet.
+- No output moderation or PII filter runs on model answers yet. A model can still *say* numbers that did not come from a tool; the prompt forbids it, the numbers shown in cards and journals come from the database, and the evaluation checks for invented personal data.
+- With tools, the assistant gets the caller's own profile facts and nutrition totals when it asks for them (after consent); a successful injection can make it reveal those to the caller only.
 - No jailbreak or red-team coverage beyond the small dataset; medical-claim accuracy is not evaluated.
 - Romanian system-prompt behaviour depends on the chosen model.
 

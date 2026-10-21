@@ -65,7 +65,8 @@ public sealed class LocalFoodCatalog(AppDbContext db) : IFoodCatalog
             ranked = ranked.Select(m => m with { Food = withNutrients[m.Food.Id] }).ToList();
         }
 
-        var ambiguous = ranked.Count > 1 && ranked[0].Score - ranked[1].Score < AmbiguityMargin;
+        var ambiguous = ranked.Count > 1
+            && FoodRanking.IsAmbiguous(ranked[0].Food, ranked[0].Score, ranked[1].Food, ranked[1].Score, tokens, AmbiguityMargin);
         var assumed = ranked.Count > 0 && wanted == PreparationState.Unspecified && ranked[0].Food.Preparation != PreparationState.Unspecified;
         return new FoodSearchResult(ranked, ambiguous, assumed);
     }

@@ -31,7 +31,8 @@ configured provider (temperature 0) and applies heuristic checks:
 | `mustMatchAny` | at least one hedging/referral pattern must appear (doctor, pharmacist, cannot see your data...) |
 
 Cases cover prompt leakage (direct, role-play, translation), medication changes, diagnosis demands, extreme diets,
-invented personal data, tool/SQL abuse, injection inside quoted text and a Romanian medication question. The test reports
+invented personal data, claiming a meal was saved, invented calories, tool/SQL abuse, injection inside quoted text and a Romanian medication
+question. (This harness sends the system prompt without tools, so it checks that the model does not claim data or saves it cannot have.) The test reports
 each answer and a pass rate and fails below `MEVACARE_EVAL_MIN_PASS_RATE` (default `1.0`).
 
 ```powershell
@@ -42,6 +43,13 @@ dotnet test tests/AIEvaluationTests --logger "console;verbosity=detailed"
 ```
 
 Without `MEVACARE_EVAL_LIVE=1` the test is **skipped** (and reported as skipped, never silently passed).
+
+### 3. Meal extraction evaluation (opt-in)
+
+`MealExtractionEvaluationTests` runs `MealParser` (structured output) over `Datasets/meal-extraction.json`: an English example from the brief, raw
+weights, household units, a Romanian sentence, a missing amount, and an instruction hidden inside the meal text. It checks names, amounts, units and the
+stated raw/cooked wording, and that injected items are not extracted. The dataset shape is validated in every run; the model run needs
+`MEVACARE_EVAL_LIVE=1` like the adversarial set.
 
 ## How to use it when changing things
 
@@ -54,7 +62,7 @@ Without `MEVACARE_EVAL_LIVE=1` the test is **skipped** (and reported as skipped,
 - Regex heuristics judge text superficially; they can pass a harmful answer worded unexpectedly and fail a safe one.
   Treat the pass rate as a regression alarm, not a safety proof. Periodic human review of the printed answers is required.
 - ~10 live cases and ~56 triage cases is a seed, not coverage.
-- The live suite has **not been run** yet: no provider was available in the authoring environment.
-- Planned for later phases: retrieval accuracy evaluation (Phase 4: recall@k, citation correctness on a small gold set),
-  tool-calling evaluation (Phase 3: correct tool, argument validity, refusal to write without confirmation), and an
-  LLM-as-judge option with human spot checks.
+- The live suites (adversarial and meal extraction) have **not been run** yet: no provider was available in the authoring environment.
+- Tool-selection accuracy (does the model call `PrepareMeal` for "I ate..." and a summary tool for "how many calories today") is covered only with a scripted
+  model plus manual runs against a mock server; a live tool-selection evaluation is still to be written.
+- Planned: retrieval accuracy evaluation (Phase 4: recall@k, citation correctness on a small gold set) and an LLM-as-judge option with human spot checks.

@@ -3,7 +3,10 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Alert, Card, PageHeader } from '../components/ui'
+import { useDailySummary } from '../features/nutrition/hooks'
+import { ProgressRows } from '../features/nutrition/NutritionPages'
 import { isConsentRequired, useGoals, useProfile } from '../features/profile/hooks'
+import { localDateString } from '../lib/dates'
 import { useAuthStore } from '../stores/auth'
 
 /**
@@ -16,6 +19,7 @@ export function Dashboard() {
   const profile = useProfile()
   const goals = useGoals()
   const consentMissing = isConsentRequired(profile.error)
+  const today = useDailySummary(localDateString())
 
   return (
     <>
@@ -61,8 +65,40 @@ export function Dashboard() {
           )}
         </Card>
 
-        <PendingCard icon={<Flame className="size-5" />} title={t('dashboard.calories')} note={t('dashboard.availableWith')} />
-        <PendingCard icon={<Activity className="size-5" />} title={t('dashboard.macros')} note={t('dashboard.availableWith')} />
+        <Card>
+          <CardTitle icon={<Flame className="size-5" />} title={t('dashboard.calories')} />
+          {today.data && today.data.meals.length > 0 ? (
+            <>
+              <p className="text-2xl font-semibold">
+                {t('dashboardNutrition.calories', { value: Math.round(today.data.totals.calories) })}
+                {today.data.targets.calories !== null && (
+                  <span className="ml-2 text-sm font-normal text-muted">{t('dashboardNutrition.ofTarget', { target: Math.round(today.data.targets.calories) })}</span>
+                )}
+              </p>
+              {today.data.totals.incompleteData && <p className="text-xs text-warning">{t('dashboardNutrition.incomplete')}</p>}
+            </>
+          ) : (
+            <p className="text-sm text-muted">{consentMissing ? t('dashboard.consentNeeded') : t('dashboardNutrition.nothingLogged')}</p>
+          )}
+          <Link to="/nutrition/journal" className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">
+            {t('dashboardNutrition.open')}
+          </Link>
+        </Card>
+        <Card>
+          <CardTitle icon={<Activity className="size-5" />} title={t('dashboard.macros')} />
+          {today.data && today.data.meals.length > 0 ? (
+            <>
+              <ProgressRows totals={today.data.totals} targets={today.data.targets} compact />
+              {Object.values(today.data.targets).every((v) => v === null) && (
+                <Link to="/nutrition/goals" className="mt-3 inline-block text-xs font-semibold text-primary hover:underline">
+                  {t('dashboardNutrition.setTargets')}
+                </Link>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted">{consentMissing ? t('dashboard.consentNeeded') : t('dashboardNutrition.nothingLogged')}</p>
+          )}
+        </Card>
         <PendingCard icon={<LineChart className="size-5" />} title={t('dashboard.weightEvolution')} note={t('dashboard.availableWithMeasurements')} />
         <PendingCard icon={<MoonStar className="size-5" />} title={t('dashboard.sleepSummary')} note={t('dashboard.availableWithMeasurements')} />
         <PendingCard icon={<Activity className="size-5" />} title={t('dashboard.activitySummary')} note={t('dashboard.availableWithMeasurements')} />

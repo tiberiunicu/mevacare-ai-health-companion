@@ -18,7 +18,7 @@ is closed.
 | Secrets | none in the repository; connection string, JWT key and AI keys come from user-secrets or environment variables; startup fails fast on a weak/missing JWT key; key values never appear in errors or logs |
 | Logging | no health data, tokens, passwords, chat content or provider error bodies; request path without query string |
 | Audit | sign-in/out/failures/lockout, token-reuse detection, consent grants/revocations (with policy version), profile/goal changes, export, deletion, chat sends and safety overrides; no payloads |
-| Data minimisation toward the LLM | only the system prompt, the conversation's recent messages (bounded by count and characters) and the new message; never e-mail, name, tokens or the profile (verified against the recorded provider request in manual testing) |
+| Data minimisation toward the LLM | the system prompt, the conversation's recent messages (bounded by count and characters), the new message and, only when the model calls a tool, that tool's compact result (for example daily totals, or age/sex/height/activity level; never the date of birth, e-mail, name, tokens or time zone). Checked against recorded provider requests in manual testing. Consent for health data **and** AI processing is required for health tools. |
 | Frontend | in-memory access token, no `localStorage` of credentials, no raw HTML rendering of model output, no third-party requests |
 
 ## GDPR design
@@ -42,9 +42,10 @@ is closed.
 
 ## AI-specific security
 
-- The assistant has **no tools yet**, so a prompt injection cannot read data or cause writes. Tool calling arrives in
-  Phase 3 with the rules in [tool-calling.md](../ai/tool-calling.md) (user id from server context, read/write split,
-  explicit confirmation, idempotency, argument validation).
+- The assistant has **four tools** (profile, two nutrition summaries, meal preparation). They are bound per turn to the signed-in user
+  (no user-id parameter exists), re-check consent, are audited, and the only write-type tool merely prepares a proposal that the user must
+  confirm in the UI; confirmations are idempotent. A prompt injection can therefore at worst make the assistant read the **caller's own**
+  data or prepare a meal the user then rejects. See [tool-calling.md](../ai/tool-calling.md).
 - User messages are untrusted: they are only ever sent in the *user* role, never concatenated into the system prompt.
 - Emergency and self-harm messages are answered by fixed text and never reach the model.
 - Model output is rendered as Markdown without raw HTML.

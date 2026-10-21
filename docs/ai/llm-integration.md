@@ -17,11 +17,13 @@ AiChatService.PrepareTurnAsync            (everything that can fail "normally" h
    3. reject a repeated clientMessageId                     → 409 duplicate_message
    4. load recent history (≤ 20 messages and ≤ 12,000 characters, newest first, failed answers skipped)
    5. EmergencyDetector.Assess(message)                     (see ai-safety.md)
+      (the user's local time from the browser is kept for the prompt: "today" is resolved by the client, not guessed)
    6. persist the user message (+ audit event)              → the user's words are never lost
    ▼
 AiChatService.StreamAsync  →  Server-Sent Events:  conversation, [safety], delta*, done | error
    • emergency → fixed answer, persisted, model NOT called
-   • otherwise → IChatClient.GetStreamingResponseAsync([system, ...history, user], options)
+   • otherwise → FunctionInvokingChatClient(IChatClient).GetStreamingResponseAsync([system, ...history, user], options + TurnTools)
+                 the model may call tools (events "tool" and "proposal" are streamed; see tool-calling.md)
                  accumulate text, emit delta events, then persist the assistant message:
                  Complete | Failed (provider error/timeout/empty answer, partial text kept) | Interrupted (user stopped)
 ```
@@ -60,6 +62,12 @@ system. Long-term memory (summaries, user facts) is future work, see [rag-embedd
 Reliability details: messages carry a per-conversation `Sequence` (unique) for ordering; a client-generated
 `ClientMessageId` (unique per conversation) makes a retried send idempotent; the assistant message is persisted in a
 `finally` block with a fresh cancellation token so a closed browser tab still leaves a consistent history (`Interrupted`).
+
+### Tools (Phase 3)
+
+Unless `Ai:ToolsEnabled=false`, the client is wrapped per turn in `FunctionInvokingChatClient` with four tools bound to the caller (see
+[tool-calling.md](tool-calling.md)). The stream gains `tool` (running/done/failed) and `proposal` (a meal card awaiting confirmation) events. If the model
+answers a meal with only a tool call, the service adds one deterministic sentence so the answer is never empty while a card is on screen.
 
 ### Generation options
 

@@ -4,17 +4,12 @@ import { AppShell } from './components/AppShell'
 import { LoginPage, RegisterPage, RequireAuth } from './features/auth/AuthPages'
 import { useBootstrapSession } from './features/auth/hooks'
 import { ChatPage } from './features/chat/ChatPage'
+import { DailySummaryPage, FoodJournalPage, NutritionGoalsPage } from './features/nutrition/NutritionPages'
 import { usePreferencesSync } from './features/profile/hooks'
 import { ProfilePage } from './features/profile/ProfilePage'
 import { AiSettingsPage, PreferencesPage, PrivacyPage } from './features/settings/SettingsPages'
 import { ComingSoon } from './pages/ComingSoon'
 import { Dashboard } from './pages/Dashboard'
-
-const NUTRITION_NAV = [
-  { to: '/nutrition/journal', labelKey: 'nav.journal' },
-  { to: '/nutrition/summary', labelKey: 'nav.summary' },
-  { to: '/nutrition/goals', labelKey: 'nav.nutritionGoals' },
-]
 
 const HEALTH_NAV = [
   { to: '/health/weight', labelKey: 'nav.weight' },
@@ -39,9 +34,9 @@ const router = createBrowserRouter([
           { path: '/', element: <Dashboard /> },
           { path: '/companion', element: <ChatPage /> },
           { path: '/nutrition', element: <Navigate to="/nutrition/journal" replace /> },
-          { path: '/nutrition/journal', element: <ComingSoon titleKey="nav.journal" phaseKey="phases.nutrition" subNav={NUTRITION_NAV} /> },
-          { path: '/nutrition/summary', element: <ComingSoon titleKey="nav.summary" phaseKey="phases.nutrition" subNav={NUTRITION_NAV} /> },
-          { path: '/nutrition/goals', element: <ComingSoon titleKey="nav.nutritionGoals" phaseKey="phases.nutrition" subNav={NUTRITION_NAV} /> },
+          { path: '/nutrition/journal', element: <FoodJournalPage /> },
+          { path: '/nutrition/summary', element: <DailySummaryPage /> },
+          { path: '/nutrition/goals', element: <NutritionGoalsPage /> },
           { path: '/health', element: <Navigate to="/health/weight" replace /> },
           { path: '/health/weight', element: <ComingSoon titleKey="nav.weight" phaseKey="phases.measurements" subNav={HEALTH_NAV} /> },
           { path: '/health/sleep', element: <ComingSoon titleKey="nav.sleep" phaseKey="phases.measurements" subNav={HEALTH_NAV} /> },

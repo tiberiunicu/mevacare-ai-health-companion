@@ -9,7 +9,7 @@ broker, no multi-agent system (see [ADR-0001](../decisions/0001-modular-monolith
 ```
                 Api (composition root, middleware, OpenAPI)
                /   |        \                \
-   Modules.Identity  Modules.HealthProfile  Modules.Assistant      (feature modules)
+   Modules.Identity  Modules.HealthProfile  Modules.Nutrition  Modules.Assistant      (feature modules)
           \             |  \                 |   \
            \            |   Identity (User)  |    Identity (User)
             \___________|____________________|____
@@ -23,7 +23,7 @@ broker, no multi-agent system (see [ADR-0001](../decisions/0001-modular-monolith
 | Modules depend on `Contracts` and `Infrastructure`, never on the `Api` project | the host composes, modules do not know the host |
 | `Infrastructure` never references a module | no cycles; modules reach the database through `AppDbContext.Set<T>()` |
 | A module may reference `Identity` **only for the `User` entity** (to declare the foreign key to `Users`) | database-level referential integrity and cascading deletion (GDPR erasure) |
-| Modules do not call each other's services; shared needs go through `Contracts` interfaces (`IConsentService`, `IAuditLog`, `IUserDataExporter`, `ICurrentUser`) | keeps boundaries enforceable and the modules extractable later |
+| Modules do not call each other's services; shared needs go through `Contracts` interfaces (`IConsentService`, `IAuditLog`, `IUserDataExporter`, `ICurrentUser`, and for the AI tools `INutritionAssistantApi`, `IHealthProfileReader`, `IMealProposalGate`) | keeps boundaries enforceable and the modules extractable later |
 | Entities are never returned by the API; every endpoint uses request/response records | no mass assignment, stable contracts |
 
 Inside a module the code is organised by **feature** (`Features/Auth`, `Features/Consents`…) rather than by technical
@@ -59,20 +59,20 @@ reflection at runtime.
 | `identity.UserConsents` | current decision per consent type and policy version |
 | `health_profile.HealthProfiles`, `HealthGoals`, `HealthPreferences` | profile (1:1 with user), goals (≤ 5), display preferences (1:1) |
 | `assistant.Conversations`, `ChatMessages` | chat history; messages ordered by a per-conversation `Sequence`; unique `ClientMessageId` makes retried sends idempotent |
+| `assistant.ToolExecutions` | audit of every tool call; for meals also the proposal awaiting confirmation (see [ADR-0009](../decisions/0009-tool-calling-and-confirmed-writes.md)) |
+| `nutrition.Foods`, `FoodNutrients`, `FoodPortions` | imported USDA SR Legacy food data with provenance; nutrients per 100 g; unknown nutrients have no row |
+| `nutrition.Meals`, `MealItems`, `NutritionTargets` | the journal (items keep a nutrient **snapshot**), the user's own targets; details in [nutrition.md](nutrition.md) |
 | `core.AuditEvents` | security audit log |
 
 ### Designed, not yet created
 
 Created in the phase that needs them (see [ADR-0007](../decisions/0007-incremental-modules-and-migrations.md)):
 
-- **Nutrition (Phase 3)**: `Foods`, `FoodNutrients` (per 100 g, with source and raw/cooked state), `Meals`, `MealItems`
-  (store a nutrient **snapshot** at logging time so later food-data changes never rewrite history), `NutritionTargets`.
 - **Measurements (Phase 5)**: `HealthMeasurements` (metric type, value, unit, measured-at UTC + source time zone,
   source id, external id) with a unique index on (source, external id) to prevent duplicate wearable records, and
   `MeasurementSources`.
-- **Assistant (Phase 3)**: `ToolExecutions` (audit of every tool call: arguments, validated result, confirmation state,
-  idempotency key).
 - **Integrations (Phase 5)**: `ConnectedAccounts` (tokens encrypted at rest), `SyncJobs`.
+- **Knowledge (Phase 4)**: the vector store (Qdrant) holds document chunks; relational metadata for approved sources.
 
 ## Request flows
 
@@ -83,7 +83,12 @@ a signed-in user unless it is explicitly `AllowAnonymous`) → endpoint → vali
 
 **Chat turn** (details in [LLM integration](../ai/llm-integration.md)): validate → require AI consent → load/create the
 conversation owned by the caller → run the deterministic emergency screen → persist the user message → stream the
-model answer as Server-Sent Events → persist the assistant message (also when it fails or the user disconnects).
+model answer as Server-Sent Events (the model may call the per-turn tools, see [tool calling](../ai/tool-calling.md)) →
+persist the assistant message (also when it fails or the user disconnects).
+
+**Logging a meal with the assistant** (Phase 3): `PrepareMeal` → structured extraction → deterministic food match and
+calculation → proposal card → the user confirms (`POST /api/nutrition/meals` with `proposalId`) → meal + committed proposal in
+one transaction → journal and summaries.
 
 ## Error handling and logging
 

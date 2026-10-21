@@ -106,6 +106,39 @@ public class FoodRankingTests
         Assert.Equal(["berry"], FoodRanking.Tokenize("berries"));
     }
 
+    private static (Food Food, double Score)[] Top2(string key, string query, PreparationState preparation)
+    {
+        var (tokens, wanted) = FoodRanking.SplitPreparation(query, preparation);
+        return Fixture[key]
+            .Select(r => new Food(FoodSource.UsdaSrLegacy, r.Id, r.D, r.C, FoodRanking.InferPreparation(r.D)))
+            .Where(f => FoodRanking.MatchesAll(f.Description, tokens))
+            .Select(f => (f, FoodRanking.Score(f, tokens, wanted)))
+            .OrderByDescending(x => x.Item2).ThenBy(x => x.f.Description.Length).Take(2).ToArray();
+    }
+
+    [Theory]
+    [InlineData("chicken breast", "chicken breast", PreparationState.Cooked)]
+    [InlineData("rice", "rice", PreparationState.Cooked)]
+    [InlineData("whole milk", "whole milk", PreparationState.Unspecified)]
+    public void Near_ties_between_variants_of_the_same_food_are_not_reported_as_ambiguous(string key, string query, PreparationState preparation)
+    {
+        var (tokens, _) = FoodRanking.SplitPreparation(query, preparation);
+        var top = Top2(key, query, preparation);
+
+        Assert.False(FoodRanking.IsAmbiguous(top[0].Food, top[0].Score, top[1].Food, top[1].Score, tokens));
+    }
+
+    [Fact]
+    public void Different_kinds_of_food_with_near_equal_scores_are_reported_as_ambiguous()
+    {
+        var tokens = FoodRanking.Tokenize("yogurt");
+        var dairy = new Food(FoodSource.UsdaSrLegacy, "1", "Yogurt, plain, whole milk", "Dairy and Egg Products", PreparationState.Unspecified);
+        var soy = new Food(FoodSource.UsdaSrLegacy, "2", "Yogurt, soy, plain", "Legumes and Legume Products", PreparationState.Unspecified);
+
+        Assert.True(FoodRanking.IsAmbiguous(dairy, 5, soy, 4.5, tokens));
+        Assert.False(FoodRanking.IsAmbiguous(dairy, 12, soy, 4.5, tokens)); // a clear winner is not ambiguous
+    }
+
     [Fact]
     public void Whole_words_are_required_so_rice_does_not_match_licorice()
     {
