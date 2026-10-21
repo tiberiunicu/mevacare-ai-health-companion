@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>ebd6ee49-1a34-4e0f-b8a4-00ae1f26e7b0</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Contracts\MevaCare.AI.HealthCompanion.Contracts.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Infrastructure\MevaCare.AI.HealthCompanion.Infrastructure.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.Identity\MevaCare.AI.HealthCompanion.Modules.Identity.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.HealthProfile\MevaCare.AI.HealthCompanion.Modules.HealthProfile.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Serilog.AspNetCore" />
+  </ItemGroup>
+</Project>
