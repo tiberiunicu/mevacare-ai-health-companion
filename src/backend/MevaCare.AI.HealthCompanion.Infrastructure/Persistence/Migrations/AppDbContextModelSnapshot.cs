@@ -25,7 +25,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Infrastructure.Auditing.AuditEvent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Action")
@@ -52,10 +51,92 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditEvents", "core");
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastMessageAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "LastMessageAtUtc");
+
+                    b.ToTable("Conversations", "assistant");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.ConversationMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ClientMessageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSafetyResponse")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Provider")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId", "ClientMessageId")
+                        .IsUnique()
+                        .HasFilter("[ClientMessageId] IS NOT NULL");
+
+                    b.HasIndex("ConversationId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("ChatMessages", "assistant");
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.HealthProfile.Domain.HealthGoal", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -92,7 +173,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.HealthProfile.Domain.HealthPreferences", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -130,7 +210,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.HealthProfile.Domain.HealthProfile", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ActivityLevel")
@@ -178,7 +257,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -216,7 +294,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -268,7 +345,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.UserConsent", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAtUtc")
@@ -316,6 +392,24 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.HasKey("UserId", "Role");
 
                     b.ToTable("UserRoles", "identity");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.ConversationMessage", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.HealthProfile.Domain.HealthGoal", b =>
@@ -370,6 +464,11 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Assistant.Domain.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", b =>

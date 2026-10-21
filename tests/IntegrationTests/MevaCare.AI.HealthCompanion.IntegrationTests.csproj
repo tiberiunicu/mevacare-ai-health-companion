@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Api\MevaCare.AI.HealthCompanion.Api.csproj" />
+    <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Assistant\MevaCare.AI.HealthCompanion.Modules.Assistant.csproj" />
   </ItemGroup>
 </Project>

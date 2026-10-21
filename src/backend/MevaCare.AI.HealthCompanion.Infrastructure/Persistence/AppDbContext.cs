@@ -1,3 +1,4 @@
+using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -19,6 +20,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IOption
         foreach (var assembly in modelOptions.Value.ModelAssemblies)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(assembly);
+        }
+
+        // Ids are generated in code (GUID v7). Without this, EF would treat a new entity that is reached through a
+        // navigation of a tracked parent as already existing (non-default key) and issue an UPDATE instead of an INSERT.
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes().Where(t => typeof(Entity).IsAssignableFrom(t.ClrType)))
+        {
+            modelBuilder.Entity(entityType.ClrType).Property(nameof(Entity.Id)).ValueGeneratedNever();
         }
     }
 

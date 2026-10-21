@@ -1,4 +1,5 @@
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
+using MevaCare.AI.HealthCompanion.Modules.Assistant;
 using MevaCare.AI.HealthCompanion.Modules.HealthProfile;
 using MevaCare.AI.HealthCompanion.Modules.Identity;
 
@@ -11,5 +12,6 @@ internal static class ModuleCatalog
     [
         new IdentityModule(),
         new HealthProfileModule(),
+        new AssistantModule(),
     ];
 }

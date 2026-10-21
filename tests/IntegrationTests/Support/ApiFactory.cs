@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -22,6 +25,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     private readonly string _databaseName = $"MevaCareAIHealthCompanion_Test_{Guid.NewGuid():N}";
     private readonly string _connectionString;
 
+    /// <summary>Deterministic stand-in for the LLM provider: no test depends on a paid or non-deterministic model.</summary>
+    public ScriptedChatClient Chat { get; } = new();
+
     public ApiFactory() =>
         _connectionString = new SqlConnectionStringBuilder(BaseConnectionString()) { InitialCatalog = _databaseName }.ConnectionString;
 
@@ -37,6 +43,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:RefreshReuseGraceSeconds", "0");
         builder.UseSetting("RateLimiting:AuthRequestsPerMinute", "100000");
         builder.UseSetting("RateLimiting:ChatRequestsPerMinute", "100000");
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IChatClient>();
+            services.AddSingleton<IChatClient>(Chat);
+        });
     }
 
     public Task InitializeAsync() => Task.CompletedTask;
