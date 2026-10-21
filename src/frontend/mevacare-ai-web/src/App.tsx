@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { LoginPage, RegisterPage, RequireAuth } from './features/auth/AuthPages'
 import { useBootstrapSession } from './features/auth/hooks'
+import { ChatPage } from './features/chat/ChatPage'
 import { usePreferencesSync } from './features/profile/hooks'
 import { ProfilePage } from './features/profile/ProfilePage'
 import { AiSettingsPage, PreferencesPage, PrivacyPage } from './features/settings/SettingsPages'
@@ -36,7 +37,7 @@ const router = createBrowserRouter([
         element: <Authenticated />,
         children: [
           { path: '/', element: <Dashboard /> },
-          { path: '/companion', element: <ComingSoon titleKey="nav.companion" phaseKey="phases.nutrition" /> },
+          { path: '/companion', element: <ChatPage /> },
           { path: '/nutrition', element: <Navigate to="/nutrition/journal" replace /> },
           { path: '/nutrition/journal', element: <ComingSoon titleKey="nav.journal" phaseKey="phases.nutrition" subNav={NUTRITION_NAV} /> },
           { path: '/nutrition/summary', element: <ComingSoon titleKey="nav.summary" phaseKey="phases.nutrition" subNav={NUTRITION_NAV} /> },

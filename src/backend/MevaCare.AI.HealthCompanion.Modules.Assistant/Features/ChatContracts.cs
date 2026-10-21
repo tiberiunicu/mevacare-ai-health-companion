@@ -26,7 +26,7 @@ public sealed record ChatMessageDto(
 /// Events streamed to the browser over Server-Sent Events. The SSE event name is <see cref="Names"/>.
 /// <c>conversation</c> comes first, then zero or more <c>delta</c>, then exactly one of <c>done</c> or <c>error</c>.
 /// </summary>
-public abstract record ChatStreamEvent(string EventName)
+public abstract record ChatStreamEvent([property: System.Text.Json.Serialization.JsonIgnore] string EventName)
 {
     public sealed record Conversation(Guid ConversationId, string Title) : ChatStreamEvent(Names.Conversation);
 

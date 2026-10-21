@@ -1,0 +1,12 @@
+# Architecture decision records
+
+| # | Decision | Status |
+|---|---|---|
+| [0001](0001-modular-monolith.md) | Modular monolith with Clean Architecture boundaries | Accepted |
+| [0002](0002-single-dbcontext-schema-per-module.md) | One `AppDbContext`, one SQL schema per module | Accepted |
+| [0003](0003-authentication-jwt-refresh-cookie.md) | Own authentication: PBKDF2 + short JWT + rotating httpOnly refresh cookie | Accepted |
+| [0004](0004-consent-and-gdpr-model.md) | Consent gates data access; export/delete through module contracts | Accepted |
+| [0005](0005-microsoft-extensions-ai.md) | `IChatClient` (Microsoft.Extensions.AI) with OpenAI and Ollama providers | Accepted |
+| [0006](0006-deterministic-safety-screen.md) | Deterministic emergency screen before the model | Accepted |
+| [0007](0007-incremental-modules-and-migrations.md) | Modules and tables are added in the phase that needs them | Accepted |
+| [0008](0008-frontend-token-handling-and-stack.md) | SPA stack and in-memory access token | Accepted |

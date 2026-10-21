@@ -1,0 +1,189 @@
+# MevaCare AI Health Companion
+
+An AI-powered personal health companion: AI chat as the main interface, with traditional screens for the
+dashboard, nutrition, measurements, profile and privacy. It gives **wellness information only** — it does not
+diagnose, prescribe or replace a physician, and it is not an emergency service.
+
+This is a brand-new, standalone product. It shares nothing (code, database, infrastructure) with any other MevaCare
+application.
+
+> **Status: Phase 1 (foundation) and Phase 2 (AI chat) are implemented and tested. Phases 3–6 are not started.**
+> See [What works today](#what-works-today) and [Roadmap](#roadmap).
+
+## What works today
+
+| Area | Status |
+|---|---|
+| Modular monolith, .NET 10, EF Core 10 (SQL Server), OpenAPI, Serilog, health checks, rate limiting | Done |
+| Accounts: register, sign in (JWT access token + rotating httpOnly refresh cookie), lockout, sign out | Done |
+| Consent model (terms, health data, AI processing, external integrations), audit log | Done |
+| GDPR export and account deletion | Done |
+| Health profile, goals, display preferences | Done |
+| AI chat: `IChatClient` with OpenAI or Ollama, SSE streaming, persisted history, safety screen, rate limit | Done (see *AI provider testing* below) |
+| React app: sign in/up, dashboard, profile, preferences, privacy, AI settings, chat; light/dark; English + Romanian | Done |
+| Nutrition, measurements, tool calling, RAG, wearables, insights | **Not implemented.** The UI shows an explicit "not available yet" state, never fake data |
+
+**AI provider testing.** Automated tests use a scripted fake model. The OpenAI provider code path was additionally
+exercised end-to-end (SDK → HTTP → streaming → browser) against a local OpenAI-compatible mock server. It has **not**
+been run against the real OpenAI API or a real Ollama model, because no API key or Ollama installation was available
+while building it. Run the [live evaluation](#tests) once you configure a provider.
+
+## Repository layout
+
+```
+src/backend/
+  MevaCare.AI.HealthCompanion.Api                  host: composition root, middleware, OpenAPI
+  MevaCare.AI.HealthCompanion.Contracts            shared kernel: base entities, ICurrentUser, errors, validation filter
+  MevaCare.AI.HealthCompanion.Infrastructure       AppDbContext, interceptors, audit log, EF migrations
+  MevaCare.AI.HealthCompanion.Modules.Identity     users, auth, consents, GDPR export/delete
+  MevaCare.AI.HealthCompanion.Modules.HealthProfile profile, goals, preferences
+  MevaCare.AI.HealthCompanion.Modules.Assistant    AI chat, providers, safety, conversations
+src/frontend/mevacare-ai-web                       React + TypeScript + Vite + Tailwind
+tests/UnitTests | IntegrationTests | AIEvaluationTests
+docs/architecture | decisions (ADRs) | ai | api
+infrastructure/docker, docker-compose.yml, scripts/
+```
+
+Differences from the suggested structure (reasons in [ADR-0001](docs/decisions/0001-modular-monolith.md) and
+[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): the Nutrition, Measurements, Knowledge and
+Integrations module projects are not created yet — each is added in the phase that implements it, together with its
+tables.
+
+## Prerequisites
+
+- .NET SDK 10 (`global.json` pins 10.0.x)
+- Node.js 22+ and npm
+- SQL Server reachable from your machine: a local instance (Developer/Express) **or** the Docker container below
+- Optional: Docker (SQL Server + Qdrant), Ollama or an OpenAI API key (for the AI chat)
+
+## Quick start (Windows, PowerShell)
+
+```powershell
+git clone <your-clone-url> mevacare-ai-health-companion
+cd mevacare-ai-health-companion
+
+# 1. Tools
+dotnet tool restore                      # installs the pinned dotnet-ef
+
+# 2. Secrets (stored outside the repo in dotnet user-secrets)
+./scripts/setup-dev.ps1 -SqlServer 'localhost\SQLEXPRESS'   # use your own instance name; Windows auth by default
+
+# 3. Database (creates MevaCareAIHealthCompanion from the migrations)
+dotnet ef database update --project src/backend/MevaCare.AI.HealthCompanion.Infrastructure --startup-project src/backend/MevaCare.AI.HealthCompanion.Api
+
+# 4. API   -> http://localhost:5080  (OpenAPI: /openapi/v1.json, reference UI: /scalar)
+dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api --launch-profile http
+
+# 5. Web (second terminal)  -> http://localhost:5173
+cd src/frontend/mevacare-ai-web
+npm install
+npm run dev
+```
+
+In Development the API also applies pending migrations on startup (`Database:MigrateOnStartup`), so step 3 is only
+needed to create the database before the first run or from CI. The Vite dev server proxies `/api` to the API so the
+refresh cookie works same-origin; set `VITE_API_PROXY_TARGET` if the API runs elsewhere.
+
+Open http://localhost:5173, create an account, tick the consents you want (they can be changed later under
+*Settings → Privacy & Consent*), and use *AI Companion* once an AI provider is configured.
+
+### SQL Server with Docker instead
+
+```powershell
+Copy-Item .env.example .env        # then set MSSQL_SA_PASSWORD to a strong password of your choice
+docker compose up -d sqlserver     # Qdrant is only needed from Phase 4: docker compose up -d qdrant
+./scripts/setup-dev.ps1 -SqlServer 'localhost,14330' -SqlUser sa -SqlPassword (Read-Host -AsSecureString)
+```
+
+`docker-compose.yml` was written but **not executed** in the authoring environment (Docker was not installed), so treat
+it as unverified until you run it.
+
+## Configuration
+
+Configuration is layered: `appsettings.json` (safe defaults) → `appsettings.Development.json` → user-secrets
+(Development) → environment variables (`Section__Key`). **Secrets are never committed.**
+
+| Key | Purpose |
+|---|---|
+| `ConnectionStrings:Default` | SQL Server connection (required) |
+| `Jwt:SigningKey` | HMAC key, ≥ 32 characters (required; the app refuses to start without it) |
+| `Ai:Provider` | `Ollama` (default) or `OpenAI` |
+| `Ai:Ollama:Endpoint` / `Ai:Ollama:Model` | local model, e.g. after `ollama pull <model>` |
+| `Ai:OpenAI:ApiKey` / `Ai:OpenAI:Model` | OpenAI credentials and model (`Ai:OpenAI:Endpoint` optional, for compatible gateways) |
+| `Ai:MaxOutputTokens`, `Ai:Temperature`, `Ai:HistoryMessageLimit`, `Ai:HistoryCharacterBudget`, `Ai:RequestTimeoutSeconds` | generation and cost limits |
+| `Auth:*`, `RateLimiting:*`, `Cors:AllowedOrigins` | see `appsettings.json` |
+
+Examples:
+
+```powershell
+$api = 'src/backend/MevaCare.AI.HealthCompanion.Api'
+
+# Local model with Ollama (https://ollama.com): pick any chat model you have pulled
+dotnet user-secrets set "Ai:Provider" "Ollama" --project $api
+dotnet user-secrets set "Ai:Ollama:Model" "<your-pulled-model>" --project $api
+
+# OpenAI
+dotnet user-secrets set "Ai:Provider" "OpenAI" --project $api
+dotnet user-secrets set "Ai:OpenAI:ApiKey" "<your key>" --project $api
+dotnet user-secrets set "Ai:OpenAI:Model" "<model id>" --project $api
+```
+
+Without a configured provider everything except chat works; chat answers HTTP 503 `ai_not_configured` and the UI
+shows "The AI service is not available right now".
+
+## Database and migrations
+
+Code-first EF Core; the single `AppDbContext` loads the entity configurations of every module and keeps each module's
+tables in its own schema (`identity`, `health_profile`, `assistant`, `core`).
+
+```powershell
+$infra = 'src/backend/MevaCare.AI.HealthCompanion.Infrastructure'
+$api   = 'src/backend/MevaCare.AI.HealthCompanion.Api'
+
+dotnet ef migrations add <Name> --project $infra --startup-project $api --output-dir Persistence/Migrations
+dotnet ef database update      --project $infra --startup-project $api
+dotnet ef migrations remove    --project $infra --startup-project $api   # last, unapplied migration only
+```
+
+The design-time tools start the API host, so the connection string and `Jwt:SigningKey` must be configured.
+
+## Tests
+
+```powershell
+dotnet test MevaCare.AI.HealthCompanion.slnx          # unit + integration + deterministic AI evaluation
+dotnet test tests/UnitTests
+dotnet test tests/IntegrationTests                     # needs SQL Server; creates and drops a throw-away database per run
+dotnet test tests/AIEvaluationTests                    # emergency-screen evaluation; live model eval is skipped by default
+cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
+```
+
+- Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
+  from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
+- No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`.
+- Live model evaluation (real provider, adversarial prompts, costs money):
+  `$env:MEVACARE_EVAL_LIVE='1'; $env:Ai__Provider='Ollama'; $env:Ai__Ollama__Model='<model>'; dotnet test tests/AIEvaluationTests`.
+  See [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md).
+- Only synthetic data is used in tests and development. Do not enter real health data until the open items in
+  [docs/architecture/security-and-privacy.md](docs/architecture/security-and-privacy.md#not-yet-done) are closed.
+
+## Documentation
+
+- [Architecture overview](docs/architecture/overview.md) · [Security and privacy](docs/architecture/security-and-privacy.md)
+- [Architecture decision records](docs/decisions/)
+- AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [safety](docs/ai/ai-safety.md) ·
+  [evaluation](docs/ai/ai-evaluation.md) · planned: [tool calling](docs/ai/tool-calling.md),
+  [structured outputs](docs/ai/structured-outputs.md), [RAG, embeddings and memory](docs/ai/rag-embeddings-memory.md)
+- [HTTP API](docs/api/README.md)
+
+## Roadmap
+
+1. ✅ Foundation  2. ✅ AI chat  3. Nutrition vertical slice (food data, meal logging via tools and confirmation)
+4. Medical knowledge RAG (Qdrant)  5. Wearables (WHOOP first)  6. Health intelligence (trends, insights)
+
+## Troubleshooting
+
+- *"Connection string … is not configured" / "Jwt:SigningKey must be at least 32 characters"* — run `scripts/setup-dev.ps1`.
+- *Login works but you are signed out on reload* — the refresh cookie is `Secure` unless `Auth:RefreshCookieSecure=false`
+  (the Development settings do this). Behind HTTPS in production keep it `true`.
+- *Chat says the AI service is unavailable* — configure a provider (above) and, for Ollama, make sure it is running.
+- *Integration tests cannot connect* — set `MEVACARE_TEST_SQL` to a connection string that may create databases.
