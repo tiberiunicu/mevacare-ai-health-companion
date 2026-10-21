@@ -17,5 +17,6 @@
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Api\MevaCare.AI.HealthCompanion.Api.csproj" />
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Assistant\MevaCare.AI.HealthCompanion.Modules.Assistant.csproj" />
     <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Nutrition\MevaCare.AI.HealthCompanion.Modules.Nutrition.csproj" />
+    <ProjectReference Include="..\..\src\backend\MevaCare.AI.HealthCompanion.Modules.Knowledge\MevaCare.AI.HealthCompanion.Modules.Knowledge.csproj" />
   </ItemGroup>
 </Project>

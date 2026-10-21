@@ -5,6 +5,7 @@ using MevaCare.AI.HealthCompanion.Api.Hosting;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Infrastructure;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
+using MevaCare.AI.HealthCompanion.Modules.Knowledge.Ingestion;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.Import;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
@@ -18,10 +19,11 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    // preserveStaticLogger: several hosts can start in one process (integration tests); freezing the shared bootstrap logger would make the second one fail.
     builder.Host.UseSerilog((context, services, logger) => logger
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
-        .Enrich.FromLogContext());
+        .Enrich.FromLogContext(), preserveStaticLogger: true);
 
     var modules = ModuleCatalog.CreateAll();
     var configuration = builder.Configuration;
@@ -76,6 +78,40 @@ try
         Log.Information(
             "USDA import finished: {Imported} foods imported, {Skipped} already present ({Nutrients} nutrient rows, {Portions} portion rows read)",
             result.FoodsImported, result.FoodsSkipped, result.NutrientRows, result.PortionRows);
+        return 0;
+    }
+
+    // Knowledge maintenance (operator commands; there is deliberately no HTTP endpoint for ingestion):
+    //   -- ingest-knowledge <folder with sources.json>      approve and index documents
+    //   -- reindex-knowledge [--recreate]                   rebuild the vector index from SQL (after changing the embedding model)
+    //   -- retire-knowledge <sourceId>                      stop using a source
+    if (args is ["ingest-knowledge", var knowledgeFolder])
+    {
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        var report = await scope.ServiceProvider.GetRequiredService<KnowledgeFolderIngester>().IngestFolderAsync(knowledgeFolder, CancellationToken.None);
+        foreach (var (file, message) in report)
+        {
+            Log.Information("{File}: {Message}", file, message);
+        }
+
+        return report.Any(r => r.Message.StartsWith("REJECTED", StringComparison.Ordinal)) ? 2 : 0;
+    }
+
+    if (args is ["reindex-knowledge", ..] && args.Skip(1).All(a => a == "--recreate"))
+    {
+        using var scope = app.Services.CreateScope();
+        var count = await scope.ServiceProvider.GetRequiredService<IDocumentIngestionService>()
+            .ReindexAsync(args.Contains("--recreate"), CancellationToken.None);
+        Log.Information("Re-indexed {Chunks} chunks", count);
+        return 0;
+    }
+
+    if (args is ["retire-knowledge", var sourceId] && Guid.TryParse(sourceId, out var retireId))
+    {
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<IDocumentIngestionService>().RetireAsync(retireId, CancellationToken.None);
+        Log.Information("Source {SourceId} retired", retireId);
         return 0;
     }
 

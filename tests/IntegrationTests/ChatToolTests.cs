@@ -413,7 +413,7 @@ public class ChatToolTests : IDisposable
         Assert.DoesNotContain("330", result, StringComparison.Ordinal);
         Assert.DoesNotContain(alice.Email, result, StringComparison.Ordinal);
         var offered = _factory.Chat.LastOptions!.Tools!.OfType<AIFunction>().ToList();
-        Assert.Equal(["GetDailyNutritionSummary", "GetHealthProfile", "GetNutritionSummary", "PrepareMeal"], offered.Select(f => f.Name).Order());
+        Assert.Equal(["GetDailyNutritionSummary", "GetHealthProfile", "GetNutritionSummary", "PrepareMeal", "SearchMedicalKnowledge"], offered.Select(f => f.Name).Order());
         var parameters = offered.SelectMany(f => f.JsonSchema.TryGetProperty("properties", out var p) ? p.EnumerateObject().Select(x => x.Name) : []).ToList();
         Assert.DoesNotContain(parameters, name => name.Contains("user", StringComparison.OrdinalIgnoreCase));  // no tool takes a user id
     }

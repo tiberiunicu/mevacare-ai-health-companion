@@ -42,9 +42,10 @@ public sealed class Conversation : AuditableEntity
     }
 
     public ConversationMessage AddAssistantMessage(
-        string content, MessageStatus status, bool isSafetyResponse, string? provider, string? model, int sequence, DateTime nowUtc)
+        string content, MessageStatus status, bool isSafetyResponse, string? provider, string? model, int sequence, DateTime nowUtc,
+        string? citationsJson = null)
     {
-        var message = new ConversationMessage(Id, sequence, MessageRole.Assistant, content, status, isSafetyResponse, null, provider, model, nowUtc);
+        var message = new ConversationMessage(Id, sequence, MessageRole.Assistant, content, status, isSafetyResponse, null, provider, model, nowUtc, citationsJson);
         Attach(message, nowUtc);
         return message;
     }
@@ -62,8 +63,9 @@ public sealed class ConversationMessage : Entity
 
     internal ConversationMessage(
         Guid conversationId, int sequence, MessageRole role, string content, MessageStatus status, bool isSafetyResponse,
-        Guid? clientMessageId, string? provider, string? model, DateTime createdAtUtc)
+        Guid? clientMessageId, string? provider, string? model, DateTime createdAtUtc, string? citationsJson = null)
     {
+        CitationsJson = citationsJson;
         ConversationId = conversationId;
         Sequence = sequence;
         Role = role;
@@ -94,4 +96,7 @@ public sealed class ConversationMessage : Entity
     public string? Provider { get; private set; }
     public string? Model { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
+
+    /// <summary>Sources shown under an answer that used medical knowledge (JSON list of citations), or null.</summary>
+    public string? CitationsJson { get; private set; }
 }

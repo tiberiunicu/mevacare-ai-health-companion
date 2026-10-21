@@ -20,13 +20,16 @@ namespace MevaCare.AI.HealthCompanion.IntegrationTests.Support;
 /// Connection source, in order: env var MEVACARE_TEST_SQL, then the API's user-secrets connection string
 /// (database name replaced). Only synthetic data is used.
 /// </summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly string _databaseName = $"MevaCareAIHealthCompanion_Test_{Guid.NewGuid():N}";
     private readonly string _connectionString;
 
     /// <summary>Deterministic stand-in for the LLM provider: no test depends on a paid or non-deterministic model.</summary>
     public ScriptedChatClient Chat { get; } = new();
+
+    /// <summary>Wraps the real embedding service so a test can simulate an outage of the embedding provider.</summary>
+    public FlakyEmbeddingService Embeddings { get; } = new();
 
     public ApiFactory() =>
         _connectionString = new SqlConnectionStringBuilder(BaseConnectionString()) { InitialCatalog = _databaseName }.ConnectionString;
@@ -43,19 +46,27 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Auth:RefreshReuseGraceSeconds", "0");
         builder.UseSetting("RateLimiting:AuthRequestsPerMinute", "100000");
         builder.UseSetting("RateLimiting:ChatRequestsPerMinute", "100000");
+        builder.UseSetting("Knowledge:VectorStore:Provider", "InMemory");
+        builder.UseSetting("Knowledge:Embeddings:Provider", "Lexical");
+        builder.UseSetting("Knowledge:Embeddings:Dimensions", "1024");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IChatClient>();
             services.AddSingleton<IChatClient>(Chat);
+            services.Decorate_EmbeddingService(Embeddings);
         });
     }
 
     public Task InitializeAsync() => Task.CompletedTask;
 
+    /// <summary>Hook for derived factories to clean up external resources while the host is still running.</summary>
+    protected virtual Task BeforeDisposeAsync() => Task.CompletedTask;
+
     async Task IAsyncLifetime.DisposeAsync()
     {
         try
         {
+            await BeforeDisposeAsync();
             using var scope = Services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.EnsureDeletedAsync();
         }

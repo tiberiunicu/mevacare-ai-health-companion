@@ -20,6 +20,7 @@ internal static class TestDb
         modelOptions.ModelAssemblies.Add(typeof(HealthProfileModule).Assembly);
         modelOptions.ModelAssemblies.Add(typeof(MevaCare.AI.HealthCompanion.Modules.Nutrition.NutritionModule).Assembly);
         modelOptions.ModelAssemblies.Add(typeof(MevaCare.AI.HealthCompanion.Modules.Assistant.AssistantModule).Assembly);
+        modelOptions.ModelAssemblies.Add(typeof(MevaCare.AI.HealthCompanion.Modules.Knowledge.KnowledgeModule).Assembly);
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())

@@ -23,7 +23,8 @@ public sealed class SendMessageRequestValidator : AbstractValidator<SendMessageR
 public sealed record ConversationSummaryDto(Guid Id, string Title, DateTime LastMessageAtUtc);
 
 public sealed record ChatMessageDto(
-    Guid Id, int Sequence, string Role, string Content, string Status, bool IsSafetyResponse, DateTime CreatedAtUtc);
+    Guid Id, int Sequence, string Role, string Content, string Status, bool IsSafetyResponse, DateTime CreatedAtUtc,
+    IReadOnlyList<MevaCare.AI.HealthCompanion.Contracts.Knowledge.KnowledgeCitation> Citations);
 
 /// <summary>
 /// Events streamed to the browser over Server-Sent Events. The SSE event name is <see cref="Names"/>.
@@ -44,6 +45,9 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
     /// <summary>A meal prepared by the assistant that the user must confirm; nothing is saved yet.</summary>
     public sealed record Proposal(ProposalDto Card) : ChatStreamEvent(Names.Proposal);
 
+    /// <summary>The approved sources used for this answer (cited ones first flagged). Sent before <c>done</c>.</summary>
+    public sealed record Citations(IReadOnlyList<MevaCare.AI.HealthCompanion.Contracts.Knowledge.KnowledgeCitation> Items) : ChatStreamEvent(Names.Citations);
+
     public sealed record Done(Guid MessageId) : ChatStreamEvent(Names.Done);
 
     public sealed record Error(string Code, string Message, Guid? MessageId) : ChatStreamEvent(Names.Error);
@@ -53,6 +57,7 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
         public const string Conversation = "conversation";
         public const string Delta = "delta";
         public const string Safety = "safety";
+        public const string Citations = "citations";
         public const string Tool = "tool";
         public const string Proposal = "proposal";
         public const string Done = "done";
@@ -63,5 +68,18 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
 internal static class ChatMessageMapping
 {
     public static ChatMessageDto ToDto(this ConversationMessage m) =>
-        new(m.Id, m.Sequence, m.Role.ToString(), m.Content, m.Status.ToString(), m.IsSafetyResponse, m.CreatedAtUtc);
+        new(m.Id, m.Sequence, m.Role.ToString(), m.Content, m.Status.ToString(), m.IsSafetyResponse, m.CreatedAtUtc, CitationJson.Parse(m.CitationsJson));
+}
+
+internal static class CitationJson
+{
+    private static readonly System.Text.Json.JsonSerializerOptions Options = new(System.Text.Json.JsonSerializerDefaults.Web);
+
+    public static string? Serialize(IReadOnlyList<MevaCare.AI.HealthCompanion.Contracts.Knowledge.KnowledgeCitation> citations) =>
+        citations.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(citations, Options);
+
+    public static IReadOnlyList<MevaCare.AI.HealthCompanion.Contracts.Knowledge.KnowledgeCitation> Parse(string? json) =>
+        string.IsNullOrEmpty(json)
+            ? []
+            : System.Text.Json.JsonSerializer.Deserialize<List<MevaCare.AI.HealthCompanion.Contracts.Knowledge.KnowledgeCitation>>(json, Options) ?? [];
 }

@@ -1,0 +1,22 @@
+{
+  "description": "Gold questions for the REAL sample corpus (five US-government pages: MedlinePlus Vitamin D / Dietary Fiber / Sleep Disorders, CDC adult physical activity, NHLBI sleep deprivation). The pages are not committed: download them, write a sources.json, and point MEVACARE_KNOWLEDGE_DIR at the folder (see docs/ai/rag-embeddings-memory.md). Same scoring as the synthetic set.",
+  "questions": [
+    { "q": "How many minutes of physical activity do adults need each week?", "source": "Physical Activity Guidelines for Adults", "phrase": "150 minutes" },
+    { "q": "What exercise should adults do besides aerobic activity?", "source": "Physical Activity Guidelines for Adults", "phrase": "Muscle-strengthening" },
+    { "q": "Which foods naturally contain vitamin D?", "source": "Vitamin D", "phrase": "egg yolks" },
+    { "q": "How much vitamin D does a baby need?", "source": "Vitamin D", "phrase": "400 IU" },
+    { "q": "Why is vitamin D important for my bones?", "source": "Vitamin D", "phrase": "absorb calcium" },
+    { "q": "What is insomnia?", "source": "Sleep Disorders", "phrase": "trouble falling asleep" },
+    { "q": "How are sleep disorders diagnosed?", "source": "Sleep Disorders", "phrase": "sleep study" },
+    { "q": "What are the symptoms of a sleep disorder?", "source": "Sleep Disorders", "phrase": "30 min" },
+    { "q": "What is sleep deprivation?", "source": "Sleep Deprivation and Deficiency", "phrase": "don't get enough sleep" },
+    { "q": "Is drowsy driving dangerous?", "source": "Sleep Deprivation and Deficiency", "phrase": "sleepiness while driving" },
+    { "q": "What is the difference between soluble and insoluble fiber?", "source": "Dietary Fiber", "phrase": "soluble fiber or insoluble fiber" },
+    { "q": "What are good sources of dietary fiber?", "source": "Dietary Fiber", "phrase": "Good sources of dietary fiber" }
+  ],
+  "unanswerable": [
+    "How do I bake sourdough bread?",
+    "What is the capital of Romania?",
+    "Which graphics card is best for gaming?"
+  ]
+}

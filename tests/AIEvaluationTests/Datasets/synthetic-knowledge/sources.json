@@ -1,0 +1,7 @@
+[
+  { "file": "veltrin-sleep.md", "title": "The Veltrin Sleep Guide", "publisher": "Synthetic Test Publisher A", "url": "https://example.test/veltrin-sleep", "license": "CC0-1.0", "language": "en", "retrievedOn": "2026-01-01", "approvedBy": "automated-test" },
+  { "file": "marnel-hydration.md", "title": "Marnel Hydration Notes", "publisher": "Synthetic Test Publisher B", "url": "https://example.test/marnel-hydration", "license": "CC0-1.0", "language": "en", "retrievedOn": "2026-01-01", "approvedBy": "automated-test" },
+  { "file": "quorin-fibre.md", "title": "Quorin Fibre Handbook", "publisher": "Synthetic Test Publisher C", "url": "https://example.test/quorin-fibre", "license": "CC0-1.0", "language": "en", "retrievedOn": "2026-01-01", "approvedBy": "automated-test" },
+  { "file": "zephra-activity.md", "title": "Zephra Activity Primer", "publisher": "Synthetic Test Publisher D", "url": "https://example.test/zephra-activity", "license": "CC0-1.0", "language": "en", "retrievedOn": "2026-01-01", "approvedBy": "automated-test" },
+  { "file": "pelnor-iron.md", "title": "Pelnor Iron Facts", "publisher": "Synthetic Test Publisher E", "url": "https://example.test/pelnor-iron", "license": "CC0-1.0", "language": "en", "retrievedOn": "2026-01-01", "approvedBy": "automated-test" }
+]

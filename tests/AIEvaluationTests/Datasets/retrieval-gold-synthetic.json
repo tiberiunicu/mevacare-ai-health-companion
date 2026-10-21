@@ -1,0 +1,28 @@
+{
+  "description": "Gold questions for the SYNTHETIC corpus in Datasets/synthetic-knowledge (fictional sources, runs everywhere). A question is answered correctly when a returned passage comes from the expected source AND contains the expected phrase. 'unanswerable' questions must return no passage.",
+  "questions": [
+    { "q": "How many hours of sleep do adults need?", "source": "The Veltrin Sleep Guide", "phrase": "seven to nine hours" },
+    { "q": "What bedroom temperature helps people sleep?", "source": "The Veltrin Sleep Guide", "phrase": "18 degrees" },
+    { "q": "When should I stop drinking caffeine in the day?", "source": "The Veltrin Sleep Guide", "phrase": "14:00" },
+    { "q": "How much veltrin should I take before bed?", "source": "The Veltrin Sleep Guide", "phrase": "5 milligrams" },
+    { "q": "How much fluid should an adult drink per day?", "source": "Marnel Hydration Notes", "phrase": "two litres" },
+    { "q": "What are the signs of dehydration?", "source": "Marnel Hydration Notes", "phrase": "Dark yellow urine" },
+    { "q": "When do I need electrolyte salts?", "source": "Marnel Hydration Notes", "phrase": "90 minutes" },
+    { "q": "How many grams of fibre should I eat daily?", "source": "Quorin Fibre Handbook", "phrase": "25 grams" },
+    { "q": "Which foods are rich in fibre?", "source": "Quorin Fibre Handbook", "phrase": "lentils, beans" },
+    { "q": "How can I avoid bloating when eating more fibre?", "source": "Quorin Fibre Handbook", "phrase": "gradually" },
+    { "q": "How many minutes of exercise should adults do each week?", "source": "Zephra Activity Primer", "phrase": "150 minutes" },
+    { "q": "How often should I do strength training?", "source": "Zephra Activity Primer", "phrase": "two days per week" },
+    { "q": "What is a good daily step goal?", "source": "Zephra Activity Primer", "phrase": "7,000 to 10,000" },
+    { "q": "What does iron do in the body?", "source": "Pelnor Iron Facts", "phrase": "carries oxygen" },
+    { "q": "Which foods contain iron?", "source": "Pelnor Iron Facts", "phrase": "Red meat" },
+    { "q": "Does tea reduce iron absorption?", "source": "Pelnor Iron Facts", "phrase": "reduce iron absorption" },
+    { "q": "Is it safe to take iron supplements on my own?", "source": "Pelnor Iron Facts", "phrase": "See a doctor" }
+  ],
+  "unanswerable": [
+    "What is the capital of France?",
+    "How do I change a flat tyre on a car?",
+    "Explain the tax rules for freelancers",
+    "Which programming language is best for beginners?"
+  ]
+}

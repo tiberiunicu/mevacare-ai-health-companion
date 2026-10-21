@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+    <PackageReference Include="OllamaSharp" />
+    <PackageReference Include="HtmlAgilityPack" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Contracts\MevaCare.AI.HealthCompanion.Contracts.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Infrastructure\MevaCare.AI.HealthCompanion.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

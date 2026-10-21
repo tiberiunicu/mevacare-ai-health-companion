@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
+using MevaCare.AI.HealthCompanion.Contracts.Knowledge;
 using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Domain;
@@ -48,7 +49,8 @@ public sealed class AiChatService(
     IOptions<AiOptions> options,
     IAuditLog audit,
     TimeProvider clock,
-    ILogger<AiChatService> logger)
+    ILogger<AiChatService> logger,
+    IKnowledgeSearch? knowledge = null)
 {
     private readonly AiOptions _options = options.Value;
 
@@ -130,7 +132,7 @@ public sealed class AiChatService(
 
         var prompt = new List<Microsoft.Extensions.AI.ChatMessage>
         {
-            new(ChatRole.System, SystemPrompts.Build(_options.ToolsEnabled, turn.UserNow)),
+            new(ChatRole.System, SystemPrompts.Build(_options.ToolsEnabled, turn.UserNow, knowledge is not null)),
         };
         prompt.AddRange(turn.History);
         prompt.Add(new Microsoft.Extensions.AI.ChatMessage(ChatRole.User, turn.UserText));
@@ -141,7 +143,7 @@ public sealed class AiChatService(
         if (_options.ToolsEnabled)
         {
             // The tools are bound to THIS user and conversation; the model never supplies a user id.
-            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger);
+            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge);
             chatOptions.Tools = [.. tools.Functions];
             client = new FunctionInvokingChatClient(chat)
             {
@@ -241,8 +243,23 @@ public sealed class AiChatService(
             }
 
             var status = failureCode is null ? MessageStatus.Complete : MessageStatus.Failed;
-            var stored = await PersistAssistantAsync(turn, answer.ToString(), status, isSafety: false, model);
+            IReadOnlyList<KnowledgeCitation> citations = [];
+            if (tools is not null && failureCode is null)
+            {
+                citations = tools.BuildCitations(answer.ToString(), out var unknownMarkers);
+                if (unknownMarkers > 0)
+                {
+                    logger.LogWarning("The answer cited {Count} source number(s) that were never retrieved", unknownMarkers);
+                }
+            }
+
+            var stored = await PersistAssistantAsync(turn, answer.ToString(), status, isSafety: false, model, CitationJson.Serialize(citations));
             persisted = true;
+            if (citations.Count > 0)
+            {
+                yield return new ChatStreamEvent.Citations(citations);
+            }
+
             logger.LogInformation(
                 "Chat turn finished: status {Status}, {Characters} characters, {Tools} tool calls, {ElapsedMs} ms",
                 status, answer.Length, callNames.Count, TimeProvider.System.GetElapsedTime(started).TotalMilliseconds);
@@ -261,13 +278,13 @@ public sealed class AiChatService(
     }
 
     private async Task<ConversationMessage> PersistAssistantAsync(
-        ChatTurn turn, string content, MessageStatus status, bool isSafety, string? model)
+        ChatTurn turn, string content, MessageStatus status, bool isSafety, string? model, string? citationsJson = null)
     {
         // Persisting must survive a cancelled request: the user's message is already stored, the answer must be too.
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var provider = isSafety ? null : _options.Provider.ToString();
         var message = turn.Conversation.AddAssistantMessage(
-            content, status, isSafety, provider, model, turn.NextSequence, clock.GetUtcNow().UtcDateTime);
+            content, status, isSafety, provider, model, turn.NextSequence, clock.GetUtcNow().UtcDateTime, citationsJson);
         await db.SaveChangesAsync(cts.Token);
         return message;
     }

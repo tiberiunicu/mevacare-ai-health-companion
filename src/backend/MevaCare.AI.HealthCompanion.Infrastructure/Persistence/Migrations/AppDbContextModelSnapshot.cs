@@ -85,6 +85,9 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CitationsJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("ClientMessageId")
                         .HasColumnType("uniqueidentifier");
 
@@ -452,6 +455,112 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.ToTable("UserRoles", "identity");
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeChunk", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Heading")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Ordinal")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId", "Ordinal")
+                        .IsUnique();
+
+                    b.ToTable("Chunks", "knowledge");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmbeddingModel")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<string>("License")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LicenseUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Publisher")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateOnly>("RetrievedOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Url", "ContentHash")
+                        .IsUnique();
+
+                    b.ToTable("Sources", "knowledge");
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", b =>
                 {
                     b.Property<Guid>("Id")
@@ -786,6 +895,15 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeChunk", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeSource", null)
+                        .WithMany("Chunks")
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.FoodNutrient", b =>
                 {
                     b.HasOne("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", null)
@@ -839,6 +957,11 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", b =>
                 {
                     b.Navigation("Roles");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeSource", b =>
+                {
+                    b.Navigation("Chunks");
                 });
 
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", b =>

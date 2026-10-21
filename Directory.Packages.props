@@ -15,6 +15,7 @@
     <PackageVersion Include="Microsoft.Extensions.Identity.Core" Version="10.0.13" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.2" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="HtmlAgilityPack" Version="1.13.1" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
     <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
     <PackageVersion Include="OllamaSharp" Version="5.5.0" />
