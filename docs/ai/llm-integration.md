@@ -65,7 +65,7 @@ Reliability details: messages carry a per-conversation `Sequence` (unique) for o
 
 ### Tools (Phase 3)
 
-Unless `Ai:ToolsEnabled=false`, the client is wrapped per turn in `FunctionInvokingChatClient` with five tools bound to the caller (see
+Unless `Ai:ToolsEnabled=false`, the client is wrapped per turn in `FunctionInvokingChatClient` with seven tools bound to the caller (see
 [tool-calling.md](tool-calling.md)). The stream gains `tool` (running/done/failed) and `proposal` (a meal card awaiting confirmation) events. If the model
 answers a meal with only a tool call, the service adds one deterministic sentence so the answer is never empty while a card is on screen.
 

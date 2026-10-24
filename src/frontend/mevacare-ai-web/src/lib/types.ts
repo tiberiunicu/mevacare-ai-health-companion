@@ -233,3 +233,126 @@ export interface KnowledgeSource {
   version: number
   chunkCount: number
 }
+
+// ---- Measurements and wearables ----
+
+export interface WeightPoint {
+  id: string
+  measuredAtUtc: string
+  localDate: string
+  utcOffsetMinutes: number
+  kilograms: number
+  /** "manual" for entries made by the user, otherwise the importing provider's key. */
+  provider: string
+}
+
+export interface WeightHistory {
+  from: string
+  to: string
+  points: WeightPoint[]
+  latestKilograms: number | null
+  changeKilograms: number | null
+}
+
+export interface SleepSession {
+  id: string
+  startUtc: string
+  endUtc: string
+  utcOffsetMinutes: number
+  isScored: boolean
+  asleepMinutes: number | null
+  inBedMinutes: number | null
+  awakeMinutes: number | null
+  lightMinutes: number | null
+  deepMinutes: number | null
+  remMinutes: number | null
+  performancePercent: number | null
+  efficiencyPercent: number | null
+  consistencyPercent: number | null
+  respiratoryRate: number | null
+  disturbanceCount: number | null
+}
+
+export interface Recovery {
+  /** The provider's own 0-100 score: not comparable between providers. */
+  score: number | null
+  restingHeartRate: number | null
+  hrvRmssdMilliseconds: number | null
+}
+
+export interface SleepRecoveryDay {
+  date: string
+  provider: string
+  sleep: SleepSession | null
+  napMinutes: number
+  recovery: Recovery | null
+}
+
+export interface ProviderAverages {
+  provider: string
+  daysWithSleep: number
+  averageAsleepMinutes: number | null
+  daysWithRecovery: number
+  averageRecoveryScore: number | null
+  averageRestingHeartRate: number | null
+  averageHrvRmssdMilliseconds: number | null
+}
+
+export interface SleepRecoveryRange {
+  from: string
+  to: string
+  days: SleepRecoveryDay[]
+  averages: ProviderAverages[]
+}
+
+export interface Workout {
+  id: string
+  sportName: string
+  startUtc: string
+  endUtc: string
+  utcOffsetMinutes: number
+  isScored: boolean
+  strain: number | null
+  averageHeartRate: number | null
+  maxHeartRate: number | null
+  calories: number | null
+  distanceMeters: number | null
+}
+
+export interface ActivityDay {
+  date: string
+  provider: string
+  dayStrain: number | null
+  caloriesBurned: number | null
+  workouts: Workout[]
+}
+
+export interface ActivityRange {
+  from: string
+  to: string
+  days: ActivityDay[]
+}
+
+export interface Integration {
+  provider: string
+  displayName: string
+  configured: boolean
+  connected: boolean
+  status: 'Connected' | 'NeedsReauthorization' | null
+  connectedAtUtc: string | null
+  lastSyncAtUtc: string | null
+  lastSyncStatus: string | null
+  scopes: string[]
+}
+
+export interface SyncJob {
+  id: string
+  trigger: 'Manual' | 'Scheduled'
+  status: 'Running' | 'Succeeded' | 'Failed' | 'Skipped'
+  startedAtUtc: string
+  finishedAtUtc: string | null
+  recordsFetched: number
+  recordsAdded: number
+  recordsUpdated: number
+  errorCode: string | null
+}

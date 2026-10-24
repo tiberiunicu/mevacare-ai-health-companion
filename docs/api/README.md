@@ -24,6 +24,14 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 | `GET /api/conversations/{id}/proposals` · `POST /api/assistant/proposals/{id}/dismiss` | meals prepared by the assistant (state Proposed, Committed or Dismissed) |
 | `POST /api/chat/stream` | send a message, stream the answer (needs `AiProcessing`; per-user rate limit) |
 | `GET /api/conversations` · `GET /api/conversations/{id}/messages` · `DELETE /api/conversations/{id}` | chat history |
+| `POST /api/measurements/weight` `{kilograms, measuredAt?}` · `GET /api/measurements/weight?from=&to=` · `DELETE /api/measurements/weight/{id}` | manual weight entries (kg, 20–500) and weight history with latest value and change; imported values cannot be deleted here (needs `HealthDataProcessing`; ranges ≤ 366 days) |
+| `GET /api/measurements/sleep-recovery?from=&to=` | per-day, **per-provider** night (longest non-nap sleep ending that local day), naps, recovery score / resting heart rate / HRV, and per-provider averages |
+| `GET /api/measurements/activity?from=&to=` | per-day, per-provider day strain, energy burned and workouts |
+| `GET /api/integrations` | the available providers with `configured`, `connected`, `status` (`Connected`, `NeedsReauthorization`), last synchronization |
+| `POST /api/integrations/{provider}/connect` | starts the OAuth flow: `{authorizationUrl}` to send the browser to (needs `ExternalIntegrations` + `HealthDataProcessing`; `503 integration_not_configured` without credentials) |
+| `GET /api/integrations/{provider}/callback` *anonymous, rate limited* | the provider's redirect target; consumes the single-use `state` and **always answers with a redirect** to the web app: `/devices?connected=whoop` or `/devices?error=<code>` |
+| `POST /api/integrations/{provider}/sync` · `GET /api/integrations/{provider}/sync-jobs?limit=` | synchronize now (one per minute per account) and recent runs |
+| `DELETE /api/integrations/{provider}?deleteData=false` | disconnect (revokes at the provider, deletes the stored tokens; `deleteData=true` also removes the imported history) |
 | `GET /api/knowledge/sources` | approved medical-knowledge sources behind the assistant's citations (title, publisher, URL, licence, retrieval date, version, passage count) |
 | `GET /health/live` · `GET /health/ready` *anonymous* | liveness / readiness (database) |
 | `GET /health/knowledge` *anonymous* | `{enabled, vectorStore, vectorStoreProvider, embeddingModel, activeSources}`; 503 when the vector store is unreachable; no secrets |
@@ -37,7 +45,7 @@ Response: `200 text/event-stream`. Events (each `event: <name>` + `data: <json>`
 |---|---|---|
 | `conversation` | `{conversationId, title}` | always first |
 | `safety` | `{category}` | the following text is a fixed safety answer, not model output |
-| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge` |
+| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge`, `GetWeightHistory`, `GetSleepAndRecovery` |
 | `proposal` | `{card}` | a meal prepared by the assistant (`card.id`, `card.proposal` with matched items, grams, nutrients, totals, warnings); **nothing is saved** until `POST /api/nutrition/meals` with that `proposalId` |
 | `delta` | `{text}` | zero or more |
 | `citations` | `{items:[{number, sourceId, title, publisher, url, license, retrievedOn, excerpt, cited}]}` | only when the model searched the approved sources and found something; sent after the last `delta`, before `done`; `cited=false` means consulted but not referenced by the answer. The same list is returned as `citations` on each message of `GET /api/conversations/{id}/messages` |
@@ -47,5 +55,6 @@ Response: `200 text/event-stream`. Events (each `event: <name>` + `data: <json>`
 Problems detected before streaming are normal HTTP errors: `400` validation, `401`, `403 consent_required`,
 `404` (conversation not yours or missing), `409 duplicate_message`, `429` rate limit, `503 ai_not_configured`. Nutrition adds `400 unknown_food`,
 `invalid_range`, `range_too_long`, `409 proposal_not_open` (dismissed) and `404` for a proposal that is not the caller's.
+Integration codes: `integration_not_configured` (503), `sync_in_progress` (409), `429` for a too frequent manual synchronization, `404` when the provider is unknown or not connected; callback redirect errors are `invalid_state`, `authorization_denied`, `authorization_failed`, `invalid_request`, `not_configured`, `consent_required`, `no_refresh_token`, `provider_unavailable`, `account_already_linked`, `different_account`. A synchronization run reports `status` and, on failure, `errorCode` (`reauthorization_required`, `rate_limited`, `provider_unavailable`, `consent_required`, `internal_error`) in a normal 200 response.
 Inside a turn, knowledge search failures do not break the chat: the tool result carries `knowledge_unavailable` (embedding provider or Qdrant down) or `knowledge_reindex_required` (the embedding model changed since indexing) and the assistant says it cannot consult its sources.
 A repeated `clientMessageId` in the same conversation is rejected with `409` so client retries never duplicate a message.

@@ -12,7 +12,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': { target: apiTarget, changeOrigin: false },
-      '/health': { target: apiTarget, changeOrigin: false },
+      // Only the API's own health endpoints: the SPA owns every other /health/... route (weight, sleep, activity).
+      '^/health/(live|ready|knowledge)$': { target: apiTarget, changeOrigin: false },
     },
   },
   test: {

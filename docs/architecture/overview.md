@@ -9,7 +9,7 @@ broker, no multi-agent system (see [ADR-0001](../decisions/0001-modular-monolith
 ```
                 Api (composition root, middleware, OpenAPI)
                /   |        \                \
-   Modules.Identity  Modules.HealthProfile  Modules.Nutrition  Modules.Assistant  Modules.Knowledge   (feature modules)
+   Modules.Identity  HealthProfile  Nutrition  Assistant  Knowledge  Measurements  Integrations   (feature modules)
           \             |  \                 |   \
            \            |   Identity (User)  |    Identity (User)
             \___________|____________________|____
@@ -23,7 +23,7 @@ broker, no multi-agent system (see [ADR-0001](../decisions/0001-modular-monolith
 | Modules depend on `Contracts` and `Infrastructure`, never on the `Api` project | the host composes, modules do not know the host |
 | `Infrastructure` never references a module | no cycles; modules reach the database through `AppDbContext.Set<T>()` |
 | A module may reference `Identity` **only for the `User` entity** (to declare the foreign key to `Users`) | database-level referential integrity and cascading deletion (GDPR erasure) |
-| Modules do not call each other's services; shared needs go through `Contracts` interfaces (`IConsentService`, `IAuditLog`, `IUserDataExporter`, `ICurrentUser`, and for the AI tools `INutritionAssistantApi`, `IHealthProfileReader`, `IMealProposalGate`, and for the medical-knowledge tool `IKnowledgeSearch`) | keeps boundaries enforceable and the modules extractable later |
+| Modules do not call each other's services; shared needs go through `Contracts` interfaces (`IConsentService`, `IAuditLog`, `IUserDataExporter`, `ICurrentUser`, and for the AI tools `INutritionAssistantApi`, `IHealthProfileReader`, `IMealProposalGate`, for the medical-knowledge tool `IKnowledgeSearch`, and for measurements `IMeasurementIngest` (Integrations → Measurements) and `IMeasurementsAssistantApi`) | keeps boundaries enforceable and the modules extractable later |
 | Entities are never returned by the API; every endpoint uses request/response records | no mass assignment, stable contracts |
 
 Inside a module the code is organised by **feature** (`Features/Auth`, `Features/Consents`…) rather than by technical
@@ -63,16 +63,11 @@ reflection at runtime.
 | `nutrition.Foods`, `FoodNutrients`, `FoodPortions` | imported USDA SR Legacy food data with provenance; nutrients per 100 g; unknown nutrients have no row |
 | `nutrition.Meals`, `MealItems`, `NutritionTargets` | the journal (items keep a nutrient **snapshot**), the user's own targets; details in [nutrition.md](nutrition.md) |
 | `knowledge.Sources`, `knowledge.Chunks` | approved reference documents (provenance, licence, content hash, version, status, embedding model) and their text chunks; the vector index in Qdrant is derived from them and can be rebuilt |
+| `measurements.MeasurementSources`, `HealthMeasurements`, `SleepSessions`, `Workouts` | normalized measurements with provenance, source time zone and local date; unique per provider record |
+| `integrations.ConnectedAccounts`, `SyncJobs`, `OAuthStates` | provider links with encrypted tokens, synchronization history, pending single-use OAuth states; details in [measurements-and-wearables.md](measurements-and-wearables.md) |
 | `core.AuditEvents` | security audit log |
 
-### Designed, not yet created
-
-Created in the phase that needs them (see [ADR-0007](../decisions/0007-incremental-modules-and-migrations.md)):
-
-- **Measurements (Phase 5)**: `HealthMeasurements` (metric type, value, unit, measured-at UTC + source time zone,
-  source id, external id) with a unique index on (source, external id) to prevent duplicate wearable records, and
-  `MeasurementSources`.
-- **Integrations (Phase 5)**: `ConnectedAccounts` (tokens encrypted at rest), `SyncJobs`.
+All planned tables now exist; later phases add tables only when they need them (see [ADR-0007](../decisions/0007-incremental-modules-and-migrations.md)).
 
 ## Request flows
 
@@ -85,6 +80,8 @@ a signed-in user unless it is explicitly `AllowAnonymous`) → endpoint → vali
 conversation owned by the caller → run the deterministic emergency screen → persist the user message → stream the
 model answer as Server-Sent Events (the model may call the per-turn tools, see [tool calling](../ai/tool-calling.md)) →
 persist the assistant message (also when it fails or the user disconnects).
+
+**Connecting and synchronizing a wearable** (Phase 5): authenticated `connect` → provider authorization page → anonymous callback (single-use state) → protected tokens stored → the SPA triggers a synchronization → provider data is normalized and ingested idempotently → pages and assistant tools read it back. See [measurements-and-wearables.md](measurements-and-wearables.md).
 
 **Answering from approved medical sources** (Phase 4): the model calls `SearchMedicalKnowledge` → `IKnowledgeSearch` embeds the query → Qdrant returns chunk ids → the chunks are loaded from SQL (active sources only) → numbered passages go back to the model → the answer cites `[n]` → a `citations` event and the stored message carry the sources. Details: [RAG](../ai/rag-embeddings-memory.md).
 

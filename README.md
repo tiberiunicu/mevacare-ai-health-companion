@@ -7,7 +7,7 @@ diagnose, prescribe or replace a physician, and it is not an emergency service.
 This is a brand-new, standalone product. It shares nothing (code, database, infrastructure) with any other MevaCare
 application.
 
-> **Status: Phase 1 (foundation), Phase 2 (AI chat), Phase 3 (nutrition) and Phase 4 (medical knowledge RAG) are implemented and tested. Phases 5–6 are not started.**
+> **Status: Phase 1 (foundation), Phase 2 (AI chat), Phase 3 (nutrition), Phase 4 (medical knowledge RAG) and Phase 5 (measurements and WHOOP wearable integration) are implemented and tested. Phase 6 is not started.**
 > See [What works today](#what-works-today) and [Roadmap](#roadmap).
 
 ## What works today
@@ -24,7 +24,9 @@ application.
 | AI meal logging: structured extraction → food match → proposal card → user confirmation → journal (tool calling) | Done (scripted-model tests and a mock OpenAI server; see *AI provider testing*) |
 | Medical knowledge RAG: operator-run ingestion of approved, licensed documents → chunking → embeddings → Qdrant, grounded answers with numbered citations, retrieval evaluation | Done; **no documents are shipped**, you supply a corpus (see *Medical knowledge* below). Real OpenAI/Ollama embeddings never run |
 | React app: sign in/up, dashboard (real calories and macros), profile, preferences, privacy, AI settings (incl. the approved sources list), chat with tool status, meal cards and source citations, nutrition pages; light/dark; English + Romanian | Done |
-| Weight/sleep/activity measurements, wearables, insights, AI memory | **Not implemented.** The UI shows an explicit "not available yet" state, never fake data |
+| Measurements: manual weight (kg/lb), weight evolution, sleep sessions, recovery, day strain, workouts, with provenance and local-day handling; historical queries; assistant tools `GetWeightHistory` and `GetSleepAndRecovery` | Done |
+| Wearables: connected-account infrastructure, WHOOP OAuth, hourly + on-demand synchronization, normalization, sleep/recovery/activity pages and dashboard cards, connect/synchronize/disconnect UI | Done, **but never run against the real WHOOP service** (scripted stand-in only; see [docs/integrations/whoop.md](docs/integrations/whoop.md)) |
+| Insights and trend analysis (Phase 6), AI memory, other wearables (Apple Health, Garmin, Oura …) | **Not implemented.** Pages say so explicitly, never fake data |
 
 **AI provider testing.** Automated tests use a scripted fake model. The OpenAI provider code path was additionally
 exercised end-to-end (SDK → HTTP → streaming → browser, including **tool calls and JSON-schema structured output**) against a local OpenAI-compatible mock server. It has **not**
@@ -43,6 +45,8 @@ src/backend/
   MevaCare.AI.HealthCompanion.Modules.Nutrition    foods, meals, targets, summaries, USDA importer, meal proposals back end
   MevaCare.AI.HealthCompanion.Modules.Assistant    AI chat, providers, safety, conversations, tools, meal parsing
   MevaCare.AI.HealthCompanion.Modules.Knowledge    medical-knowledge RAG: ingestion, embeddings, vector store (Qdrant), retrieval
+  MevaCare.AI.HealthCompanion.Modules.Measurements normalized measurements with provenance: weight, sleep, recovery, strain, workouts, queries
+  MevaCare.AI.HealthCompanion.Modules.Integrations connected accounts, provider OAuth (WHOOP), protected tokens, synchronization
 src/frontend/mevacare-ai-web                       React + TypeScript + Vite + Tailwind
 tests/UnitTests | IntegrationTests | AIEvaluationTests
 docs/architecture | decisions (ADRs) | ai | api
@@ -50,9 +54,8 @@ infrastructure/docker, docker-compose.yml, scripts/
 ```
 
 Differences from the suggested structure (reasons in [ADR-0001](docs/decisions/0001-modular-monolith.md) and
-[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): the Measurements and
-Integrations module projects are not created yet — each is added in the phase that implements it, together with its
-tables. The `GetWeightHistory` tool waits for the Measurements module.
+[ADR-0007](docs/decisions/0007-incremental-modules-and-migrations.md)): each module project was added in the phase that implemented it,
+together with its tables.
 
 ## Prerequisites
 
@@ -122,6 +125,7 @@ Configuration is layered: `appsettings.json` (safe defaults) → `appsettings.De
 | `Ai:MaxOutputTokens`, `Ai:Temperature`, `Ai:HistoryMessageLimit`, `Ai:HistoryCharacterBudget`, `Ai:RequestTimeoutSeconds` | generation and cost limits |
 | `Ai:ToolsEnabled`, `Ai:MaxToolIterations` | turn tool calling off (models without tool support) / cap model-tool round trips |
 | `Knowledge:Enabled`, `Knowledge:Embeddings:*`, `Knowledge:VectorStore:*`, `Knowledge:Chunking:*`, `Knowledge:Retrieval:*` | medical-knowledge RAG; defaults work offline (Lexical embeddings, Qdrant on `localhost:6333`). See [docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md#configuration-knowledge) |
+| `Integrations:Whoop:ClientId` / `ClientSecret` / `RedirectUri`, `Integrations:Sync:*`, `Integrations:DataProtectionKeysPath` | WHOOP connection and synchronization; without credentials the integration shows "not set up". See [docs/integrations/whoop.md](docs/integrations/whoop.md) |
 | `Auth:*`, `RateLimiting:*`, `Cors:AllowedOrigins` | see `appsettings.json` |
 
 Examples:
@@ -149,6 +153,12 @@ The assistant answers reference questions ("what is HRV?", "how much activity do
 4. Ask the assistant a reference question; the sources appear under the answer and in *Settings → AI*.
 
 The default embeddings are an **offline lexical baseline** (matches words, not meaning). For better retrieval set `Knowledge:Embeddings:Provider` to `OpenAI` or `Ollama` plus `Model` and `Dimensions`, run `reindex-knowledge --recreate`, and re-calibrate `Knowledge:Retrieval:MinScore` with the retrieval evaluation. Those providers are implemented but were **not run** against a real service.
+
+### Wearables (WHOOP)
+
+Sleep, recovery, strain and workouts can be imported from a WHOOP account. You need a WHOOP developer app (client id and secret, registered redirect URL) and a WHOOP member account to try it; the steps, the exact commands and the list of **unverified assumptions** are in [docs/integrations/whoop.md](docs/integrations/whoop.md). In short: set `Integrations:Whoop:ClientId` and `ClientSecret` with user-secrets, turn on the *External integrations* consent, open *Connected devices* and press *Connect WHOOP*. Without the credentials the page says "Not set up on this server" and nothing else is affected. In production set `Integrations:DataProtectionKeysPath` to a persistent, protected folder (it holds the keys that encrypt the stored tokens) and run a single API instance (the hourly synchronization runs inside it).
+
+Weight can always be entered by hand under *Health → Weight* (kg or lb, following your unit preference).
 
 Without a configured provider everything except chat works; chat answers HTTP 503 `ai_not_configured` and the UI
 shows "The AI service is not available right now".
@@ -195,6 +205,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - [Architecture overview](docs/architecture/overview.md) · [Security and privacy](docs/architecture/security-and-privacy.md)
 - [Architecture decision records](docs/decisions/)
 - [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
+- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md)
 - AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·
   [structured outputs](docs/ai/structured-outputs.md) · [safety](docs/ai/ai-safety.md) · [evaluation](docs/ai/ai-evaluation.md) ·
   [RAG, citations and (planned) memory](docs/ai/rag-embeddings-memory.md)
@@ -203,7 +214,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ## Roadmap
 
 1. ✅ Foundation  2. ✅ AI chat  3. ✅ Nutrition vertical slice (food data, meal logging via tools and confirmation)
-4. ✅ Medical knowledge RAG (Qdrant, citations)  5. Wearables (WHOOP first) and measurements  6. Health intelligence (trends, insights)
+4. ✅ Medical knowledge RAG (Qdrant, citations)  5. ✅ Wearables (WHOOP first) and measurements  6. Health intelligence (trends, insights)
 
 ## Troubleshooting
 
@@ -213,4 +224,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - *Chat says the AI service is unavailable* — configure a provider (above) and, for Ollama, make sure it is running.
 - *Integration tests cannot connect* — set `MEVACARE_TEST_SQL` to a connection string that may create databases.
 - *The assistant says it has no approved source* — nothing is ingested yet, the question is outside the corpus, or the lexical baseline did not match your wording; check `GET /health/knowledge` and *Settings → AI*.
+- *"Not set up on this server" under Connected devices* — the WHOOP client id/secret are missing ([docs/integrations/whoop.md](docs/integrations/whoop.md)).
+- *Connecting WHOOP returns "The connection attempt expired" or fails at the provider* — the redirect URL must match the one registered in the WHOOP dashboard exactly.
+- *Behind a reverse proxy, `/health/weight` shows an API error* — proxy only `/api` and the API's own `/health/live|ready|knowledge`; every other `/health/...` path belongs to the web app (the Vite dev proxy does the same).
 - *"knowledge_unavailable" / "knowledge_reindex_required"* — Qdrant or the embedding provider is down, or the embedding model changed: run `reindex-knowledge --recreate`.

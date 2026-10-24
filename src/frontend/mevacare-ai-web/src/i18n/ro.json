@@ -83,18 +83,21 @@
     "insights": "Observații AI",
     "noDataYet": "Încă nu există date",
     "availableWith": "Disponibil odată cu modulul de nutriție (faza următoare).",
-    "availableWithMeasurements": "Disponibil odată cu măsurătorile de sănătate și integrarea dispozitivelor (fază ulterioară).",
-    "availableWithInsights": "Disponibil după ce se strâng suficiente date proprii (fază ulterioară)."
-  },
-  "comingSoon": {
-    "title": "Indisponibil încă",
-    "body": "Această zonă este planificată, dar nu a fost construită. Nimic din ce se afișează aici nu reprezintă date reale.",
-    "phase": "Planificat pentru: {{phase}}"
-  },
-  "phases": {
-    "nutrition": "Faza 3 — Nutriție",
-    "measurements": "Faza 5 — Dispozitive și măsurători",
-    "devices": "Faza 5 — Dispozitive purtabile"
+    "availableWithInsights": "Disponibil după ce se strâng suficiente date proprii (fază ulterioară).",
+    "weightChange": "{{value}} în {{days}} de zile",
+    "weightEmpty": "Încă nu există înregistrări de greutate.",
+    "weightAction": "Deschide greutatea",
+    "sleepEmpty": "Încă nu există date de somn sau recuperare. Conectează un dispozitiv pentru a le importa.",
+    "sleepAction": "Deschide somn și recuperare",
+    "activityEmpty": "Încă nu există date de activitate. Conectează un dispozitiv pentru a le importa.",
+    "activityAction": "Deschide activitatea",
+    "connectAction": "Conectează un dispozitiv",
+    "recovery": "Recuperare {{provider}} {{score}}%",
+    "strain": "Efort {{provider}} {{value}}",
+    "workoutsWeek": "{{count}} antrenamente în ultimele 7 zile",
+    "workoutsWeek_one": "{{count}} antrenament în ultimele 7 zile",
+    "workoutsWeek_few": "{{count}} antrenamente în ultimele 7 zile",
+    "fromDevice": "De la {{provider}}"
   },
   "profile": {
     "title": "Profil de sănătate",
@@ -177,7 +180,7 @@
       },
       "ExternalIntegrations": {
         "title": "Integrări externe",
-        "body": "Permite conectarea dispozitivelor purtabile și a altor servicii (indisponibil încă)."
+        "body": "Permite conectarea dispozitivelor purtabile (WHOOP) și importul datelor lor."
       }
     },
     "dataTitle": "Datele tale",
@@ -209,7 +212,8 @@
     "knowledgeTitle": "Surse de cunoștințe medicale",
     "knowledgeBody": "Când întrebi despre termeni de sănătate sau recomandări, asistentul poate răspunde din aceste documente aprobate și le citează. Pentru astfel de răspunsuri nu folosește alte surse.",
     "knowledgeEmpty": "Nu este indexată nicio sursă aprobată, deci asistentul nu are documente de referință.",
-    "knowledgeMeta": "{{publisher}} · {{license}} · preluat {{date}} · {{count}} pasaje"
+    "knowledgeMeta": "{{publisher}} · {{license}} · preluat {{date}} · {{count}} pasaje",
+    "whatIsSent4": "Când întrebarea ta are nevoie de datele tale, doar faptele potrivite pe care asistentul le caută pentru acel răspuns: elemente de bază din profil (vârstă, sex, înălțime, nivel de activitate), totaluri nutriționale, greutăți, precum și valori de somn și recuperare de la un dispozitiv conectat."
   },
   "chat": {
     "title": "Companion AI",
@@ -381,5 +385,143 @@
     "open": "Deschide jurnalul alimentar",
     "setTargets": "Setează ținte pentru a vedea barele de progres",
     "incomplete": "Totalurile pot fi incomplete."
+  },
+  "health": {
+    "consentTitle": "Este necesar consimțământul pentru date de sănătate",
+    "consentBody": "Greutatea, somnul și activitatea sunt date de sănătate. Activează prelucrarea datelor de sănătate pentru a le stoca și a le vedea.",
+    "consentAction": "Deschide setările de confidențialitate",
+    "range": "Perioadă",
+    "lastDays": "Ultimele {{count}} zile",
+    "duration": "{{hours}} h {{minutes}} min",
+    "bpm": "bpm",
+    "ms": "ms",
+    "kcal": "kcal",
+    "providerScoreNote": "Scorul propriu {{provider}}, pe scala proprie {{provider}}. Nu poate fi comparat cu scorurile altor dispozitive.",
+    "noDeviceTitle": "Încă nu există date de la dispozitiv",
+    "noDeviceBody": "Somnul, recuperarea și activitatea vin de la un dispozitiv conectat. Nu se afișează nimic până nu sunt importate date reale.",
+    "noDeviceAction": "Conectează un dispozitiv",
+    "weight": {
+      "title": "Greutate",
+      "subtitle": "Înregistrările tale și valorile importate din surse conectate, în sistemul tău de unități.",
+      "addTitle": "Adaugă o măsurătoare",
+      "valueLabel": "Greutate ({{unit}})",
+      "whenLabel": "Data și ora",
+      "add": "Adaugă",
+      "invalid": "Introdu o greutate între {{min}} și {{max}} {{unit}}.",
+      "evolution": "Evoluție",
+      "latest": "Ultima",
+      "change": "Schimbare în perioadă",
+      "needTwo": "Sunt necesare cel puțin două înregistrări.",
+      "entries": "Înregistrări",
+      "empty": "Nu există încă înregistrări de greutate în această perioadă.",
+      "chartLabel": "Greutatea în timp: {{count}} înregistrări între {{from}} și {{to}}, între {{low}} și {{high}} {{unit}}.",
+      "enteredByYou": "introdusă de tine",
+      "importedFrom": "importată de la {{provider}}",
+      "deleteLabel": "Șterge înregistrarea de greutate din {{date}}"
+    },
+    "sleep": {
+      "title": "Somn și recuperare",
+      "subtitle": "Importate de la dispozitivul conectat. Scorurile aparțin furnizorului dispozitivului.",
+      "lastNight": "Noaptea trecută",
+      "performance": "Performanța somnului",
+      "efficiency": "Eficiența somnului",
+      "naps": "Plus somn de zi: {{duration}}",
+      "pending": "{{provider}} nu a evaluat încă acest somn. Va apărea după următoarea sincronizare.",
+      "noSleep": "Nu s-a importat somn în această perioadă.",
+      "recoveryTitle": "Recuperare {{provider}}",
+      "noRecovery": "Nu s-a importat recuperare în această perioadă.",
+      "restingHeartRate": "Puls în repaus",
+      "hrv": "HRV (RMSSD)",
+      "durationChart": "Timp de somn",
+      "durationChartLabel": "Timpul de somn pe noapte în ultimele {{count}} zile",
+      "recoveryChart": "Scor de recuperare {{provider}}",
+      "recoveryChartLabel": "Scorul de recuperare {{provider}} pe zi în ultimele {{count}} zile",
+      "averages": "Medii pe {{count}} zile",
+      "avgSleep": "Somn mediu",
+      "avgRecovery": "Recuperare medie",
+      "basedOn": "{{count}} zile cu date",
+      "basedOn_one": "{{count}} zi cu date",
+      "basedOn_few": "{{count}} zile cu date",
+      "stages": {
+        "deep": "Profund",
+        "rem": "REM",
+        "light": "Ușor",
+        "awake": "Treaz"
+      }
+    },
+    "activity": {
+      "title": "Activitate",
+      "subtitle": "Efort, energie și antrenamente importate de la dispozitivul conectat.",
+      "strainChart": "Efortul zilei {{provider}}",
+      "strainChartLabel": "Efortul zilei {{provider}} pe zi în ultimele {{count}} zile",
+      "strainValue": "efort {{value}}",
+      "calories": "Energie consumată (ultima zi)",
+      "caloriesNote": "întreaga zi, inclusiv metabolismul de repaus",
+      "noCalories": "Nu există date de energie în această perioadă.",
+      "workouts": "Antrenamente",
+      "noWorkouts": "Niciun antrenament în această perioadă.",
+      "workoutPending": "încă neevaluat"
+    }
+  },
+  "devices": {
+    "title": "Dispozitive conectate",
+    "subtitle": "Importă somnul, recuperarea și activitatea de pe dispozitivul tău purtabil. Tu alegi ce se conectează și te poți deconecta oricând.",
+    "state": {
+      "notConfigured": "Neconfigurat pe acest server",
+      "notConnected": "Neconectat",
+      "connected": "Conectat",
+      "needsReauth": "Trebuie reconectat"
+    },
+    "notConfiguredHelp": "{{provider}} nu a fost încă configurat de administratorul acestui server, deci nu poate fi conectat. Vezi docs/integrations/whoop.md pentru configurare.",
+    "consentNeeded": "Conectarea unui dispozitiv necesită consimțământul pentru integrări externe.",
+    "consentAction": "Deschide setările de confidențialitate",
+    "connect": "Conectează {{provider}}",
+    "reconnect": "Reconectează",
+    "lastSync": "Ultima sincronizare",
+    "neverSynced": "Încă nu",
+    "dataShared": "Ce se importă",
+    "dataSharedValue": "Somn, recuperare, efortul zilei și antrenamente",
+    "syncNow": "Sincronizează acum",
+    "syncing": "Se sincronizează…",
+    "syncDone": "La zi: {{added}} înregistrări noi și {{updated}} actualizate.",
+    "syncFailedTitle": "Sincronizarea nu s-a terminat",
+    "syncTooSoon": "Dispozitivul a fost sincronizat acum câteva momente. Așteaptă un minut și încearcă din nou.",
+    "syncErrors": {
+      "reauthorization_required": "Conexiunea a fost refuzată de furnizor. Reconectează dispozitivul.",
+      "rate_limited": "Furnizorul ne-a cerut să încetinim. Se va reîncerca automat.",
+      "provider_unavailable": "Furnizorul nu a putut fi contactat. Se va reîncerca automat.",
+      "consent_required": "Un consimțământ necesar este dezactivat.",
+      "internal_error": "Ceva nu a mers bine. Încearcă mai târziu."
+    },
+    "disconnect": "Deconectează",
+    "disconnectBody": "Deconectarea oprește importul de la {{provider}} și șterge accesul stocat. Istoricul deja importat rămâne, dacă nu îl ștergi mai jos.",
+    "deleteDataLabel": "Șterge și datele importate de la {{provider}}",
+    "confirmDisconnect": "Deconectează",
+    "history": "Sincronizări recente",
+    "jobStatus": {
+      "Running": "În curs",
+      "Succeeded": "Reușită",
+      "Failed": "Eșuată",
+      "Skipped": "Omisă"
+    },
+    "connectedTitle": "Conectat",
+    "connectedBody": "Dispozitivul tău este conectat.",
+    "importing": "Se importă datele recente…",
+    "connectFailedTitle": "Dispozitivul nu a putut fi conectat",
+    "callbackErrors": {
+      "invalid_state": "Încercarea de conectare a expirat sau a fost deja folosită. Începe din nou.",
+      "authorization_denied": "Ai anulat autorizarea la furnizor.",
+      "authorization_failed": "Furnizorul nu a acceptat autorizarea. Încearcă din nou.",
+      "invalid_request": "Răspunsul furnizorului a fost incomplet. Încearcă din nou.",
+      "not_configured": "Această integrare nu este configurată pe server.",
+      "consent_required": "Un consimțământ necesar este dezactivat. Verifică setările de confidențialitate.",
+      "no_refresh_token": "Furnizorul nu a acordat acces de lungă durată, deci datele nu pot fi ținute la zi.",
+      "provider_unavailable": "Furnizorul nu a putut fi contactat. Încearcă mai târziu.",
+      "account_already_linked": "Acest cont de la furnizor este deja conectat la alt utilizator.",
+      "different_account": "Acesta este alt cont de la furnizor decât cel deja conectat. Deconectează mai întâi.",
+      "unknown": "Conectarea a eșuat. Încearcă din nou."
+    },
+    "privacyTitle": "Datele tale",
+    "privacyBody": "Accesul este cerut doar pentru citire. Cheile de acces sunt stocate criptat pe server și nu sunt afișate niciodată. Deconectarea revocă accesul la furnizor atunci când acesta poate fi contactat."
   }
 }

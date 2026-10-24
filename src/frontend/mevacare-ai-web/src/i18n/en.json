@@ -82,18 +82,20 @@
     "insights": "AI insights",
     "noDataYet": "No data yet",
     "availableWith": "Available with the nutrition module (next phase).",
-    "availableWithMeasurements": "Available with health measurements and wearable integration (later phase).",
-    "availableWithInsights": "Available once enough of your own data has been collected (later phase)."
-  },
-  "comingSoon": {
-    "title": "Not available yet",
-    "body": "This area is planned but has not been built. Nothing shown here is real data.",
-    "phase": "Planned for: {{phase}}"
-  },
-  "phases": {
-    "nutrition": "Phase 3 — Nutrition",
-    "measurements": "Phase 5 — Wearables and measurements",
-    "devices": "Phase 5 — Wearables"
+    "availableWithInsights": "Available once enough of your own data has been collected (later phase).",
+    "weightChange": "{{value}} in {{days}} days",
+    "weightEmpty": "No weight entries yet.",
+    "weightAction": "Open weight",
+    "sleepEmpty": "No sleep or recovery data yet. Connect a device to import it.",
+    "sleepAction": "Open sleep and recovery",
+    "activityEmpty": "No activity data yet. Connect a device to import it.",
+    "activityAction": "Open activity",
+    "connectAction": "Connect a device",
+    "recovery": "{{provider}} recovery {{score}}%",
+    "strain": "{{provider}} strain {{value}}",
+    "workoutsWeek": "{{count}} workouts in the last 7 days",
+    "workoutsWeek_one": "{{count}} workout in the last 7 days",
+    "fromDevice": "From {{provider}}"
   },
   "profile": {
     "title": "Health profile",
@@ -176,7 +178,7 @@
       },
       "ExternalIntegrations": {
         "title": "External integrations",
-        "body": "Allows connecting wearables and other services (not available yet)."
+        "body": "Allows connecting wearables (WHOOP) and importing their data."
       }
     },
     "dataTitle": "Your data",
@@ -208,7 +210,8 @@
     "knowledgeTitle": "Medical knowledge sources",
     "knowledgeBody": "When you ask about health terms or guidance, the assistant can answer from these approved documents and cites them. It never uses other sources for those answers.",
     "knowledgeEmpty": "No approved sources are indexed yet, so the assistant has no reference documents.",
-    "knowledgeMeta": "{{publisher}} · {{license}} · retrieved {{date}} · {{count}} passages"
+    "knowledgeMeta": "{{publisher}} · {{license}} · retrieved {{date}} · {{count}} passages",
+    "whatIsSent4": "When your question needs your own data, only the matching facts the assistant looks up for that answer: profile basics (age, sex, height, activity level), nutrition totals, weight entries, and sleep and recovery values from a connected device."
   },
   "chat": {
     "title": "AI Companion",
@@ -379,5 +382,142 @@
     "open": "Open food journal",
     "setTargets": "Set targets to see progress bars",
     "incomplete": "Totals may be incomplete."
+  },
+  "health": {
+    "consentTitle": "Health data consent needed",
+    "consentBody": "Weight, sleep and activity are health data. Turn on health data processing to store and see them.",
+    "consentAction": "Open privacy settings",
+    "range": "Period",
+    "lastDays": "Last {{count}} days",
+    "duration": "{{hours}} h {{minutes}} min",
+    "bpm": "bpm",
+    "ms": "ms",
+    "kcal": "kcal",
+    "providerScoreNote": "{{provider}}'s own score on {{provider}}'s own scale. It is not comparable with scores from other devices.",
+    "noDeviceTitle": "No device data yet",
+    "noDeviceBody": "Sleep, recovery and activity come from a connected device. Nothing is shown until real data has been imported.",
+    "noDeviceAction": "Connect a device",
+    "weight": {
+      "title": "Weight",
+      "subtitle": "Your own entries and values imported from connected sources, in your unit system.",
+      "addTitle": "Add a measurement",
+      "valueLabel": "Weight ({{unit}})",
+      "whenLabel": "Date and time",
+      "add": "Add",
+      "invalid": "Enter a weight between {{min}} and {{max}} {{unit}}.",
+      "evolution": "Evolution",
+      "latest": "Latest",
+      "change": "Change in the period",
+      "needTwo": "Needs at least two entries.",
+      "entries": "Entries",
+      "empty": "No weight entries in this period yet.",
+      "chartLabel": "Weight over time: {{count}} entries from {{from}} to {{to}}, between {{low}} and {{high}} {{unit}}.",
+      "enteredByYou": "entered by you",
+      "importedFrom": "imported from {{provider}}",
+      "deleteLabel": "Delete the weight entry of {{date}}"
+    },
+    "sleep": {
+      "title": "Sleep and recovery",
+      "subtitle": "Imported from your connected device. Scores belong to the device provider.",
+      "lastNight": "Last night",
+      "performance": "Sleep performance",
+      "efficiency": "Sleep efficiency",
+      "naps": "Plus naps: {{duration}}",
+      "pending": "{{provider}} has not scored this sleep yet. It will appear after the next synchronization.",
+      "noSleep": "No sleep imported in this period.",
+      "recoveryTitle": "{{provider}} recovery",
+      "noRecovery": "No recovery imported in this period.",
+      "restingHeartRate": "Resting heart rate",
+      "hrv": "HRV (RMSSD)",
+      "durationChart": "Time asleep",
+      "durationChartLabel": "Time asleep per night over the last {{count}} days",
+      "recoveryChart": "{{provider}} recovery score",
+      "recoveryChartLabel": "{{provider}} recovery score per day over the last {{count}} days",
+      "averages": "Averages over {{count}} days",
+      "avgSleep": "Average sleep",
+      "avgRecovery": "Average recovery",
+      "basedOn": "{{count}} days with data",
+      "basedOn_one": "{{count}} day with data",
+      "stages": {
+        "deep": "Deep",
+        "rem": "REM",
+        "light": "Light",
+        "awake": "Awake"
+      }
+    },
+    "activity": {
+      "title": "Activity",
+      "subtitle": "Strain, energy and workouts imported from your connected device.",
+      "strainChart": "{{provider}} day strain",
+      "strainChartLabel": "{{provider}} day strain per day over the last {{count}} days",
+      "strainValue": "strain {{value}}",
+      "calories": "Energy burned (latest day)",
+      "caloriesNote": "whole day including resting metabolism",
+      "noCalories": "No energy data in this period.",
+      "workouts": "Workouts",
+      "noWorkouts": "No workouts in this period.",
+      "workoutPending": "not scored yet"
+    }
+  },
+  "devices": {
+    "title": "Connected devices",
+    "subtitle": "Import sleep, recovery and activity from your wearable. You choose what is connected and can disconnect at any time.",
+    "state": {
+      "notConfigured": "Not set up on this server",
+      "notConnected": "Not connected",
+      "connected": "Connected",
+      "needsReauth": "Needs to be reconnected"
+    },
+    "notConfiguredHelp": "{{provider}} has not been configured by the administrator of this server yet, so it cannot be connected. See docs/integrations/whoop.md for the setup.",
+    "consentNeeded": "Connecting a device needs the External integrations consent.",
+    "consentAction": "Open privacy settings",
+    "connect": "Connect {{provider}}",
+    "reconnect": "Reconnect",
+    "lastSync": "Last synchronization",
+    "neverSynced": "Not yet",
+    "dataShared": "What is imported",
+    "dataSharedValue": "Sleep, recovery, day strain and workouts",
+    "syncNow": "Synchronize now",
+    "syncing": "Synchronizing…",
+    "syncDone": "Up to date: {{added}} new and {{updated}} updated records.",
+    "syncFailedTitle": "The synchronization did not finish",
+    "syncTooSoon": "This device was synchronized a moment ago. Please wait a minute and try again.",
+    "syncErrors": {
+      "reauthorization_required": "The connection was refused by the provider. Reconnect the device.",
+      "rate_limited": "The provider asked us to slow down. It will be retried automatically.",
+      "provider_unavailable": "The provider could not be reached. It will be retried automatically.",
+      "consent_required": "A required consent is switched off.",
+      "internal_error": "Something went wrong. Try again later."
+    },
+    "disconnect": "Disconnect",
+    "disconnectBody": "Disconnecting stops importing from {{provider}} and removes the stored access. The history already imported stays unless you delete it below.",
+    "deleteDataLabel": "Also delete the data imported from {{provider}}",
+    "confirmDisconnect": "Disconnect",
+    "history": "Recent synchronizations",
+    "jobStatus": {
+      "Running": "Running",
+      "Succeeded": "Succeeded",
+      "Failed": "Failed",
+      "Skipped": "Skipped"
+    },
+    "connectedTitle": "Connected",
+    "connectedBody": "Your device is connected.",
+    "importing": "Importing your recent data…",
+    "connectFailedTitle": "The device could not be connected",
+    "callbackErrors": {
+      "invalid_state": "The connection attempt expired or was already used. Start again.",
+      "authorization_denied": "You cancelled the authorization at the provider.",
+      "authorization_failed": "The provider did not accept the authorization. Try again.",
+      "invalid_request": "The provider's answer was incomplete. Try again.",
+      "not_configured": "This integration is not set up on the server.",
+      "consent_required": "A required consent is switched off. Check the privacy settings.",
+      "no_refresh_token": "The provider did not grant long-lasting access, so it cannot be kept up to date.",
+      "provider_unavailable": "The provider could not be reached. Try again later.",
+      "account_already_linked": "This provider account is already connected to another user.",
+      "different_account": "This is a different provider account than the one already connected. Disconnect first.",
+      "unknown": "The connection failed. Try again."
+    },
+    "privacyTitle": "Your data",
+    "privacyBody": "Access is requested read-only. The access keys are stored encrypted on the server and are never shown. Disconnecting revokes the access at the provider when it is reachable."
   }
 }

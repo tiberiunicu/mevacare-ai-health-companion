@@ -42,7 +42,7 @@ is closed.
 
 ## AI-specific security
 
-- The assistant has **five tools** (profile, two nutrition summaries, meal preparation, medical-knowledge search). They are bound per turn to the signed-in user
+- The assistant has **seven tools** (profile, two nutrition summaries, meal preparation, medical-knowledge search, weight history, sleep and recovery). All are bound to the caller, re-check consent and are read-only except meal preparation, which only proposes. They are bound per turn to the signed-in user
   (no user-id parameter exists), re-check consent, are audited, and the only write-type tool merely prepares a proposal that the user must
   confirm in the UI; confirmations are idempotent. A prompt injection can therefore at worst make the assistant read the **caller's own**
   data or prepare a meal the user then rejects. See [tool-calling.md](../ai/tool-calling.md).
@@ -53,6 +53,16 @@ is closed.
 - No shell or SQL execution from model output exists or is planned.
 - See [AI safety](../ai/ai-safety.md) for limits of these defences.
 
+## Wearable integrations (Phase 5)
+
+- **Consent**: connecting and synchronizing need the *External integrations* and *Health data processing* consents; withdrawing either stops imports before any provider call.
+- **Scopes** are read-only and limited to what is shown (profile id, sleep, recovery, cycles, workouts); the e-mail address and name that WHOOP returns for the profile are never stored.
+- **OAuth**: random 256-bit `state`, stored only as a hash, single use, 10 minutes; the anonymous callback identifies the user only through it, the redirect target is configuration, one provider account can be linked to one user.
+- **Tokens** are encrypted with Data Protection, never returned by the API, exported or logged; the client secret lives only in user-secrets/environment. **Key management is an operator duty**: set `Integrations:DataProtectionKeysPath` to a persistent, access-controlled, backed-up location; losing it forces reconnection (data is unaffected).
+- **Provider errors** are mapped to stable codes; response bodies are never stored or logged.
+- **Disconnect and deletion**: disconnecting revokes access at the provider (best effort) and removes the tokens; the user chooses whether the imported history stays. Account deletion removes connections and measurements; the export lists them (never tokens).
+- **What is sent where**: only the authorization request and token calls go to WHOOP; MevaCare sends no health data to WHOOP. Imported data is sent to the AI provider only through the read tools when the user asks, under the AI consent.
+
 ## Not yet done
 
 These must be resolved before real personal health data is used:
@@ -62,8 +72,7 @@ These must be resolved before real personal health data is used:
 2. **Multi-factor authentication.**
 3. **Transport security in deployment** — HTTPS termination, certificate management and a reverse-proxy configuration
    (forwarded headers, SSE buffering off) are not provided; a Content-Security-Policy for the SPA host is not set.
-4. **Encryption at rest** for the database (TDE or disk encryption) and a key-management story; future OAuth tokens for
-   wearables must be encrypted at the application level.
+4. **Encryption at rest** for the database (TDE or disk encryption) and a key-management story. Provider tokens are already encrypted at the application level; the Data Protection key ring location and its backup are still an operator task.
 5. **Retention jobs** (expired refresh tokens, old audit events) and backups with matching retention.
 6. **Legal texts**: the Terms of Service and Privacy Policy referenced by the consent screen are not written; the
    policy version string is a placeholder for them. A DPIA and processor agreements with the chosen LLM provider are

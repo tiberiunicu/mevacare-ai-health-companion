@@ -244,6 +244,7 @@ export function AiSettingsPage() {
               <li>{t('aiSettings.whatIsSent1')}</li>
               <li>{t('aiSettings.whatIsSent2')}</li>
               <li>{t('aiSettings.whatIsSent3')}</li>
+              <li>{t('aiSettings.whatIsSent4')}</li>
             </ul>
           </Card>
           <Card>

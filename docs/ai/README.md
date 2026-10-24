@@ -8,7 +8,7 @@ what problem it solves, why it is needed, how it works here, why this implementa
 | LLM integration (`IChatClient`, providers, streaming, history, persistence) | **Implemented (Phase 2)** | [llm-integration.md](llm-integration.md) |
 | Prompt engineering and AI safety (system prompt, emergency screen, injection handling) | **Implemented (Phase 2)** | [ai-safety.md](ai-safety.md) |
 | AI evaluation (deterministic emergency evaluation, live adversarial evaluation) | **Implemented (Phase 2)** | [ai-evaluation.md](ai-evaluation.md) |
-| Function calling / tools (five tools, including `SearchMedicalKnowledge`) | **Implemented (Phase 3–4)** | [tool-calling.md](tool-calling.md) |
+| Function calling / tools (seven tools, including `SearchMedicalKnowledge` and the measurement reads) | **Implemented (Phases 3–5)** | [tool-calling.md](tool-calling.md) |
 | Structured outputs (meal extraction) | **Implemented (Phase 3)** | [structured-outputs.md](structured-outputs.md) |
 | Embeddings, vector search, RAG, citations, retrieval evaluation | **Implemented (Phase 4)**; real embedding providers never run | [rag-embeddings-memory.md](rag-embeddings-memory.md) |
 | AI memory | Designed, **not implemented** | [rag-embeddings-memory.md](rag-embeddings-memory.md#ai-memory-later--designed-not-implemented) |

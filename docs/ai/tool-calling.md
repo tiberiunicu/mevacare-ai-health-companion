@@ -1,6 +1,6 @@
 # Tool calling (function calling)
 
-> **Status: implemented (Phase 3, extended in Phase 4).** Five tools. `GetWeightHistory` needs measurements (Phase 5) and is intentionally **not** registered yet.
+> **Status: implemented (Phase 3, extended in Phases 4 and 5).** Seven tools.
 
 ## What problem it solves
 
@@ -32,6 +32,8 @@ user message ──► AiChatService ──► FunctionInvokingChatClient(IChatC
 | `GetDailyNutritionSummary(date)` | Read | totals, targets and remaining for one local day, plus meals (name, grams, kcal) |
 | `GetNutritionSummary(from, to)` | Read | per-day totals and the average over *logged* days (≤ 366 days) |
 | `PrepareMeal(description)` | Write (proposal only) | extract, match, calculate; **writes nothing** |
+| `GetWeightHistory(from, to)` | Read | weight entries between two dates (≤ 366 days), latest value and change; the model sees at most the last 60 points and the source of each |
+| `GetSleepAndRecovery(from, to)` | Read | per day: time asleep, deep/REM, sleep performance, naps, recovery score, resting heart rate, HRV, with the provider named, plus per-provider averages (last 31 days shown); the result tells the model that scores are the provider's own and must not be compared across providers or turned into medical conclusions |
 | `SearchMedicalKnowledge(query)` | Read | searches the approved reference documents (not the user's data); returns numbered passages labelled as data, to be cited with `[n]`; query ≤ 1,000 characters; registered only if `Knowledge:Enabled`. See [rag-embeddings-memory.md](rag-embeddings-memory.md) |
 
 ### The rules and where they are enforced

@@ -1,8 +1,9 @@
-import { Activity, Flame, LineChart, MoonStar, Sparkles, Target, UserRound } from 'lucide-react'
+import { Activity, Flame, Sparkles, Target, UserRound } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Alert, Card, PageHeader } from '../components/ui'
+import { ActivityCard, SleepCard, WeightCard } from '../features/health/DashboardCards'
 import { useDailySummary } from '../features/nutrition/hooks'
 import { ProgressRows } from '../features/nutrition/NutritionPages'
 import { isConsentRequired, useGoals, useProfile } from '../features/profile/hooks'
@@ -99,9 +100,9 @@ export function Dashboard() {
             <p className="text-sm text-muted">{consentMissing ? t('dashboard.consentNeeded') : t('dashboardNutrition.nothingLogged')}</p>
           )}
         </Card>
-        <PendingCard icon={<LineChart className="size-5" />} title={t('dashboard.weightEvolution')} note={t('dashboard.availableWithMeasurements')} />
-        <PendingCard icon={<MoonStar className="size-5" />} title={t('dashboard.sleepSummary')} note={t('dashboard.availableWithMeasurements')} />
-        <PendingCard icon={<Activity className="size-5" />} title={t('dashboard.activitySummary')} note={t('dashboard.availableWithMeasurements')} />
+        <WeightCard />
+        <SleepCard />
+        <ActivityCard />
         <PendingCard icon={<Sparkles className="size-5" />} title={t('dashboard.insights')} note={t('dashboard.availableWithInsights')} tone="ai" />
       </div>
     </>
