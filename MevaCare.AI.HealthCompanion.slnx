@@ -7,7 +7,9 @@
     <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.Assistant/MevaCare.AI.HealthCompanion.Modules.Assistant.csproj" />
     <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.HealthProfile/MevaCare.AI.HealthCompanion.Modules.HealthProfile.csproj" />
     <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.Identity/MevaCare.AI.HealthCompanion.Modules.Identity.csproj" />
+    <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.Integrations/MevaCare.AI.HealthCompanion.Modules.Integrations.csproj" />
     <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.Knowledge/MevaCare.AI.HealthCompanion.Modules.Knowledge.csproj" />
+    <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.Measurements/MevaCare.AI.HealthCompanion.Modules.Measurements.csproj" />
     <Project Path="src/backend/MevaCare.AI.HealthCompanion.Modules.Nutrition/MevaCare.AI.HealthCompanion.Modules.Nutrition.csproj" />
   </Folder>
   <Folder Name="/tests/" />

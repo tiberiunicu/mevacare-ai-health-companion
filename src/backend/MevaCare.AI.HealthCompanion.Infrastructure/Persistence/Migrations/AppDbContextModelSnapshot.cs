@@ -455,6 +455,163 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.ToTable("UserRoles", "identity");
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.ConnectedAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AccessTokenExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AccessTokenProtected")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("ConnectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExternalUserId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("LastAttemptAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSyncAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastSyncStatus")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("RefreshTokenProtected")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Scopes")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Provider", "ExternalUserId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("ConnectedAccounts", "integrations");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.OAuthState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("StateHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAtUtc");
+
+                    b.HasIndex("StateHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("OAuthStates", "integrations");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.SyncJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ConnectedAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<DateTime?>("FinishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RangeFromUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("RangeToUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RecordsAdded")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecordsFetched")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecordsUpdated")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Trigger")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConnectedAccountId", "StartedAtUtc");
+
+                    b.ToTable("SyncJobs", "integrations");
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeChunk", b =>
                 {
                     b.Property<Guid>("Id")
@@ -559,6 +716,248 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Sources", "knowledge");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.HealthMeasurement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExternalId")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateOnly>("LocalDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("MeasuredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Metric")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UtcOffsetMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId", "Metric", "ExternalId")
+                        .IsUnique()
+                        .HasFilter("[ExternalId] IS NOT NULL");
+
+                    b.HasIndex("UserId", "Metric", "LocalDate");
+
+                    b.ToTable("HealthMeasurements", "measurements");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.MeasurementSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("MeasurementSources", "measurements");
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.SleepSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("AwakeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("ConsistencyPercent")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeepMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DisturbanceCount")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("EfficiencyPercent")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<DateTime>("EndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<bool>("IsNap")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsScored")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LightMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("LocalDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("PerformancePercent")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<int?>("RemMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("RespiratoryRate")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("TimeInBedMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UtcOffsetMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId", "ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "LocalDate");
+
+                    b.ToTable("SleepSessions", "measurements", t =>
+                        {
+                            t.HasCheckConstraint("CK_SleepSessions_Times", "[EndUtc] >= [StartUtc]");
+                        });
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.Workout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("AverageHeartRate")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Calories")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("DistanceMeters")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<DateTime>("EndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<bool>("IsScored")
+                        .HasColumnType("bit");
+
+                    b.Property<DateOnly>("LocalDate")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("MaxHeartRate")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SportName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("Strain")
+                        .HasPrecision(7, 3)
+                        .HasColumnType("decimal(7,3)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UtcOffsetMinutes")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceId", "ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "LocalDate");
+
+                    b.ToTable("Workouts", "measurements", t =>
+                        {
+                            t.HasCheckConstraint("CK_Workouts_Times", "[EndUtc] >= [StartUtc]");
+                        });
                 });
 
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain.Food", b =>
@@ -895,10 +1294,73 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.ConnectedAccount", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.OAuthState", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.SyncJob", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Integrations.Domain.ConnectedAccount", null)
+                        .WithMany()
+                        .HasForeignKey("ConnectedAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeChunk", b =>
                 {
                     b.HasOne("MevaCare.AI.HealthCompanion.Modules.Knowledge.Domain.KnowledgeSource", null)
                         .WithMany("Chunks")
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.HealthMeasurement", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.MeasurementSource", null)
+                        .WithMany()
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.MeasurementSource", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.SleepSession", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.MeasurementSource", null)
+                        .WithMany()
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.Workout", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Measurements.Domain.MeasurementSource", null)
+                        .WithMany()
                         .HasForeignKey("SourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

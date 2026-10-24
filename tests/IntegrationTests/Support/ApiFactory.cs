@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
+using MevaCare.AI.HealthCompanion.Modules.Integrations.Providers.Whoop;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,16 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     /// <summary>Wraps the real embedding service so a test can simulate an outage of the embedding provider.</summary>
     public FlakyEmbeddingService Embeddings { get; } = new();
 
+    /// <summary>Scripted stand-in for the WHOOP service; see <see cref="FakeWhoopHandler"/>.</summary>
+    public FakeWhoopHandler Whoop { get; } = new();
+
+    /// <summary>Derived factories can change the WHOOP configuration (for example leave it unconfigured).</summary>
+    protected virtual bool WhoopConfigured => true;
+
+    protected virtual int ManualSyncIntervalSeconds => 0;
+
+    private readonly string _keysPath = Path.Combine(Path.GetTempPath(), "mevacare-test-keys-" + Guid.NewGuid().ToString("N"));
+
     public ApiFactory() =>
         _connectionString = new SqlConnectionStringBuilder(BaseConnectionString()) { InitialCatalog = _databaseName }.ConnectionString;
 
@@ -49,11 +60,19 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Knowledge:VectorStore:Provider", "InMemory");
         builder.UseSetting("Knowledge:Embeddings:Provider", "Lexical");
         builder.UseSetting("Knowledge:Embeddings:Dimensions", "1024");
+        builder.UseSetting("Integrations:Sync:BackgroundEnabled", "false");
+        builder.UseSetting("Integrations:Sync:MinManualIntervalSeconds", ManualSyncIntervalSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        builder.UseSetting("Integrations:DataProtectionKeysPath", _keysPath);
+        builder.UseSetting("Integrations:FrontendBaseUrl", "http://localhost:5173");
+        builder.UseSetting("Integrations:Whoop:ClientId", WhoopConfigured ? "test-client-id" : "");
+        builder.UseSetting("Integrations:Whoop:ClientSecret", WhoopConfigured ? "test-client-secret" : "");
+        builder.UseSetting("Integrations:Whoop:RedirectUri", "http://localhost:5080/api/integrations/whoop/callback");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IChatClient>();
             services.AddSingleton<IChatClient>(Chat);
             services.Decorate_EmbeddingService(Embeddings);
+            services.AddHttpClient<WhoopProvider>().ConfigurePrimaryHttpMessageHandler(() => Whoop);
         });
     }
 
@@ -73,6 +92,17 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         finally
         {
             await base.DisposeAsync();
+            try
+            {
+                if (Directory.Exists(_keysPath))
+                {
+                    Directory.Delete(_keysPath, recursive: true);
+                }
+            }
+            catch (IOException)
+            {
+                // best effort: the folder only holds throw-away test keys
+            }
         }
     }
 

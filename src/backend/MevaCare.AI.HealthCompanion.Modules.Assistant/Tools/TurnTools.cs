@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
 using MevaCare.AI.HealthCompanion.Contracts.Knowledge;
+using MevaCare.AI.HealthCompanion.Contracts.Measurements;
 using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Assistant.Domain;
@@ -31,13 +32,16 @@ public sealed class TurnTools
     private readonly TimeProvider _clock;
     private readonly ILogger _logger;
     private readonly IKnowledgeSearch? _knowledge;
+    private readonly IMeasurementsAssistantApi? _measurements;
     private readonly List<(int Number, KnowledgePassage Passage)> _retrieved = [];
 
     public TurnTools(
         Guid userId, Guid conversationId, int assistantSequence, INutritionAssistantApi nutrition, IHealthProfileReader profiles,
-        MealParser parser, AppDbContext db, TimeProvider clock, ILogger logger, IKnowledgeSearch? knowledge = null)
+        MealParser parser, AppDbContext db, TimeProvider clock, ILogger logger, IKnowledgeSearch? knowledge = null,
+        IMeasurementsAssistantApi? measurements = null)
     {
         _knowledge = knowledge;
+        _measurements = measurements;
         _userId = userId;
         _conversationId = conversationId;
         _assistantSequence = assistantSequence;
@@ -59,6 +63,14 @@ public sealed class TurnTools
             AIFunctionFactory.Create(PrepareMealAsync, ToolExecution.PrepareMealTool,
                 "Prepares a meal from the user's own words. It only shows the user a proposal card to review; NOTHING is saved until the user confirms in the app."),
         };
+        if (measurements is not null)
+        {
+            functions.Add(AIFunctionFactory.Create(GetWeightHistoryAsync, "GetWeightHistory",
+                "Returns the user's body-weight entries between two dates (at most 366 days) with the latest value and the change over the period. Read-only."));
+            functions.Add(AIFunctionFactory.Create(GetSleepAndRecoveryAsync, "GetSleepAndRecovery",
+                "Returns sleep (duration, stages, performance) and recovery (recovery score, resting heart rate, HRV) per day between two dates, with averages, from the user's connected wearable (at most 366 days). Scores belong to the device provider and are not comparable with other providers. Read-only."));
+        }
+
         if (knowledge is not null)
         {
             functions.Add(AIFunctionFactory.Create(SearchMedicalKnowledgeAsync, "SearchMedicalKnowledge",
@@ -123,6 +135,52 @@ public sealed class TurnTools
         [Description("First day, YYYY-MM-DD.")] string from, [Description("Last day, YYYY-MM-DD.")] string to, CancellationToken ct) =>
         RunAsync("GetNutritionSummary", ToolKind.Read, new { from, to }, async () =>
             Result(await _nutrition.GetRangeSummaryAsync(_userId, ParseDate(from), ParseDate(to), ct)));
+
+    private Task<object> GetWeightHistoryAsync(
+        [Description("First day, YYYY-MM-DD.")] string from, [Description("Last day, YYYY-MM-DD.")] string to, CancellationToken ct) =>
+        RunAsync("GetWeightHistory", ToolKind.Read, new { from, to }, async () =>
+        {
+            var history = await _measurements!.GetWeightHistoryAsync(_userId, ParseDate(from), ParseDate(to), ct);
+            return Result(new
+            {
+                history.From,
+                history.To,
+                count = history.Points.Count,
+                latestKilograms = history.LatestKilograms,
+                changeKilograms = history.ChangeKilograms,
+                points = history.Points.TakeLast(60).Select(p => new { date = p.LocalDate, kilograms = p.Kilograms, source = p.Provider }),
+                note = history.Points.Count == 0 ? "The user has no weight entries in this period." : "Report only these values; do not interpret changes as a diagnosis.",
+            });
+        });
+
+    private Task<object> GetSleepAndRecoveryAsync(
+        [Description("First day, YYYY-MM-DD.")] string from, [Description("Last day, YYYY-MM-DD.")] string to, CancellationToken ct) =>
+        RunAsync("GetSleepAndRecovery", ToolKind.Read, new { from, to }, async () =>
+        {
+            var range = await _measurements!.GetSleepRecoveryAsync(_userId, ParseDate(from), ParseDate(to), ct);
+            return Result(new
+            {
+                range.From,
+                range.To,
+                days = range.Days.TakeLast(31).Select(d => new
+                {
+                    d.Date,
+                    source = d.Provider,
+                    asleepMinutes = d.Sleep?.AsleepMinutes,
+                    deepMinutes = d.Sleep?.DeepMinutes,
+                    remMinutes = d.Sleep?.RemMinutes,
+                    sleepPerformancePercent = d.Sleep?.PerformancePercent,
+                    napMinutes = d.NapMinutes,
+                    recoveryScore = d.Recovery?.Score,
+                    restingHeartRate = d.Recovery?.RestingHeartRate,
+                    hrvRmssdMilliseconds = d.Recovery?.HrvRmssdMilliseconds,
+                }),
+                averages = range.Averages,
+                note = range.Days.Count == 0
+                    ? "No sleep or recovery data is stored for this period (no device connected, or nothing synchronized yet)."
+                    : "Recovery scores and strain are the device provider's own scale (for example WHOOP); never compare them across providers or with other metrics. HRV is RMSSD. Sleep 'asleepMinutes' excludes time awake. Do not diagnose.",
+            });
+        });
 
     private Task<object> PrepareMealAsync(
         [Description("What the user said they ate, in their own words, including amounts.")] string description, CancellationToken ct) =>
