@@ -162,7 +162,7 @@ terminal that starts the API. `scripts/run-live-eval.ps1` therefore passes the s
 
 The assistant answers reference questions ("what is HRV?", "how much activity do adults need?") from **approved documents** and cites them. The repository contains **no medical documents**: you choose them, check their licence (the allow-list is public domain US-government works, CC0, CC-BY, CC-BY-SA) and ingest them on the server. Without any, the assistant says it has no approved source.
 
-1. Start Qdrant: `docker compose up -d qdrant` (unverified compose file) or a local Qdrant binary on port 6333.
+1. Start Qdrant: `docker compose up -d qdrant` (unverified compose file) or the official Windows binary (`qdrant-x86_64-pc-windows-msvc.zip` from the [qdrant/qdrant releases](https://github.com/qdrant/qdrant/releases); verified with v1.20.0): unzip it, set `$env:QDRANT__TELEMETRY_DISABLED = 'true'` (it reports telemetry by default) and run `qdrant.exe` from a folder where it may create `./storage` (REST on 6333, gRPC on 6334). `GET /health/knowledge` shows whether the API reaches it and which embedding model the index was built with.
 2. Put the documents (`html`, `md`, `txt`; no PDF) and a `sources.json` with their provenance in a folder (format and example in [docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md#operating-it)).
 3. Ingest: `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- ingest-knowledge "C:\path\to\corpus"` (re-running is safe; changed content becomes a new version). Other commands: `reindex-knowledge [--recreate]` (after changing the embedding model) and `retire-knowledge <source-guid>`.
 4. Ask the assistant a reference question; the sources appear under the answer and in *Settings → AI*.
@@ -204,7 +204,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
-- State at the end of Phase 6: 328 unit tests, 166 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`), 13 evaluation tests (+3 live-model tests skipped), 93 frontend tests; all pass.
+- State at the end of Phase 6: 328 unit tests, 166 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 13 evaluation tests (+3 live-model tests skipped), 93 frontend tests; all pass.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.
