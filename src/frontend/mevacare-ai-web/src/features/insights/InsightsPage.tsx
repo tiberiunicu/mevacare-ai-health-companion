@@ -139,7 +139,7 @@ function Explanation({ days }: { days: number }) {
   const explain = useExplainInsights()
   const language = i18n.language.startsWith('ro') ? 'ro' : 'en'
   const error = explain.error instanceof ApiError ? explain.error : null
-  const errorKey = error?.code && ['ai_not_configured', 'ai_unavailable', 'ai_timeout', 'ai_empty_response', 'consent_required', 'nothing_to_explain'].includes(error.code) ? error.code : null
+  const errorKey = error?.code && ['ai_not_configured', 'ai_unavailable', 'ai_timeout', 'ai_empty_response', 'ai_content_filtered', 'consent_required', 'nothing_to_explain'].includes(error.code) ? error.code : null
 
   return (
     <Card className="bg-ai-soft">

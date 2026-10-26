@@ -3,14 +3,14 @@
 All six planned phases are implemented and tested. This page lists, honestly, what is **not** done or **not verified**, in the order I would tackle it.
 *Effort*: S = hours, M = a day or two, L = a week or more. *Needs you* = something only the owner can provide (an account, a key, a decision, a legal text).
 
-## 1. Make the AI real (highest value, nothing here has run against a real model)
+## 1. Make the AI real (chat is verified; embeddings and the evaluations below are not)
 
-Everything AI-related is tested with a **scripted model** or a throw-away OpenAI-compatible mock. The code paths exist; their behaviour with a real model is unknown.
+Chat, tool calling, streaming, meal extraction and insight explanations were verified against **Azure OpenAI / Foundry (`gpt-6-luna`)** through the zero-code OpenAI route (items 1.1 and 1.2 are done, see below). Everything else AI-related is still tested only with a **scripted model** or a throw-away mock.
 
 | # | Task | Effort | Needs you |
 |---|---|---|---|
-| 1.1 | **Configure one real chat provider.** Azure OpenAI / Foundry: a resource `mevacare-health-companion` already exists, no model is deployed yet. Deploy a small chat model and `text-embedding-3-small`, put the key in user-secrets and point `Ai:OpenAI:Endpoint` (`…/openai/v1/`) and `Ai:OpenAI:Model` (the **deployment name**) at it. The zero-code route is unverified; if it fails, add a dedicated Azure provider (`Azure.AI.OpenAI`, optionally Entra ID). Alternative: Ollama after updating the NVIDIA driver (546.30 is too old for Ollama's CUDA runtimes) or on CPU. | S–M | Azure account/key, or a driver update |
-| 1.2 | Run the **live evaluations** that are written but skipped: adversarial prompts (`LiveModelEvaluationTests`), meal extraction (`MealExtractionEvaluationTests`). Read the printed answers, fix prompts, record results in `docs/ai/ai-evaluation.md`. | S | 1.1 |
+| 1.1 | **Done (chat): real chat provider.** Azure OpenAI / Foundry works with the OpenAI provider (`scripts/setup-ai.ps1`; endpoint `…services.ai.azure.com/openai/v1/`, model = deployment name). Reasoning models need `Ai:OpenAI:ReasoningEffort=none` for function tools and `Ai:SendTemperature=false`. **Still open:** deploy `text-embedding-3-small` and use it for embeddings (item 1.3). Ollama is still unusable on the owner's PC until the NVIDIA driver (546.30) is updated. A dedicated Azure provider (Entra ID instead of a key) is not needed for now. | S | an embedding deployment |
+| 1.2 | **Done: live evaluations run** (meal extraction 6/6; adversarial 10/10 answered cases pass, 2 refused by Azure's content filter). Results and caveats in [ai/ai-evaluation.md](ai/ai-evaluation.md). Re-run after any prompt or model change; grow the datasets. | S | — |
 | 1.3 | **Real embeddings and retrieval calibration**: set `Knowledge:Embeddings:Provider`, `reindex-knowledge --recreate`, re-run the retrieval evaluation on the demo/real corpus and re-tune `Knowledge:Retrieval:MinScore` (the lexical baseline's 0.15 is not valid for another model; baseline recall@3 is 83 %). | S | 1.1, Qdrant running |
 | 1.4 | **Tool-selection evaluation** (not written): does the model call `PrepareMeal` for "I ate…", `GetHealthInsights` for "why did my weight slow down", `GetSleepAndRecovery` for "how did I sleep", the knowledge tool for "what is HRV", and none of them for small talk? Add a labelled dataset and a live test. | M | 1.1 |
 | 1.5 | **Insight-explanation evaluation** (not written): on fixed synthetic inputs the explanation must stay inside the data, avoid causal wording and diagnosis, keep `ungroundedNumbers` empty and be usable in Romanian. See [ai/insight-explanations.md](ai/insight-explanations.md). | S–M | 1.1 |

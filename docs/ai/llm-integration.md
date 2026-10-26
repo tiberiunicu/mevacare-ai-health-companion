@@ -38,7 +38,7 @@ Key code: `Modules.Assistant/Providers/ChatClientFactory.cs` (providers), `Featu
 
 | `Ai:Provider` | Implementation | Required settings |
 |---|---|---|
-| `OpenAI` | `OpenAIClient(...).GetChatClient(model).AsIChatClient()` | `Ai:OpenAI:ApiKey`, `Ai:OpenAI:Model`; optional `Ai:OpenAI:Endpoint` for compatible gateways |
+| `OpenAI` | `OpenAIClient(...).GetChatClient(model).AsIChatClient()` (or the Responses client when `Ai:OpenAI:Api=Responses`) | `Ai:OpenAI:ApiKey`, `Ai:OpenAI:Model`; optional `Ai:OpenAI:Endpoint` for compatible gateways. **Azure OpenAI / Foundry** works this way with `Endpoint=https://<resource>.services.ai.azure.com/openai/v1/` and `Model=<deployment name>` (verified with `gpt-6-luna`; reasoning models also need `Ai:OpenAI:ReasoningEffort=none` for function tools and `Ai:SendTemperature=false`, see the README) |
 | `Ollama` | `OllamaApiClient` (implements `IChatClient`) | `Ai:Ollama:Endpoint`, `Ai:Ollama:Model` |
 
 Model names, endpoints and keys are configuration only. A missing setting does not stop the application: the singleton
@@ -49,7 +49,7 @@ factory throws `ServiceUnavailableException("ai_not_configured")`, shown to the 
 The endpoint returns `text/event-stream` through `TypedResults.ServerSentEvents`. Each event has a name and a JSON
 payload (`ChatStreamEvent`). Because the HTTP status is committed when streaming starts, **every pre-flight problem is
 raised before the first byte** (`PrepareTurnAsync`), and failures *after* that are reported as an `error` event with a
-stable code (`ai_unavailable`, `ai_timeout`, `ai_empty_response`). Provider messages, URLs or keys are never forwarded.
+stable code (`ai_unavailable`, `ai_timeout`, `ai_empty_response`, and `ai_content_filtered` when the provider's own safety filter refused the message). Provider messages, URLs or keys are never forwarded.
 
 The browser uses `fetch` + `ReadableStream` rather than `EventSource` because it needs an `Authorization` header and a POST body.
 

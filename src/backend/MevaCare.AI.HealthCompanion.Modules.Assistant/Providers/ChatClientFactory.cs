@@ -44,9 +44,12 @@ public static class ChatClientFactory
             clientOptions.Endpoint = new Uri(options.Endpoint);
         }
 
-        return new OpenAIClient(new ApiKeyCredential(options.ApiKey), clientOptions)
-            .GetChatClient(options.Model)
-            .AsIChatClient();
+        var client = new OpenAIClient(new ApiKeyCredential(options.ApiKey), clientOptions);
+#pragma warning disable OPENAI001 // the Responses client is marked experimental by the SDK
+        return options.Api == OpenAiApi.Responses
+            ? client.GetResponsesClient().AsIChatClient(options.Model)
+            : client.GetChatClient(options.Model).AsIChatClient();
+#pragma warning restore OPENAI001
     }
 
     private static IChatClient CreateOllama(OllamaOptions options, TimeSpan timeout)

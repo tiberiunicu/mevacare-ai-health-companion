@@ -66,7 +66,7 @@ public sealed class InsightExplanationService(
         };
 
         var settings = options.Value;
-        var chatOptions = new ChatOptions { MaxOutputTokens = settings.MaxOutputTokens, Temperature = Math.Min(settings.Temperature, 0.3f) };
+        var chatOptions = ChatOptionsFactory.Create(settings, Math.Min(settings.Temperature, 0.3f));
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(settings.RequestTimeoutSeconds));
 
@@ -82,8 +82,10 @@ public sealed class InsightExplanationService(
         catch (Exception ex) when (ex is not (OperationCanceledException or AppException))
         {
             // Provider details (URLs, keys, status bodies) must never reach the client or the log message.
-            logger.LogWarning("AI provider call failed: {ExceptionType}", ex.GetType().Name);
-            throw new ServiceUnavailableException("ai_unavailable", "The AI service is not available right now.");
+            logger.LogWarning("AI provider call failed: {Failure}", ProviderFailure.Describe(ex, settings.LogProviderErrorDetails));
+            throw ProviderFailure.IsContentFilter(ex)
+                ? new ServiceUnavailableException("ai_content_filtered", "The AI service's safety filter did not accept this request.")
+                : new ServiceUnavailableException("ai_unavailable", "The AI service is not available right now.");
         }
 
         var text = response.Text?.Trim();

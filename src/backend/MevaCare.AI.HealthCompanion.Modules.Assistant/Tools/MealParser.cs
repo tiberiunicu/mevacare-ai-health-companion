@@ -1,7 +1,10 @@
 using System.ComponentModel;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
 using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
+using MevaCare.AI.HealthCompanion.Modules.Assistant.Options;
+using MevaCare.AI.HealthCompanion.Modules.Assistant.Providers;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
 
 namespace MevaCare.AI.HealthCompanion.Modules.Assistant.Tools;
 
@@ -22,7 +25,7 @@ public sealed record ExtractedFood(
 /// from <see cref="MealExtraction"/>). The result is an UNTRUSTED suggestion: it is validated here and again by the
 /// nutrition module, and the model is never asked for nutrient values, which are calculated by deterministic code.
 /// </summary>
-public sealed class MealParser(IChatClient chat)
+public sealed class MealParser(IChatClient chat, IOptions<AiOptions>? aiOptions = null)
 {
     public const int MaxDescriptionLength = 1000;
 
@@ -44,7 +47,7 @@ public sealed class MealParser(IChatClient chat)
             throw new BadRequestException("invalid_description", $"The meal description must have 1 to {MaxDescriptionLength} characters.");
         }
 
-        var options = new ChatOptions { Temperature = 0, MaxOutputTokens = 800 };
+        var options = aiOptions is null ? new ChatOptions { Temperature = 0, MaxOutputTokens = 800 } : ChatOptionsFactory.Create(aiOptions.Value, temperature: 0, maxOutputTokens: 800);
         List<ChatMessage> messages = [new(ChatRole.System, ExtractionPrompt), new(ChatRole.User, description)];
 
         string? problem = null;

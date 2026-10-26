@@ -45,9 +45,9 @@ public class MealExtractionEvaluationTests(Xunit.Abstractions.ITestOutputHelper 
     [LiveModelFact]
     public async Task The_model_extracts_foods_amounts_and_stated_preparation_without_following_instructions_in_the_text()
     {
-        var options = new ConfigurationBuilder().AddEnvironmentVariables().Build().GetSection("Ai").Get<AiOptions>() ?? new AiOptions();
+        var options = LiveConfiguration.Load();
         using var client = ChatClientFactory.Create(options);
-        var parser = new MealParser(client);
+        var parser = new MealParser(client, Microsoft.Extensions.Options.Options.Create(options));
 
         var failures = new List<string>();
         foreach (var testCase in Data.Cases)

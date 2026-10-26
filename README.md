@@ -144,7 +144,19 @@ dotnet user-secrets set "Ai:Ollama:Model" "<your-pulled-model>" --project $api
 dotnet user-secrets set "Ai:Provider" "OpenAI" --project $api
 dotnet user-secrets set "Ai:OpenAI:ApiKey" "<your key>" --project $api
 dotnet user-secrets set "Ai:OpenAI:Model" "<model id>" --project $api
+
+# Azure OpenAI / Microsoft Foundry (verified with a reasoning model): the script asks for the key with a hidden prompt and prints only setting names
+./scripts/setup-ai.ps1 -Endpoint 'https://<resource>.services.ai.azure.com/openai/v1/' -Model '<deployment name>' -ReasoningEffort none -OmitTemperature
 ```
+
+Settings for reasoning models (GPT-5 / GPT-6 families, o-series), all optional: `Ai:SendTemperature=false` (these models reject `temperature`),
+`Ai:OpenAI:ReasoningEffort` = `none`\|`low`\|`medium`\|`high` (some refuse function tools unless it is `none`), `Ai:ReasoningTokenAllowance` (extra output tokens because
+hidden reasoning counts against the limit), `Ai:OpenAI:Api` = `ChatCompletions`\|`Responses`, and `Ai:LogProviderErrorDetails=true` to log the provider's error text while debugging (off by default, it may contain request details).
+The provider's own safety filter can refuse a message (HTTP 400 `content_filter`); the chat then answers with the code `ai_content_filtered` instead of an outage message.
+
+**Windows note (Store/MSIX apps).** Some desktop apps and terminals see a *virtualized* `%APPDATA%`, so `dotnet user-secrets` may write to, or read, a different copy of `secrets.json`
+than the API process started from a normal terminal. If the API says "not configured" although you stored the settings, run `dotnet user-secrets list --project $api` in the same
+terminal that starts the API. `scripts/run-live-eval.ps1` therefore passes the settings to the test process as environment variables.
 
 ### Medical knowledge (RAG)
 
@@ -155,7 +167,7 @@ The assistant answers reference questions ("what is HRV?", "how much activity do
 3. Ingest: `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- ingest-knowledge "C:\path\to\corpus"` (re-running is safe; changed content becomes a new version). Other commands: `reindex-knowledge [--recreate]` (after changing the embedding model) and `retire-knowledge <source-guid>`.
 4. Ask the assistant a reference question; the sources appear under the answer and in *Settings → AI*.
 
-The default embeddings are an **offline lexical baseline** (matches words, not meaning). For better retrieval set `Knowledge:Embeddings:Provider` to `OpenAI` or `Ollama` plus `Model` and `Dimensions`, run `reindex-knowledge --recreate`, and re-calibrate `Knowledge:Retrieval:MinScore` with the retrieval evaluation. Those providers are implemented but were **not run** against a real service.
+The default embeddings are an **offline lexical baseline** (matches words, not meaning). For better retrieval set `Knowledge:Embeddings:Provider` to `OpenAI` or `Ollama` plus `Model` and `Dimensions`, run `reindex-knowledge --recreate`, and re-calibrate `Knowledge:Retrieval:MinScore` with the retrieval evaluation. Those embedding providers are implemented but were **not run** against a real service (only the chat side was verified, with Azure OpenAI).
 
 ### Wearables (WHOOP)
 
@@ -199,7 +211,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - Qdrant integration tests are skipped unless `MEVACARE_QDRANT_URL` is set: `$env:MEVACARE_QDRANT_URL='http://localhost:6333'; dotnet test tests/IntegrationTests` (they create and drop their own collections).
 - Retrieval quality on your own corpus: `$env:MEVACARE_KNOWLEDGE_DIR='C:\path\to\corpus'; dotnet test tests/AIEvaluationTests --filter Retrieval` (needs a gold set shaped like `Datasets/retrieval-gold-demo-corpus.json`).
 - Live model evaluation (real provider, adversarial prompts, costs money):
-  `$env:MEVACARE_EVAL_LIVE='1'; $env:Ai__Provider='Ollama'; $env:Ai__Ollama__Model='<model>'; dotnet test tests/AIEvaluationTests`.
+  `./scripts/run-live-eval.ps1` (uses the settings stored by `scripts/setup-ai.ps1`), or set `MEVACARE_EVAL_LIVE=1` and the `Ai__*` environment variables yourself and run `dotnet test tests/AIEvaluationTests`.
   See [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md).
 - Only synthetic data is used in tests and development. Do not enter real health data until the open items in
   [docs/architecture/security-and-privacy.md](docs/architecture/security-and-privacy.md#not-yet-done) are closed.

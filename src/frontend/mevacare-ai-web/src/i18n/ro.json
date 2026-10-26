@@ -650,6 +650,7 @@
         "ai_unavailable": "Serviciul AI nu este disponibil acum. Observațiile de mai sus rămân complete.",
         "ai_timeout": "Serviciul AI a răspuns prea greu. Încearcă din nou.",
         "ai_empty_response": "Serviciul AI a returnat un răspuns gol. Încearcă din nou.",
+        "ai_content_filtered": "Filtrul de siguranță al serviciului AI nu a acceptat această cerere. Observațiile de mai sus rămân complete.",
         "consent_required": "Activează procesarea AI pentru a folosi această funcție.",
         "nothing_to_explain": "Nu există încă destule date înregistrate în această perioadă pentru a explica."
       },

@@ -646,6 +646,7 @@
         "ai_unavailable": "The AI service is not available right now. The insights above are still complete.",
         "ai_timeout": "The AI service took too long to answer. Try again.",
         "ai_empty_response": "The AI service returned an empty answer. Try again.",
+        "ai_content_filtered": "The AI service's safety filter did not accept this request. The insights above are still complete.",
         "consent_required": "Turn on AI processing to use this.",
         "nothing_to_explain": "There is not enough recorded data in this period to explain yet."
       },

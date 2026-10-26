@@ -141,7 +141,7 @@ public sealed class AiChatService(
         prompt.AddRange(turn.History);
         prompt.Add(new Microsoft.Extensions.AI.ChatMessage(ChatRole.User, turn.UserText));
 
-        var chatOptions = new ChatOptions { MaxOutputTokens = _options.MaxOutputTokens, Temperature = _options.Temperature };
+        var chatOptions = ChatOptionsFactory.Create(_options);
         IChatClient client = chat;
         TurnTools? tools = null;
         if (_options.ToolsEnabled)
@@ -190,8 +190,8 @@ public sealed class AiChatService(
                 catch (Exception ex)
                 {
                     // Provider details (URLs, keys, status bodies) must never reach the client or the log message.
-                    logger.LogWarning("AI provider call failed: {ExceptionType}", ex.GetType().Name);
-                    failureCode = "ai_unavailable";
+                    logger.LogWarning("AI provider call failed: {Failure}", ProviderFailure.Describe(ex, _options.LogProviderErrorDetails));
+                    failureCode = ProviderFailure.IsContentFilter(ex) ? "ai_content_filtered" : "ai_unavailable";
                     break;
                 }
 
@@ -331,6 +331,7 @@ public sealed class AiChatService(
     {
         "ai_timeout" => "The AI service took too long to answer.",
         "ai_empty_response" => "The AI service returned no answer.",
+        "ai_content_filtered" => "The AI service's safety filter did not accept this message. Please rephrase it.",
         _ => "The AI service is not available right now.",
     };
 }
