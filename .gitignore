@@ -34,3 +34,6 @@ secrets.json
 # Local data volumes
 infrastructure/docker/data/
 .claude/
+
+# Local, untracked working files (downloaded sample corpus etc.)
+.local/
