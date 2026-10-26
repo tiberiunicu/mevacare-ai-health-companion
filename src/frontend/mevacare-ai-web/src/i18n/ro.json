@@ -38,7 +38,8 @@
     "aiSettings": "Setări AI",
     "signOut": "Deconectare",
     "main": "Navigare principală",
-    "toggleTheme": "Schimbă tema"
+    "toggleTheme": "Schimbă tema",
+    "insights": "Observații"
   },
   "auth": {
     "signInTitle": "Bine ai revenit",
@@ -80,10 +81,9 @@
     "weightEvolution": "Evoluția greutății",
     "sleepSummary": "Rezumatul somnului",
     "activitySummary": "Rezumatul activității",
-    "insights": "Observații AI",
+    "insights": "Observații",
     "noDataYet": "Încă nu există date",
     "availableWith": "Disponibil odată cu modulul de nutriție (faza următoare).",
-    "availableWithInsights": "Disponibil după ce se strâng suficiente date proprii (fază ulterioară).",
     "weightChange": "{{value}} în {{days}} de zile",
     "weightEmpty": "Încă nu există înregistrări de greutate.",
     "weightAction": "Deschide greutatea",
@@ -97,7 +97,9 @@
     "workoutsWeek": "{{count}} antrenamente în ultimele 7 zile",
     "workoutsWeek_one": "{{count}} antrenament în ultimele 7 zile",
     "workoutsWeek_few": "{{count}} antrenamente în ultimele 7 zile",
-    "fromDevice": "De la {{provider}}"
+    "fromDevice": "De la {{provider}}",
+    "insightsEmpty": "Nu există încă destule date înregistrate pentru a găsi tendințe. Greutatea, mesele și un dispozitiv conectat ajută.",
+    "insightsAction": "Deschide observațiile"
   },
   "profile": {
     "title": "Profil de sănătate",
@@ -523,5 +525,141 @@
     },
     "privacyTitle": "Datele tale",
     "privacyBody": "Accesul este cerut doar pentru citire. Cheile de acces sunt stocate criptat pe server și nu sunt afișate niciodată. Deconectarea revocă accesul la furnizor atunci când acesta poate fi contactat."
+  },
+  "insights": {
+    "title": "Observații",
+    "subtitle": "Tendințe și comparații calculate din propriile tale date înregistrate. Descriu ce arată datele, nu de ce, și nu sunt sfat medical.",
+    "coverage": {
+      "title": "Pe ce se bazează",
+      "line": "{{from}} – {{to}}: {{weight}} înregistrări de greutate, mese înregistrate în {{logged}} din {{window}} zile.",
+      "provider": "{{provider}}: somn în {{sleep}} zile, recuperare în {{recovery}} zile."
+    },
+    "sections": {
+      "insights": "Ce iese în evidență",
+      "trends": "Tendințe în această perioadă",
+      "compare": "Această perioadă comparată cu cele {{days}} zile dinainte",
+      "limitations": "Bine de știut"
+    },
+    "none": "Nimic nu iese în evidență în această perioadă.",
+    "trendsNote": "O tendință este schimbarea medie pe săptămână potrivită prin datele tale. O potrivire slabă sau puține zile scad încrederea.",
+    "week": "săptămână",
+    "trendBasis": "{{points}} zile cu date pe {{span}} zile",
+    "confidenceWord": "încredere",
+    "metrics": {
+      "weight_kg": "Greutate",
+      "calories_kcal": "Calorii (pe zi înregistrată)",
+      "protein_g": "Proteine (pe zi înregistrată)",
+      "sleep_minutes": "Timp de somn",
+      "recovery_score": "Scor de recuperare",
+      "hrv_ms": "HRV (RMSSD)",
+      "resting_heart_rate_bpm": "Puls în repaus"
+    },
+    "direction": {
+      "increasing": "în creștere",
+      "decreasing": "în scădere",
+      "stable": "stabil",
+      "insufficient_data": "date insuficiente"
+    },
+    "confidence": {
+      "low": "scăzută",
+      "moderate": "moderată",
+      "high": "ridicată"
+    },
+    "shift": {
+      "slowed": "a încetinit",
+      "reversed": "s-a inversat",
+      "accelerated": "s-a accelerat"
+    },
+    "severity": {
+      "info": "Notă",
+      "notable": "Merită o privire"
+    },
+    "category": {
+      "weight": "Greutate",
+      "nutrition": "Nutriție",
+      "sleep": "Somn",
+      "recovery": "Recuperare",
+      "combined": "Combinat",
+      "data_quality": "Despre datele tale"
+    },
+    "notes": {
+      "no_data": "Nu există date în această perioadă.",
+      "needs_3_points_over_7_days": "O tendință are nevoie de cel puțin 3 zile cu date răspândite pe 7 zile sau mai mult."
+    },
+    "caveats": {
+      "association_not_cause": "Lucrurile care se schimbă împreună nu sunt neapărat legate: aceasta arată o asociere, nu o cauză.",
+      "weight_varies_daily": "Greutatea variază în mod normal de la o zi la alta (apă, sare, ora cântăririi).",
+      "low_confidence": "Încredere scăzută: puține zile sau o potrivire slabă, deci tratează-o ca pe o sugestie.",
+      "logging_gaps": "Mesele au fost înregistrate în mai puțin de jumătate din zile, deci cifrele de nutriție pot să nu descrie celelalte zile.",
+      "incomplete_food_data": "Unele alimente au valori nutriționale necunoscute, deci totalurile pot fi prea mici.",
+      "provider_score": "Acesta este scorul propriu al furnizorului dispozitivului, comparat doar cu propriul tău istoric.",
+      "small_sample": "Bazat pe un număr mic de zile."
+    },
+    "limitations": {
+      "observational_only": "Tot ce vezi aici este observat în propriile tale date. Nu poate arăta ce a cauzat o schimbare.",
+      "not_medical_advice": "Acestea sunt informații de wellness, nu sfat medical. Vorbește cu un specialist calificat despre problemele de sănătate.",
+      "provider_scores_not_comparable": "Scorurile unui dispozitiv (recuperare, efort) aparțin acelui dispozitiv și nu sunt niciodată comparate cu alte dispozitive.",
+      "logging_gaps": "Mediile de nutriție folosesc doar zilele în care ai înregistrat mese."
+    },
+    "above": "peste",
+    "below": "sub",
+    "more": "mai mult",
+    "less": "mai puțin",
+    "gaps": {
+      "weight_entries": "înregistrări de greutate",
+      "nutrition_logged_days": "mese înregistrate",
+      "device_data": "date de la dispozitiv (somn, recuperare)"
+    },
+    "items": {
+      "data_gaps": "Unele tendințe nu pot fi calculate încă. Lipsesc: {{missing}}.",
+      "weight_trend": "Greutatea ta este {{direction}} cu aproximativ {{change_per_week_abs}} kg pe săptămână ({{points}} zile cu înregistrări pe {{span_days}} zile, încredere {{confidence}}).",
+      "weight_trend_stable": "Greutatea ta a fost stabilă: aproximativ {{change_per_week}} kg pe săptămână ({{points}} zile cu înregistrări pe {{span_days}} zile, încredere {{confidence}}).",
+      "weight_trend_shift": "Tendința greutății tale {{shift}}: aproximativ {{previous_change_per_week}} kg pe săptămână în perioada dinainte, {{current_change_per_week}} kg pe săptămână în aceasta.",
+      "nutrition_logging_coverage": "Ai înregistrat mese în {{logged_days}} din ultimele {{window_days}} zile. Mediile de nutriție folosesc doar aceste zile.",
+      "nutrient_vs_target": "Media ta de {{nutrient}} în zilele înregistrate este {{average}} {{unit}}: cu {{deviation_percent_abs}}% {{aboveBelow}} ținta de {{target}} {{unit}} ({{logged_days}} zile înregistrate).",
+      "sleep_duration_change": "Timpul tău mediu de somn ({{provider}}) este {{current_average}} minute, cu {{change_abs}} minute {{moreLess}} decât înainte ({{previous_average}} minute).",
+      "sleep_variability": "Timpul tău de somn ({{provider}}) a variat mult: de la {{minimum}} la {{maximum}} minute în {{nights}} nopți.",
+      "recovery_below_average": "Ultimele trei scoruri de recuperare {{provider}} sunt toate mult sub media ta de {{average}} (ultimul: {{latest}}).",
+      "recovery_and_sleep": "După nopți mai lungi decât mediana ta ({{median_sleep}} minute), recuperarea {{provider}} a fost în medie {{recovery_after_longer_sleep}} față de {{recovery_after_shorter_sleep}} după nopți mai scurte ({{days}} zile).",
+      "hrv_trend": "{{label}} ({{provider}}) este {{direction}} cu aproximativ {{change_per_week_abs}} {{unit}} pe săptămână ({{points}} zile, încredere {{confidence}}).",
+      "resting_heart_rate_trend": "{{label}} ({{provider}}) este {{direction}} cu aproximativ {{change_per_week_abs}} {{unit}} pe săptămână ({{points}} zile, încredere {{confidence}})."
+    },
+    "factors": {
+      "calories": "În același timp, media caloriilor înregistrate s-a schimbat cu {{calories_average_change}} kcal pe zi înregistrată.",
+      "sleep": "În același timp, timpul tău mediu de somn ({{provider}}) s-a schimbat cu {{sleep_average_change}} minute.",
+      "none": "Nimic altceva din datele tale nu s-a schimbat suficient pentru a indica un posibil factor."
+    },
+    "compare": {
+      "metric": "Măsură",
+      "before": "Înainte",
+      "now": "Acum",
+      "change": "Schimbare",
+      "days": "{{before}} zile înainte, {{now}} zile acum",
+      "needMore": "necesită 3+ zile în ambele perioade",
+      "small": "în variația normală",
+      "note": "Medii ale zilelor cu date din fiecare perioadă. O diferență este evidențiată doar dacă depășește variația obișnuită de la o zi la alta."
+    },
+    "explain": {
+      "title": "Explică-mi în cuvinte simple",
+      "body": "AI-ul pune în cuvinte cifrele de mai sus. Primește doar aceste observații calculate, nu are voie să adauge cifre proprii și este verificat dacă folosește cifre care nu apar în datele tale.",
+      "action": "Explică cu AI",
+      "working": "Se scrie explicația…",
+      "consentAction": "Deschide setările de confidențialitate",
+      "errors": {
+        "ai_not_configured": "Serviciul AI nu este configurat pe acest server. Observațiile de mai sus rămân complete.",
+        "ai_unavailable": "Serviciul AI nu este disponibil acum. Observațiile de mai sus rămân complete.",
+        "ai_timeout": "Serviciul AI a răspuns prea greu. Încearcă din nou.",
+        "ai_empty_response": "Serviciul AI a returnat un răspuns gol. Încearcă din nou.",
+        "consent_required": "Activează procesarea AI pentru a folosi această funcție.",
+        "nothing_to_explain": "Nu există încă destule date înregistrate în această perioadă pentru a explica."
+      },
+      "ungroundedTitle": "Verifică aceste cifre",
+      "ungroundedBody": "Aceste cifre din text nu au putut fi potrivite cu datele tale: {{numbers}}. Bazează-te pe cardurile de mai sus.",
+      "disclaimer": "Scris de AI din valori calculate. Poate formula totuși prost. Informații de wellness, nu sfat medical."
+    },
+    "nutrients": {
+      "calories": "calorii",
+      "protein": "proteine"
+    }
   }
 }

@@ -49,6 +49,7 @@ are validated and consent-checked, nothing is written without the user's confirm
 - With tools, the assistant gets the caller's own profile facts and nutrition totals when it asks for them (after consent); a successful injection can make it reveal those to the caller only.
 - No jailbreak or red-team coverage beyond the small dataset; medical-claim accuracy is not evaluated.
 - Romanian system-prompt behaviour depends on the chosen model.
+- Insight explanations: the numbers come from the application and the model is checked for invented ones, but a model can still word a true number misleadingly or reassure too much; causal and diagnostic wording is forbidden by the prompt and absent from the application's own statements, not enforced on the model's output.
 - Wearable scores (recovery, strain) are the device provider's own numbers. The prompt and the tool results tell the model to report them as the provider's score and not to compare them across devices or draw medical conclusions; that is guidance, not enforcement, and it is covered only by the scripted tests, not by a live evaluation.
 - Retrieval can surface an approved but outdated or misread passage; a citation shows *where* a claim came from, it does not prove the claim is right or fits the user. The injection heuristics are patterns, not a guarantee; the document approval process is the real control.
 

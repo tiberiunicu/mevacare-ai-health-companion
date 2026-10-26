@@ -1,9 +1,10 @@
-import { Activity, Flame, Sparkles, Target, UserRound } from 'lucide-react'
+import { Activity, Flame, Target, UserRound } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Alert, Card, PageHeader } from '../components/ui'
 import { ActivityCard, SleepCard, WeightCard } from '../features/health/DashboardCards'
+import { InsightsCard } from '../features/insights/InsightsCard'
 import { useDailySummary } from '../features/nutrition/hooks'
 import { ProgressRows } from '../features/nutrition/NutritionPages'
 import { isConsentRequired, useGoals, useProfile } from '../features/profile/hooks'
@@ -103,7 +104,7 @@ export function Dashboard() {
         <WeightCard />
         <SleepCard />
         <ActivityCard />
-        <PendingCard icon={<Sparkles className="size-5" />} title={t('dashboard.insights')} note={t('dashboard.availableWithInsights')} tone="ai" />
+        <InsightsCard />
       </div>
     </>
   )
@@ -115,16 +116,5 @@ function CardTitle({ icon, title }: { icon: ReactNode; title: string }) {
       <span className="text-primary">{icon}</span>
       {title}
     </h2>
-  )
-}
-
-function PendingCard({ icon, title, note, tone }: { icon: ReactNode; title: string; note: string; tone?: 'ai' }) {
-  const { t } = useTranslation()
-  return (
-    <Card className={tone === 'ai' ? 'bg-ai-soft' : undefined}>
-      <CardTitle icon={icon} title={title} />
-      <p className="text-sm font-medium text-muted">{t('dashboard.noDataYet')}</p>
-      <p className="mt-1 text-xs text-muted">{note}</p>
-    </Card>
   )
 }

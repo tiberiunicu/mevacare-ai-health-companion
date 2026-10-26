@@ -8,9 +8,10 @@ what problem it solves, why it is needed, how it works here, why this implementa
 | LLM integration (`IChatClient`, providers, streaming, history, persistence) | **Implemented (Phase 2)** | [llm-integration.md](llm-integration.md) |
 | Prompt engineering and AI safety (system prompt, emergency screen, injection handling) | **Implemented (Phase 2)** | [ai-safety.md](ai-safety.md) |
 | AI evaluation (deterministic emergency evaluation, live adversarial evaluation) | **Implemented (Phase 2)** | [ai-evaluation.md](ai-evaluation.md) |
-| Function calling / tools (seven tools, including `SearchMedicalKnowledge` and the measurement reads) | **Implemented (Phases 3–5)** | [tool-calling.md](tool-calling.md) |
+| Function calling / tools (eight tools, including `SearchMedicalKnowledge`, the measurement reads and `GetHealthInsights`) | **Implemented (Phases 3–6)** | [tool-calling.md](tool-calling.md) |
 | Structured outputs (meal extraction) | **Implemented (Phase 3)** | [structured-outputs.md](structured-outputs.md) |
 | Embeddings, vector search, RAG, citations, retrieval evaluation | **Implemented (Phase 4)**; real embedding providers never run | [rag-embeddings-memory.md](rag-embeddings-memory.md) |
+| AI-assisted explanation of computed insights (grounded in verified numbers, with a number check) | **Implemented (Phase 6)**, scripted model only | [insight-explanations.md](insight-explanations.md) |
 | AI memory | Designed, **not implemented** | [rag-embeddings-memory.md](rag-embeddings-memory.md#ai-memory-later--designed-not-implemented) |
 
 Pages or sections marked *designed* (currently only AI memory in [RAG, embeddings and memory](rag-embeddings-memory.md)) describe the intended approach so later phases stay consistent; they must be revisited and

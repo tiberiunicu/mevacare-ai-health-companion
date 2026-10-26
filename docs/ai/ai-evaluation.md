@@ -74,4 +74,5 @@ stated raw/cooked wording, and that injected items are not extracted. The datase
 - Tool-selection accuracy (does the model call `PrepareMeal` for "I ate..." and a summary tool for "how many calories today") is covered only with a scripted
   model plus manual runs against a mock server; a live tool-selection evaluation is still to be written.
 - Retrieval evaluation (Phase 4) measures the retriever, not the model's answer: whether the model cites faithfully and does not misread a passage is **not evaluated**. The synthetic gold set has 17 answerable and 4 unanswerable questions; the real-corpus numbers come from 5 pages and 15 questions. Treat them as a regression alarm.
+- The insight explanation (Phase 6) and the `GetHealthInsights` tool are tested with a scripted model only; a live evaluation (stays within the data, no causal wording, no diagnosis, empty `ungroundedNumbers`) is still to be written ([../remaining-work.md](../remaining-work.md)).
 - Planned: an LLM-as-judge option with human spot checks.

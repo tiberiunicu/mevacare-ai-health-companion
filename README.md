@@ -7,7 +7,7 @@ diagnose, prescribe or replace a physician, and it is not an emergency service.
 This is a brand-new, standalone product. It shares nothing (code, database, infrastructure) with any other MevaCare
 application.
 
-> **Status: Phase 1 (foundation), Phase 2 (AI chat), Phase 3 (nutrition), Phase 4 (medical knowledge RAG) and Phase 5 (measurements and WHOOP wearable integration) are implemented and tested. Phase 6 is not started.**
+> **Status: Phase 1 (foundation), Phase 2 (AI chat), Phase 3 (nutrition), Phase 4 (medical knowledge RAG), Phase 5 (measurements and WHOOP wearable integration) and Phase 6 (health intelligence) are implemented and tested — **all six planned phases are done**. What is *not* verified or not built is listed in [docs/remaining-work.md](docs/remaining-work.md): above all, nothing has run against a real AI model or the real WHOOP service.**
 > See [What works today](#what-works-today) and [Roadmap](#roadmap).
 
 ## What works today
@@ -26,7 +26,9 @@ application.
 | React app: sign in/up, dashboard (real calories and macros), profile, preferences, privacy, AI settings (incl. the approved sources list), chat with tool status, meal cards and source citations, nutrition pages; light/dark; English + Romanian | Done |
 | Measurements: manual weight (kg/lb), weight evolution, sleep sessions, recovery, day strain, workouts, with provenance and local-day handling; historical queries; assistant tools `GetWeightHistory` and `GetSleepAndRecovery` | Done |
 | Wearables: connected-account infrastructure, WHOOP OAuth, hourly + on-demand synchronization, normalization, sleep/recovery/activity pages and dashboard cards, connect/synchronize/disconnect UI | Done, **but never run against the real WHOOP service** (scripted stand-in only; see [docs/integrations/whoop.md](docs/integrations/whoop.md)) |
-| Insights and trend analysis (Phase 6), AI memory, other wearables (Apple Health, Garmin, Oura …) | **Not implemented.** Pages say so explicitly, never fake data |
+| Health intelligence: weight, nutrition, sleep and recovery trends, comparison with the previous period, combined insights (for example *why did my weight loss slow down*, as associations, never causes), computed on request by deterministic rules; insights page and dashboard card | Done |
+| AI-assisted explanation of the insights (button on the insights page) and the chat tool `GetHealthInsights`; the model only words the computed numbers and its answer is checked for numbers that are not in the data | Done with a scripted model; **never run against a real model** |
+| AI memory, other wearables (Apple Health, Garmin, Oura …) | **Not implemented.** See [docs/remaining-work.md](docs/remaining-work.md) |
 
 **AI provider testing.** Automated tests use a scripted fake model. The OpenAI provider code path was additionally
 exercised end-to-end (SDK → HTTP → streaming → browser, including **tool calls and JSON-schema structured output**) against a local OpenAI-compatible mock server. It has **not**
@@ -47,6 +49,7 @@ src/backend/
   MevaCare.AI.HealthCompanion.Modules.Knowledge    medical-knowledge RAG: ingestion, embeddings, vector store (Qdrant), retrieval
   MevaCare.AI.HealthCompanion.Modules.Measurements normalized measurements with provenance: weight, sleep, recovery, strain, workouts, queries
   MevaCare.AI.HealthCompanion.Modules.Integrations connected accounts, provider OAuth (WHOOP), protected tokens, synchronization
+  MevaCare.AI.HealthCompanion.Modules.Insights     trends, period comparisons, rule-based insights (no tables, no model)
 src/frontend/mevacare-ai-web                       React + TypeScript + Vite + Tailwind
 tests/UnitTests | IntegrationTests | AIEvaluationTests
 docs/architecture | decisions (ADRs) | ai | api
@@ -189,6 +192,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
+- State at the end of Phase 6: 328 unit tests, 166 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`), 13 evaluation tests (+3 live-model tests skipped), 93 frontend tests; all pass.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.
@@ -206,6 +210,8 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - [Architecture decision records](docs/decisions/)
 - [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
 - [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md)
+- [Insights (trends, comparisons, rules)](docs/architecture/insights.md) · [AI explanations of insights](docs/ai/insight-explanations.md)
+- **[What remains to be done](docs/remaining-work.md)**
 - AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·
   [structured outputs](docs/ai/structured-outputs.md) · [safety](docs/ai/ai-safety.md) · [evaluation](docs/ai/ai-evaluation.md) ·
   [RAG, citations and (planned) memory](docs/ai/rag-embeddings-memory.md)
@@ -214,7 +220,9 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ## Roadmap
 
 1. ✅ Foundation  2. ✅ AI chat  3. ✅ Nutrition vertical slice (food data, meal logging via tools and confirmation)
-4. ✅ Medical knowledge RAG (Qdrant, citations)  5. ✅ Wearables (WHOOP first) and measurements  6. Health intelligence (trends, insights)
+4. ✅ Medical knowledge RAG (Qdrant, citations)  5. ✅ Wearables (WHOOP first) and measurements  6. ✅ Health intelligence (trends, insights)
+
+All planned phases are implemented; the next work is making the AI and WHOOP parts real and hardening for real users — see [docs/remaining-work.md](docs/remaining-work.md).
 
 ## Troubleshooting
 

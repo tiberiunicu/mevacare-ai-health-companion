@@ -46,6 +46,7 @@ const NAV: NavItem[] = [
       { to: '/health/weight', labelKey: 'nav.weight' },
       { to: '/health/sleep', labelKey: 'nav.sleep' },
       { to: '/health/activity', labelKey: 'nav.activity' },
+      { to: '/health/insights', labelKey: 'nav.insights' },
     ],
   },
   { to: '/devices', labelKey: 'nav.devices', icon: <Link2 className="size-5" /> },

@@ -42,7 +42,7 @@ is closed.
 
 ## AI-specific security
 
-- The assistant has **seven tools** (profile, two nutrition summaries, meal preparation, medical-knowledge search, weight history, sleep and recovery). All are bound to the caller, re-check consent and are read-only except meal preparation, which only proposes. They are bound per turn to the signed-in user
+- The assistant has **eight tools** (profile, two nutrition summaries, meal preparation, medical-knowledge search, weight history, sleep and recovery, computed insights). All are bound to the caller, re-check consent and are read-only except meal preparation, which only proposes. They are bound per turn to the signed-in user
   (no user-id parameter exists), re-check consent, are audited, and the only write-type tool merely prepares a proposal that the user must
   confirm in the UI; confirmations are idempotent. A prompt injection can therefore at worst make the assistant read the **caller's own**
   data or prepare a meal the user then rejects. See [tool-calling.md](../ai/tool-calling.md).
@@ -52,6 +52,12 @@ is closed.
 - Model output is rendered as Markdown without raw HTML.
 - No shell or SQL execution from model output exists or is planned.
 - See [AI safety](../ai/ai-safety.md) for limits of these defences.
+
+## Insights and AI explanations (Phase 6)
+
+- Insights are computed from the caller's own data through the contracts that check the health-data consent and filter by user; nothing is stored, so there is no new personal-data table, export section or deletion path.
+- The AI explanation sends **aggregated, application-computed facts** (trends, averages, rule outputs, provider keys) of the caller to the configured AI provider, only after the AI-processing consent. It sends no raw records, identifiers, names or free text, has no tools, is rate limited per user and is not stored. Provider errors are reduced to stable codes.
+- Output is checked for numbers that are not in the data it was given; wellness disclaimers are fixed text. Neither replaces a clinical review of the wording ([../remaining-work.md](../remaining-work.md)).
 
 ## Wearable integrations (Phase 5)
 

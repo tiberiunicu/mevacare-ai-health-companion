@@ -38,7 +38,8 @@
     "aiSettings": "AI Settings",
     "signOut": "Sign out",
     "main": "Main navigation",
-    "toggleTheme": "Toggle theme"
+    "toggleTheme": "Toggle theme",
+    "insights": "Insights"
   },
   "auth": {
     "signInTitle": "Welcome back",
@@ -79,10 +80,9 @@
     "weightEvolution": "Weight evolution",
     "sleepSummary": "Sleep summary",
     "activitySummary": "Activity summary",
-    "insights": "AI insights",
+    "insights": "Insights",
     "noDataYet": "No data yet",
     "availableWith": "Available with the nutrition module (next phase).",
-    "availableWithInsights": "Available once enough of your own data has been collected (later phase).",
     "weightChange": "{{value}} in {{days}} days",
     "weightEmpty": "No weight entries yet.",
     "weightAction": "Open weight",
@@ -95,7 +95,9 @@
     "strain": "{{provider}} strain {{value}}",
     "workoutsWeek": "{{count}} workouts in the last 7 days",
     "workoutsWeek_one": "{{count}} workout in the last 7 days",
-    "fromDevice": "From {{provider}}"
+    "fromDevice": "From {{provider}}",
+    "insightsEmpty": "Not enough recorded data yet to find trends. Weight entries, meals and a connected device make this fill up.",
+    "insightsAction": "Open insights"
   },
   "profile": {
     "title": "Health profile",
@@ -519,5 +521,141 @@
     },
     "privacyTitle": "Your data",
     "privacyBody": "Access is requested read-only. The access keys are stored encrypted on the server and are never shown. Disconnecting revokes the access at the provider when it is reachable."
+  },
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Trends and comparisons calculated from your own recorded data. They describe what the data shows, not why, and they are not medical advice.",
+    "coverage": {
+      "title": "What this is based on",
+      "line": "{{from}} to {{to}}: {{weight}} weight entries, meals logged on {{logged}} of {{window}} days.",
+      "provider": "{{provider}}: sleep on {{sleep}} days, recovery on {{recovery}} days."
+    },
+    "sections": {
+      "insights": "What stands out",
+      "trends": "Trends in this period",
+      "compare": "This period compared with the {{days}} days before",
+      "limitations": "Good to know"
+    },
+    "none": "Nothing stands out in this period.",
+    "trendsNote": "A trend is the average change per week fitted through your data. A weak fit or few days lowers the confidence.",
+    "week": "week",
+    "trendBasis": "{{points}} days with data over {{span}} days",
+    "confidenceWord": "confidence",
+    "metrics": {
+      "weight_kg": "Weight",
+      "calories_kcal": "Calories (per logged day)",
+      "protein_g": "Protein (per logged day)",
+      "sleep_minutes": "Time asleep",
+      "recovery_score": "Recovery score",
+      "hrv_ms": "HRV (RMSSD)",
+      "resting_heart_rate_bpm": "Resting heart rate"
+    },
+    "direction": {
+      "increasing": "increasing",
+      "decreasing": "decreasing",
+      "stable": "stable",
+      "insufficient_data": "not enough data"
+    },
+    "confidence": {
+      "low": "low",
+      "moderate": "moderate",
+      "high": "high"
+    },
+    "shift": {
+      "slowed": "slowed down",
+      "reversed": "reversed",
+      "accelerated": "sped up"
+    },
+    "severity": {
+      "info": "Note",
+      "notable": "Worth a look"
+    },
+    "category": {
+      "weight": "Weight",
+      "nutrition": "Nutrition",
+      "sleep": "Sleep",
+      "recovery": "Recovery",
+      "combined": "Combined",
+      "data_quality": "About your data"
+    },
+    "notes": {
+      "no_data": "No data in this period.",
+      "needs_3_points_over_7_days": "A trend needs at least 3 days with data spread over 7 days or more."
+    },
+    "caveats": {
+      "association_not_cause": "Things that change together are not necessarily connected: this shows an association, not a cause.",
+      "weight_varies_daily": "Weight normally varies from day to day (water, salt, timing).",
+      "low_confidence": "Low confidence: few days or a loose fit, so treat this as a hint.",
+      "logging_gaps": "Meals were logged on fewer than half of the days, so nutrition numbers may not describe the other days.",
+      "incomplete_food_data": "Some foods have unknown nutrient values, so totals may be too low.",
+      "provider_score": "This is the device provider's own score, compared only with your own history.",
+      "small_sample": "Based on a small number of days."
+    },
+    "limitations": {
+      "observational_only": "Everything here is observed in your own data. It cannot show what caused a change.",
+      "not_medical_advice": "This is wellness information, not medical advice. Talk to a qualified professional about health concerns.",
+      "provider_scores_not_comparable": "Scores from a device (recovery, strain) belong to that device and are never compared with other devices.",
+      "logging_gaps": "Nutrition averages use only the days you logged meals."
+    },
+    "above": "above",
+    "below": "below",
+    "more": "more",
+    "less": "less",
+    "gaps": {
+      "weight_entries": "weight entries",
+      "nutrition_logged_days": "logged meals",
+      "device_data": "device data (sleep, recovery)"
+    },
+    "items": {
+      "data_gaps": "Some trends cannot be calculated yet. Missing: {{missing}}.",
+      "weight_trend": "Your weight is {{direction}} by about {{change_per_week_abs}} kg per week ({{points}} days with entries over {{span_days}} days, {{confidence}} confidence).",
+      "weight_trend_stable": "Your weight has been stable: about {{change_per_week}} kg per week ({{points}} days with entries over {{span_days}} days, {{confidence}} confidence).",
+      "weight_trend_shift": "Your weight trend {{shift}}: about {{previous_change_per_week}} kg per week in the period before, {{current_change_per_week}} kg per week in this one.",
+      "nutrition_logging_coverage": "You logged meals on {{logged_days}} of the last {{window_days}} days. Nutrition averages use only those days.",
+      "nutrient_vs_target": "Your average {{nutrient}} on logged days is {{average}} {{unit}}: {{deviation_percent_abs}}% {{aboveBelow}} your target of {{target}} {{unit}} ({{logged_days}} logged days).",
+      "sleep_duration_change": "Your average time asleep ({{provider}}) is {{current_average}} minutes, {{change_abs}} minutes {{moreLess}} than before ({{previous_average}} minutes).",
+      "sleep_variability": "Your time asleep ({{provider}}) varied a lot: from {{minimum}} to {{maximum}} minutes over {{nights}} nights.",
+      "recovery_below_average": "Your last three {{provider}} recovery scores are all far below your own average of {{average}} (latest: {{latest}}).",
+      "recovery_and_sleep": "After nights longer than your median ({{median_sleep}} minutes), your {{provider}} recovery averaged {{recovery_after_longer_sleep}} versus {{recovery_after_shorter_sleep}} after shorter nights ({{days}} days).",
+      "hrv_trend": "Your {{label}} ({{provider}}) is {{direction}} by about {{change_per_week_abs}} {{unit}} per week ({{points}} days, {{confidence}} confidence).",
+      "resting_heart_rate_trend": "Your {{label}} ({{provider}}) is {{direction}} by about {{change_per_week_abs}} {{unit}} per week ({{points}} days, {{confidence}} confidence)."
+    },
+    "factors": {
+      "calories": "Over the same time, your average logged calories changed by {{calories_average_change}} kcal per logged day.",
+      "sleep": "Over the same time, your average time asleep ({{provider}}) changed by {{sleep_average_change}} minutes.",
+      "none": "Nothing else in your data changed enough to point to a possible factor."
+    },
+    "compare": {
+      "metric": "Measure",
+      "before": "Before",
+      "now": "Now",
+      "change": "Change",
+      "days": "{{before}} days before, {{now}} days now",
+      "needMore": "needs 3+ days in both periods",
+      "small": "within normal variation",
+      "note": "Averages of the days that have data in each period. A difference is highlighted only when it is bigger than usual day-to-day variation."
+    },
+    "explain": {
+      "title": "Explain it in plain words",
+      "body": "The AI puts the numbers above into words. It only receives these calculated insights, may not add numbers of its own, and is checked for numbers that are not in your data.",
+      "action": "Explain with AI",
+      "working": "Writing the explanation…",
+      "consentAction": "Open privacy settings",
+      "errors": {
+        "ai_not_configured": "The AI service is not set up on this server. The insights above are still complete.",
+        "ai_unavailable": "The AI service is not available right now. The insights above are still complete.",
+        "ai_timeout": "The AI service took too long to answer. Try again.",
+        "ai_empty_response": "The AI service returned an empty answer. Try again.",
+        "consent_required": "Turn on AI processing to use this.",
+        "nothing_to_explain": "There is not enough recorded data in this period to explain yet."
+      },
+      "ungroundedTitle": "Check these numbers",
+      "ungroundedBody": "These numbers in the text could not be matched to your data: {{numbers}}. Rely on the cards above.",
+      "disclaimer": "AI-written from calculated values. It can still phrase things badly. Wellness information, not medical advice."
+    },
+    "nutrients": {
+      "calories": "calories",
+      "protein": "protein"
+    }
   }
 }

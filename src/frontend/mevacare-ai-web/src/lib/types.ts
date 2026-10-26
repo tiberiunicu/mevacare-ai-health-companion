@@ -356,3 +356,79 @@ export interface SyncJob {
   recordsUpdated: number
   errorCode: string | null
 }
+
+// ---- Insights ----
+
+export type TrendDirection = 'insufficient_data' | 'increasing' | 'decreasing' | 'stable'
+export type TrendConfidence = 'low' | 'moderate' | 'high'
+
+export interface Trend {
+  metric: string
+  unit: string
+  provider: string | null
+  direction: TrendDirection
+  confidence: TrendConfidence
+  points: number
+  spanDays: number
+  average: number | null
+  first: number | null
+  last: number | null
+  changePerWeek: number | null
+  rSquared: number | null
+  note: string | null
+}
+
+export interface PeriodComparison {
+  metric: string
+  unit: string
+  provider: string | null
+  currentDays: number
+  previousDays: number
+  currentAverage: number | null
+  previousAverage: number | null
+  change: number | null
+  changePercent: number | null
+  direction: TrendDirection
+  meaningful: boolean
+}
+
+export interface InsightFact {
+  key: string
+  number: number | null
+  text: string | null
+  unit: string | null
+}
+
+export interface Insight {
+  code: string
+  category: 'weight' | 'nutrition' | 'sleep' | 'recovery' | 'combined' | 'data_quality'
+  severity: 'info' | 'notable'
+  /** A deterministic English sentence; the UI phrases insights from the facts in the user's language and falls back to this. */
+  statement: string
+  facts: InsightFact[]
+  caveats: string[]
+}
+
+export interface HealthInsights {
+  from: string
+  to: string
+  days: number
+  coverage: {
+    weightEntries: number
+    nutritionLoggedDays: number
+    nutritionWindowDays: number
+    providers: { provider: string; daysWithSleep: number; daysWithRecovery: number }[]
+  }
+  trends: Trend[]
+  comparisons: PeriodComparison[]
+  insights: Insight[]
+  limitations: string[]
+}
+
+export interface InsightExplanation {
+  explanation: string
+  /** Numbers in the text that could not be matched to the data the model was given. */
+  ungroundedNumbers: string[]
+  model: string
+  generatedAtUtc: string
+}

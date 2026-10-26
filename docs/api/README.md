@@ -32,6 +32,8 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 | `GET /api/integrations/{provider}/callback` *anonymous, rate limited* | the provider's redirect target; consumes the single-use `state` and **always answers with a redirect** to the web app: `/devices?connected=whoop` or `/devices?error=<code>` |
 | `POST /api/integrations/{provider}/sync` · `GET /api/integrations/{provider}/sync-jobs?limit=` | synchronize now (one per minute per account) and recent runs |
 | `DELETE /api/integrations/{provider}?deleteData=false` | disconnect (revokes at the provider, deletes the stored tokens; `deleteData=true` also removes the imported history) |
+| `GET /api/insights?days=30&to=YYYY-MM-DD` | trends (per week, with confidence), comparison with the previous period of the same length, combined insights with facts and caveats, data coverage and limitations; `days` 7–90 (`400 invalid_period` otherwise); needs `HealthDataProcessing`; computed on request, nothing stored |
+| `POST /api/assistant/insights/explain` `{days, to?, language?: en\|ro}` | AI explanation of those insights: `{explanation, ungroundedNumbers[], model, generatedAtUtc}`; needs `AiProcessing` + `HealthDataProcessing`; per-user chat rate limit; `400 nothing_to_explain` (no model call), `503 ai_not_configured\|ai_unavailable\|ai_timeout\|ai_empty_response` |
 | `GET /api/knowledge/sources` | approved medical-knowledge sources behind the assistant's citations (title, publisher, URL, licence, retrieval date, version, passage count) |
 | `GET /health/live` · `GET /health/ready` *anonymous* | liveness / readiness (database) |
 | `GET /health/knowledge` *anonymous* | `{enabled, vectorStore, vectorStoreProvider, embeddingModel, activeSources}`; 503 when the vector store is unreachable; no secrets |
@@ -45,7 +47,7 @@ Response: `200 text/event-stream`. Events (each `event: <name>` + `data: <json>`
 |---|---|---|
 | `conversation` | `{conversationId, title}` | always first |
 | `safety` | `{category}` | the following text is a fixed safety answer, not model output |
-| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge`, `GetWeightHistory`, `GetSleepAndRecovery` |
+| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge`, `GetWeightHistory`, `GetSleepAndRecovery`, `GetHealthInsights` |
 | `proposal` | `{card}` | a meal prepared by the assistant (`card.id`, `card.proposal` with matched items, grams, nutrients, totals, warnings); **nothing is saved** until `POST /api/nutrition/meals` with that `proposalId` |
 | `delta` | `{text}` | zero or more |
 | `citations` | `{items:[{number, sourceId, title, publisher, url, license, retrievedOn, excerpt, cited}]}` | only when the model searched the approved sources and found something; sent after the last `delta`, before `done`; `cited=false` means consulted but not referenced by the answer. The same list is returned as `citations` on each message of `GET /api/conversations/{id}/messages` |

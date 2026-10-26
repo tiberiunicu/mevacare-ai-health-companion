@@ -9,7 +9,7 @@ broker, no multi-agent system (see [ADR-0001](../decisions/0001-modular-monolith
 ```
                 Api (composition root, middleware, OpenAPI)
                /   |        \                \
-   Modules.Identity  HealthProfile  Nutrition  Assistant  Knowledge  Measurements  Integrations   (feature modules)
+   Modules.Identity  HealthProfile  Nutrition  Assistant  Knowledge  Measurements  Integrations  Insights   (feature modules)
           \             |  \                 |   \
            \            |   Identity (User)  |    Identity (User)
             \___________|____________________|____
@@ -23,7 +23,7 @@ broker, no multi-agent system (see [ADR-0001](../decisions/0001-modular-monolith
 | Modules depend on `Contracts` and `Infrastructure`, never on the `Api` project | the host composes, modules do not know the host |
 | `Infrastructure` never references a module | no cycles; modules reach the database through `AppDbContext.Set<T>()` |
 | A module may reference `Identity` **only for the `User` entity** (to declare the foreign key to `Users`) | database-level referential integrity and cascading deletion (GDPR erasure) |
-| Modules do not call each other's services; shared needs go through `Contracts` interfaces (`IConsentService`, `IAuditLog`, `IUserDataExporter`, `ICurrentUser`, and for the AI tools `INutritionAssistantApi`, `IHealthProfileReader`, `IMealProposalGate`, for the medical-knowledge tool `IKnowledgeSearch`, and for measurements `IMeasurementIngest` (Integrations → Measurements) and `IMeasurementsAssistantApi`) | keeps boundaries enforceable and the modules extractable later |
+| Modules do not call each other's services; shared needs go through `Contracts` interfaces (`IConsentService`, `IAuditLog`, `IUserDataExporter`, `ICurrentUser`, and for the AI tools `INutritionAssistantApi`, `IHealthProfileReader`, `IMealProposalGate`, for the medical-knowledge tool `IKnowledgeSearch`, and for measurements `IMeasurementIngest` (Integrations → Measurements) `IMeasurementsAssistantApi`, and `IInsightsAssistantApi` (Insights → Assistant)) | keeps boundaries enforceable and the modules extractable later |
 | Entities are never returned by the API; every endpoint uses request/response records | no mass assignment, stable contracts |
 
 Inside a module the code is organised by **feature** (`Features/Auth`, `Features/Consents`…) rather than by technical
@@ -82,6 +82,8 @@ model answer as Server-Sent Events (the model may call the per-turn tools, see [
 persist the assistant message (also when it fails or the user disconnects).
 
 **Connecting and synchronizing a wearable** (Phase 5): authenticated `connect` → provider authorization page → anonymous callback (single-use state) → protected tokens stored → the SPA triggers a synchronization → provider data is normalized and ingested idempotently → pages and assistant tools read it back. See [measurements-and-wearables.md](measurements-and-wearables.md).
+
+**Insights** (Phase 6): `GET /api/insights` or the assistant tool → `InsightsService` reads weights and sleep/recovery through `IMeasurementsAssistantApi` and meals through `INutritionAssistantApi` → the pure `InsightEngine` returns trends, comparisons and rule-based insights; nothing is stored. The optional AI explanation puts the computed result into words and is checked for invented numbers. See [insights.md](insights.md) and [../ai/insight-explanations.md](../ai/insight-explanations.md).
 
 **Answering from approved medical sources** (Phase 4): the model calls `SearchMedicalKnowledge` → `IKnowledgeSearch` embeds the query → Qdrant returns chunk ids → the chunks are loaded from SQL (active sources only) → numbered passages go back to the model → the answer cites `[n]` → a `citations` event and the stored message carry the sources. Details: [RAG](../ai/rag-embeddings-memory.md).
 

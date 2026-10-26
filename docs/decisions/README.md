@@ -16,3 +16,4 @@
 | [0012](0012-embedding-providers-and-lexical-baseline.md) | Pluggable embedding providers, offline lexical baseline, evaluation-based calibration | Accepted |
 | [0013](0013-normalized-measurements-with-provenance.md) | Normalized measurements with provenance; provider scores stay provider-specific | Accepted |
 | [0014](0014-connected-accounts-oauth-and-sync.md) | Connected accounts: OAuth with single-use state, protected tokens, in-process idempotent sync | Accepted |
+| [0015](0015-computed-insights-ai-only-explains.md) | Insights computed on request by plain rules; the AI only explains them, with a number check | Accepted |

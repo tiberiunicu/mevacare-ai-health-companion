@@ -6,6 +6,7 @@ import { useBootstrapSession } from './features/auth/hooks'
 import { ChatPage } from './features/chat/ChatPage'
 import { DevicesPage } from './features/devices/DevicesPage'
 import { ActivityPage, SleepPage, WeightPage } from './features/health/HealthPages'
+import { InsightsPage } from './features/insights/InsightsPage'
 import { DailySummaryPage, FoodJournalPage, NutritionGoalsPage } from './features/nutrition/NutritionPages'
 import { usePreferencesSync } from './features/profile/hooks'
 import { ProfilePage } from './features/profile/ProfilePage'
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
           { path: '/health/weight', element: <WeightPage /> },
           { path: '/health/sleep', element: <SleepPage /> },
           { path: '/health/activity', element: <ActivityPage /> },
+          { path: '/health/insights', element: <InsightsPage /> },
           { path: '/devices', element: <DevicesPage /> },
           { path: '/settings', element: <Navigate to="/settings/profile" replace /> },
           { path: '/settings/profile', element: <ProfilePage /> },
