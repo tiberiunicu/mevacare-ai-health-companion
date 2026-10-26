@@ -12,6 +12,7 @@
     <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.Knowledge\MevaCare.AI.HealthCompanion.Modules.Knowledge.csproj" />
     <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.Measurements\MevaCare.AI.HealthCompanion.Modules.Measurements.csproj" />
     <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.Integrations\MevaCare.AI.HealthCompanion.Modules.Integrations.csproj" />
+    <ProjectReference Include="..\MevaCare.AI.HealthCompanion.Modules.Insights\MevaCare.AI.HealthCompanion.Modules.Insights.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />

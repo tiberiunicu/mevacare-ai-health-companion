@@ -2,6 +2,7 @@ using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Modules.Assistant;
 using MevaCare.AI.HealthCompanion.Modules.HealthProfile;
 using MevaCare.AI.HealthCompanion.Modules.Identity;
+using MevaCare.AI.HealthCompanion.Modules.Insights;
 using MevaCare.AI.HealthCompanion.Modules.Integrations;
 using MevaCare.AI.HealthCompanion.Modules.Knowledge;
 using MevaCare.AI.HealthCompanion.Modules.Measurements;
@@ -19,6 +20,7 @@ internal static class ModuleCatalog
         new NutritionModule(),
         new MeasurementsModule(),
         new IntegrationsModule(),
+        new InsightsModule(),
         new KnowledgeModule(),
         new AssistantModule(),
     ];

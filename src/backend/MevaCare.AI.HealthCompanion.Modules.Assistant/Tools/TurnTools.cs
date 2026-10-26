@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
+using MevaCare.AI.HealthCompanion.Contracts.Insights;
 using MevaCare.AI.HealthCompanion.Contracts.Knowledge;
 using MevaCare.AI.HealthCompanion.Contracts.Measurements;
 using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
@@ -33,15 +34,17 @@ public sealed class TurnTools
     private readonly ILogger _logger;
     private readonly IKnowledgeSearch? _knowledge;
     private readonly IMeasurementsAssistantApi? _measurements;
+    private readonly IInsightsAssistantApi? _insights;
     private readonly List<(int Number, KnowledgePassage Passage)> _retrieved = [];
 
     public TurnTools(
         Guid userId, Guid conversationId, int assistantSequence, INutritionAssistantApi nutrition, IHealthProfileReader profiles,
         MealParser parser, AppDbContext db, TimeProvider clock, ILogger logger, IKnowledgeSearch? knowledge = null,
-        IMeasurementsAssistantApi? measurements = null)
+        IMeasurementsAssistantApi? measurements = null, IInsightsAssistantApi? insights = null)
     {
         _knowledge = knowledge;
         _measurements = measurements;
+        _insights = insights;
         _userId = userId;
         _conversationId = conversationId;
         _assistantSequence = assistantSequence;
@@ -69,6 +72,12 @@ public sealed class TurnTools
                 "Returns the user's body-weight entries between two dates (at most 366 days) with the latest value and the change over the period. Read-only."));
             functions.Add(AIFunctionFactory.Create(GetSleepAndRecoveryAsync, "GetSleepAndRecovery",
                 "Returns sleep (duration, stages, performance) and recovery (recovery score, resting heart rate, HRV) per day between two dates, with averages, from the user's connected wearable (at most 366 days). Scores belong to the device provider and are not comparable with other providers. Read-only."));
+        }
+
+        if (insights is not null)
+        {
+            functions.Add(AIFunctionFactory.Create(GetHealthInsightsAsync, "GetHealthInsights",
+                "Returns trends (weight, nutrition, sleep, recovery), a comparison with the previous period of the same length, and combined insights, all calculated by the application from the user's own recorded data. Use it for questions about trends, changes, comparisons and why something may have changed. Read-only."));
         }
 
         if (knowledge is not null)
@@ -179,6 +188,24 @@ public sealed class TurnTools
                 note = range.Days.Count == 0
                     ? "No sleep or recovery data is stored for this period (no device connected, or nothing synchronized yet)."
                     : "Recovery scores and strain are the device provider's own scale (for example WHOOP); never compare them across providers or with other metrics. HRV is RMSSD. Sleep 'asleepMinutes' excludes time awake. Do not diagnose.",
+            });
+        });
+
+    private Task<object> GetHealthInsightsAsync(
+        [Description("Length of the period in days, 7 to 90 (30 for 'last month').")] int days,
+        [Description("Last day of the period, YYYY-MM-DD, normally today in the user's calendar.")] string endDate, CancellationToken ct) =>
+        RunAsync("GetHealthInsights", ToolKind.Read, new { days, endDate }, async () =>
+        {
+            var result = await _insights!.GetInsightsAsync(_userId, days, ParseDate(endDate), ct);
+            return Result(new
+            {
+                period = new { from = result.From, to = result.To, days = result.Days },
+                result.Coverage,
+                trends = result.Trends.Where(t => t.Direction != Direction.InsufficientData),
+                comparisons = result.Comparisons.Where(c => c.Direction != Direction.InsufficientData),
+                insights = result.Insights,
+                result.Limitations,
+                note = "These numbers were calculated by the application. Explain them in plain words using only these numbers. They show associations, never causes; mention the caveats; device scores belong to their provider; do not diagnose.",
             });
         });
 

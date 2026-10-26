@@ -34,6 +34,7 @@ public sealed class AssistantModule : IModule
         services.AddSingleton<IChatClient>(sp => ChatClientFactory.Create(sp.GetRequiredService<IOptions<AiOptions>>().Value));
 
         services.AddScoped<AiChatService>();
+        services.AddScoped<InsightExplanationService>();
         services.AddScoped<ConversationService>();
         services.AddScoped<MealParser>();
         services.AddScoped<IMealProposalGate, ProposalGate>();
@@ -56,6 +57,12 @@ public sealed class AssistantModule : IModule
             .WithTags("Chat")
             .RequireRateLimiting(RateLimitPolicies.Chat)
             .WithValidation<SendMessageRequest>();
+
+        app.MapPost("/api/assistant/insights/explain", async (ExplainInsightsRequest request, ICurrentUser user, InsightExplanationService service, CancellationToken ct) =>
+                TypedResults.Ok(await service.ExplainAsync(user.UserId, request, ct)))
+            .WithTags("Insights")
+            .RequireRateLimiting(RateLimitPolicies.Chat)
+            .WithValidation<ExplainInsightsRequest>();
 
         MapProposals(app);
 

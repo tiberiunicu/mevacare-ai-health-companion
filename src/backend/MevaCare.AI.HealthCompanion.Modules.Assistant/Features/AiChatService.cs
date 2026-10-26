@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
+using MevaCare.AI.HealthCompanion.Contracts.Insights;
 using MevaCare.AI.HealthCompanion.Contracts.Knowledge;
 using MevaCare.AI.HealthCompanion.Contracts.Measurements;
 using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
@@ -52,7 +53,8 @@ public sealed class AiChatService(
     TimeProvider clock,
     ILogger<AiChatService> logger,
     IKnowledgeSearch? knowledge = null,
-    IMeasurementsAssistantApi? measurements = null)
+    IMeasurementsAssistantApi? measurements = null,
+    IInsightsAssistantApi? insights = null)
 {
     private readonly AiOptions _options = options.Value;
 
@@ -145,7 +147,7 @@ public sealed class AiChatService(
         if (_options.ToolsEnabled)
         {
             // The tools are bound to THIS user and conversation; the model never supplies a user id.
-            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge, measurements);
+            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge, measurements, insights);
             chatOptions.Tools = [.. tools.Functions];
             client = new FunctionInvokingChatClient(chat)
             {
