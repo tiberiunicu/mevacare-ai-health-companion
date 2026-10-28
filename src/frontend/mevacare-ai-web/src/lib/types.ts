@@ -149,6 +149,22 @@ export interface FoodSearchItem {
   per100g: NutrientValues
   ambiguous: boolean
   preparationAssumed: boolean
+  /** Packaged products (Open Food Facts) have a brand and a barcode; generic foods do not. */
+  brand?: string | null
+  barcode?: string | null
+}
+
+/** A product found online (Open Food Facts). A preview: nothing is stored until it is added. */
+export interface OnlineFoodCandidate {
+  barcode: string
+  name: string
+  brand: string | null
+  category: string | null
+  quantity: string | null
+  per100g: NutrientValues
+  sourceLabel: string
+  /** Set when the product is already in the local database. */
+  foodId: string | null
 }
 
 export interface SaveMealItem {

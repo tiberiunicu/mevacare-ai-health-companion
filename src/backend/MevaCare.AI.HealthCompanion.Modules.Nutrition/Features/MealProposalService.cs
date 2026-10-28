@@ -69,6 +69,20 @@ public sealed class NutritionAssistantApi(
         }
 
         var result = await catalog.SearchAsync(new FoodQuery(parsed.FoodName, wanted, 5), ct);
+        if (!string.IsNullOrWhiteSpace(parsed.Brand))
+        {
+            // A named brand: try that product first; when it is not in the database fall back to the generic food and say so.
+            var branded = await catalog.SearchAsync(new FoodQuery($"{parsed.FoodName} {parsed.Brand}", wanted, 5), ct);
+            if (branded.Matches.Count > 0)
+            {
+                result = branded;
+            }
+            else if (result.Matches.Count > 0)
+            {
+                warnings.Add($"'{parsed.FoodName}': the brand '{parsed.Brand}' was not found in the database; a generic food was used. Search for the product to use its exact values.");
+            }
+        }
+
         if (result.Matches.Count == 0)
         {
             warnings.Add($"No food matching '{parsed.FoodName}' was found in the database; it was not guessed.");

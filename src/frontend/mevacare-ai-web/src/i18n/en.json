@@ -180,7 +180,7 @@
       },
       "ExternalIntegrations": {
         "title": "External integrations",
-        "body": "Allows connecting wearables (WHOOP) and importing their data."
+        "body": "Allows connecting wearables (WHOOP) and importing their data, and searching the public Open Food Facts database online for packaged products (only the text you search for is sent, when you press the button)."
       }
     },
     "dataTitle": "Your data",
@@ -323,6 +323,26 @@
       "confirm": "Confirm and save",
       "atLeastOne": "Add at least one food.",
       "saveError": "The meal could not be saved."
+    },
+    "online": {
+      "search": "Search packaged products online",
+      "searching": "Searching online…",
+      "privacy": "Searches Open Food Facts, a public database of packaged products. Only the text you typed is sent, and only when you press the button.",
+      "resultsTitle": "Found online (Open Food Facts)",
+      "noResults": "Nothing usable was found online either. Nothing is guessed: refine the search or add a custom item.",
+      "use": "Use this product",
+      "adding": "Adding…",
+      "attribution": "Product data comes from Open Food Facts contributors (ODbL licence) and may be incomplete or wrong. Check it against the package.",
+      "consentAction": "Open privacy settings",
+      "errors": {
+        "consent_required": "Searching online needs the External integrations consent.",
+        "food_online_unavailable": "The online food database is not available right now.",
+        "food_online_disabled": "The online lookup is turned off on this server.",
+        "rate_limited": "The online lookup is busy. Try again in a minute.",
+        "product_data_unusable": "The data of this product is incomplete or implausible, so it was not added.",
+        "not_found": "This product was not found online.",
+        "generic": "The online search failed. Try again."
+      }
     },
     "summary": {
       "title": "Daily Summary",

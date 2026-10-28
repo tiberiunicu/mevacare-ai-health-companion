@@ -7,6 +7,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Integrations.Providers.Whoop;
+using MevaCare.AI.HealthCompanion.Modules.Nutrition.OpenFoodFacts;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,9 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     /// <summary>Scripted stand-in for the WHOOP service; see <see cref="FakeWhoopHandler"/>.</summary>
     public FakeWhoopHandler Whoop { get; } = new();
+
+    /// <summary>Scripted stand-in for Open Food Facts (the online food lookup); see <see cref="FakeOpenFoodFactsHandler"/>.</summary>
+    public FakeOpenFoodFactsHandler OpenFoodFacts { get; } = new();
 
     /// <summary>Derived factories can change the WHOOP configuration (for example leave it unconfigured).</summary>
     protected virtual bool WhoopConfigured => true;
@@ -73,6 +77,7 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IChatClient>(Chat);
             services.Decorate_EmbeddingService(Embeddings);
             services.AddHttpClient<WhoopProvider>().ConfigurePrimaryHttpMessageHandler(() => Whoop);
+            services.AddHttpClient<IOpenFoodFactsClient, OpenFoodFactsClient>().ConfigurePrimaryHttpMessageHandler(() => OpenFoodFacts);
         });
     }
 

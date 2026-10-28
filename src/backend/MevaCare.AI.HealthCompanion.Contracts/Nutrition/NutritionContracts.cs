@@ -35,7 +35,8 @@ public sealed record NutritionRangeSummaryDto(
 
 // ---- Meal proposals (the AI prepares, the user confirms) ----
 
-public sealed record ParsedFoodItem(string FoodName, decimal Quantity, string Unit, string Preparation, string? OriginalText);
+/// <param name="Brand">A brand the user named ("Hochland"), kept apart from the generic <paramref name="FoodName"/> so that the match can try the product first and fall back to the generic food.</param>
+public sealed record ParsedFoodItem(string FoodName, decimal Quantity, string Unit, string Preparation, string? OriginalText, string? Brand = null);
 
 public sealed record ParsedMeal(string? MealType, IReadOnlyList<ParsedFoodItem> Items);
 

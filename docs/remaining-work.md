@@ -42,6 +42,7 @@ The detailed list lives in [architecture/security-and-privacy.md](architecture/s
 5. **Retention and backups**: jobs for expired refresh tokens and old audit events; backup/restore with matching retention; verify GDPR deletion against backups. M
 6. **Admin tooling and role-based authorization** (roles exist in the token, no admin endpoint does) — needed to operate the knowledge corpus without a shell. M
 7. Penetration test, dependency vulnerability monitoring in CI, a review of rate-limit values and of the audit log content. M
+8. **Consent wording and policy version**: the *External integrations* text was extended to cover the online food lookup (Open Food Facts) without bumping `ConsentPolicy.CurrentVersion`; bump it (which asks everyone to consent again) and have the wording reviewed before real users. Also decide whether to keep the ODbL attribution/share-alike obligations in mind if the food table is ever published ([ADR-0016](decisions/0016-open-food-facts-products.md)). S
 
 ## 4. Operating it (nothing below exists yet)
 
@@ -64,7 +65,7 @@ The detailed list lives in [architecture/security-and-privacy.md](architecture/s
 
 ## 6. Product ideas deliberately left out
 
-Photo-based food recognition (postponed by the brief), barcode scanning, a Romanian food database (SR Legacy is generic US data), recipes and meal plans, weight-goal progress using the stored target weight/date,
+Photo-based food recognition (postponed by the brief), barcode scanning with the camera (typing a barcode already works), traditional Romanian dishes without a barcode (packaged products come from Open Food Facts since ADR-0016), recipes and meal plans, weight-goal progress using the stored target weight/date,
 reminders and notifications, workout planning, body-composition metrics, data export in other formats, offline/PWA mode, a mobile app.
 
 ## 7. Known small issues and technical debt

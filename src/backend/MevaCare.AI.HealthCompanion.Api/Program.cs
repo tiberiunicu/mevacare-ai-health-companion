@@ -7,6 +7,7 @@ using MevaCare.AI.HealthCompanion.Infrastructure;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Knowledge.Ingestion;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.Import;
+using MevaCare.AI.HealthCompanion.Modules.Nutrition.OpenFoodFacts;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -78,6 +79,26 @@ try
         Log.Information(
             "USDA import finished: {Imported} foods imported, {Skipped} already present ({Nutrients} nutrient rows, {Portions} portion rows read)",
             result.FoodsImported, result.FoodsSkipped, result.NutrientRows, result.PortionRows);
+        return 0;
+    }
+
+    // Maintenance command: dotnet run --project <Api> -- import-openfoodfacts <en.openfoodfacts.org.products.csv[.gz]> <countries, comma separated> [--limit N]
+    // Packaged products with brand and barcode (Open Food Facts, ODbL licence). Countries are Open Food Facts names, e.g. romania,germany,united-kingdom.
+    if (args is ["import-openfoodfacts", var offFile, var offCountries, ..] && (args.Length == 3 || (args.Length == 5 && args[3] == "--limit" && int.TryParse(args[4], out _))))
+    {
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        int? offLimit = args.Length == 5 ? int.Parse(args[4], System.Globalization.CultureInfo.InvariantCulture) : null;
+        var result = await scope.ServiceProvider.GetRequiredService<OpenFoodFactsImporter>()
+            .ImportAsync(offFile, offCountries.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries), offLimit, message => Log.Information("{Message}", message), CancellationToken.None);
+        Log.Information(
+            "Open Food Facts import finished: {Imported} products imported, {Skipped} already present, {InCountries} in the selected countries of {Rows} rows ({Malformed} malformed rows)",
+            result.Imported, result.SkippedExisting, result.InCountries, result.RowsRead, result.MalformedRows);
+        foreach (var (reason, count) in result.Rejected.OrderByDescending(r => r.Value))
+        {
+            Log.Information("Rejected {Count} products: {Reason}", count, reason);
+        }
+
         return 0;
     }
 

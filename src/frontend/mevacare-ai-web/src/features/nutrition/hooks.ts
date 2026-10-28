@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import type { DailySummary, FoodSearchItem, Meal, NutritionTargets, RangeSummary, SaveMealRequest } from '../../lib/types'
+import type { DailySummary, FoodSearchItem, Meal, NutritionTargets, OnlineFoodCandidate, RangeSummary, SaveMealRequest } from '../../lib/types'
 
 export const nutritionKeys = {
   daily: (date: string) => ['nutrition', 'daily', date] as const,
@@ -57,4 +57,14 @@ export function useDeleteMeal() {
 
 export function searchFoods(query: string, signal?: AbortSignal) {
   return api<FoodSearchItem[]>(`/api/nutrition/foods/search?q=${encodeURIComponent(query)}&limit=8`, { signal })
+}
+
+/** Preview of packaged products in Open Food Facts. Only when the user asks: the search text leaves the server. */
+export function searchOnlineFoods(query: string, signal?: AbortSignal) {
+  return api<OnlineFoodCandidate[]>(`/api/nutrition/foods/online/search?q=${encodeURIComponent(query)}`, { signal })
+}
+
+/** Stores one product (by barcode) in the local database and returns it like a search result. */
+export function addOnlineFood(barcode: string) {
+  return api<FoodSearchItem>('/api/nutrition/foods/online/add', { method: 'POST', body: { barcode } })
 }

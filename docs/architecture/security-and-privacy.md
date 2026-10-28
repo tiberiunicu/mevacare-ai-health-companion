@@ -69,6 +69,15 @@ is closed.
 - **Disconnect and deletion**: disconnecting revokes access at the provider (best effort) and removes the tokens; the user chooses whether the imported history stays. Account deletion removes connections and measurements; the export lists them (never tokens).
 - **What is sent where**: only the authorization request and token calls go to WHOOP; MevaCare sends no health data to WHOOP. Imported data is sent to the AI provider only through the read tools when the user asks, under the AI consent.
 
+## Online food lookup (Open Food Facts)
+
+- **Only on request**: nothing is sent unless the user presses "Search packaged products online" (or adds a product); the local search and the chat never call it by themselves.
+- **Consent**: the *External integrations* consent (its wording covers this lookup). Without it the endpoints answer 403 before any outbound request.
+- **What is sent**: the search text or a barcode, with an identifying User-Agent (application name, optional operator contact from configuration). No user id, no token, no health data, no cookies. Open Food Facts sees the server's IP address, not the user's.
+- **What is trusted**: nothing from the client except the barcode. The server re-reads the product, validates every value (see ADR-0016), cleans free text and stores it with its source; failures become stable codes and provider text never reaches the client or the logs (only the exception type or HTTP status).
+- **Abuse limits**: a server-wide limit per minute below the provider's published limits (`429 rate_limited` above it), a timeout, a switch to turn it off (`Nutrition:OpenFoodFacts:Enabled=false`).
+- Added products are public food data (no personal data), shared by all users of the instance and not part of a user's export or deletion.
+
 ## Not yet done
 
 These must be resolved before real personal health data is used:

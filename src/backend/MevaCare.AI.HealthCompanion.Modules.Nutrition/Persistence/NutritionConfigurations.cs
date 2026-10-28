@@ -1,5 +1,6 @@
 using MevaCare.AI.HealthCompanion.Modules.Identity.Domain;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain;
+using MevaCare.AI.HealthCompanion.Modules.Nutrition.FoodSearch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,7 +17,12 @@ internal sealed class FoodConfiguration : IEntityTypeConfiguration<Food>
         builder.Property(f => f.Description).HasMaxLength(300).IsRequired();
         builder.Property(f => f.Category).HasMaxLength(120);
         builder.Property(f => f.Preparation).HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(f => f.Brand).HasMaxLength(120);
+        builder.Property(f => f.Barcode).HasMaxLength(14);
+        builder.Property(f => f.SearchText).HasMaxLength(FoodText.MaxSearchTextLength).IsRequired();
         builder.Ignore(f => f.SourceLabel);
+        builder.Ignore(f => f.IsBranded);
+        builder.HasIndex(f => f.Barcode);
         builder.HasIndex(f => new { f.Source, f.SourceFoodId }).IsUnique();
         builder.HasMany(f => f.Nutrients).WithOne().HasForeignKey(n => n.FoodId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(f => f.Portions).WithOne().HasForeignKey(p => p.FoodId).OnDelete(DeleteBehavior.Cascade);

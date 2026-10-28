@@ -9,6 +9,7 @@ using MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.Features;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.FoodSearch;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.Import;
+using MevaCare.AI.HealthCompanion.Modules.Nutrition.OpenFoodFacts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -30,6 +31,19 @@ public sealed class NutritionModule : IModule
         services.AddScoped<NutritionSummaryService>();
         services.AddScoped<INutritionAssistantApi, NutritionAssistantApi>();
         services.AddScoped<UsdaSrLegacyImporter>();
+        services.AddScoped<OpenFoodFactsImporter>();
+        services.AddScoped<OnlineFoodService>();
+        services.AddOptions<OpenFoodFactsOptions>().Bind(configuration.GetSection(OpenFoodFactsOptions.SectionName)).ValidateDataAnnotations();
+        services.AddSingleton<SlidingRateGate>();
+        services.AddHttpClient<IOpenFoodFactsClient, OpenFoodFactsClient>((sp, client) =>
+        {
+            var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenFoodFactsOptions>>().Value;
+            client.BaseAddress = new Uri(settings.BaseUrl.TrimEnd('/') + "/");
+            // Open Food Facts asks API users to identify the application (and, if possible, a contact).
+            var agent = "MevaCare-AI-HealthCompanion/1.0";
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(string.IsNullOrWhiteSpace(settings.ContactEmail) ? agent : $"{agent} ({settings.ContactEmail.Trim()})");
+            client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds + 5);
+        });
         services.AddScoped<IUserDataExporter, NutritionExporter>();
         services.AddValidatorsFromAssemblyContaining<NutritionModule>();
     }
@@ -47,10 +61,15 @@ public sealed class NutritionModule : IModule
 
             var result = await catalog.SearchAsync(
                 new FoodQuery(q, preparation ?? PreparationState.Unspecified, Math.Clamp(limit ?? 10, 1, 25), IncludeNutrients: true), ct);
-            return TypedResults.Ok(result.Matches.Select(m => new FoodSearchItemDto(
-                m.Food.Id, m.Food.Description, m.Food.Preparation.ToString(), m.Food.Category, m.Food.SourceLabel,
-                NutrientCalculator.ForQuantity(m.Food, 100m), result.Ambiguous, result.PreparationAssumed)).ToList());
+            return TypedResults.Ok(result.Matches.Select(m => FoodDtos.ToSearchItem(m.Food, result.Ambiguous, result.PreparationAssumed)).ToList());
         });
+
+        // Packaged products from Open Food Facts that are not in the local database. Search = preview only; add = store one product by barcode.
+        group.MapGet("/foods/online/search", async (string q, ICurrentUser user, OnlineFoodService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.SearchAsync(user.UserId, q, ct)));
+
+        group.MapPost("/foods/online/add", async (AddOnlineFoodRequest request, ICurrentUser user, OnlineFoodService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.AddAsync(user.UserId, request.Barcode, ct)));
 
         group.MapGet("/summary/daily", async (DateOnly date, ICurrentUser user, NutritionSummaryService service, CancellationToken ct) =>
             TypedResults.Ok(await service.GetDailyAsync(user.UserId, date, ct)));

@@ -182,7 +182,7 @@
       },
       "ExternalIntegrations": {
         "title": "Integrări externe",
-        "body": "Permite conectarea dispozitivelor purtabile (WHOOP) și importul datelor lor."
+        "body": "Permite conectarea dispozitivelor purtabile (WHOOP) și importul datelor lor, precum și căutarea online de produse ambalate în Open Food Facts (se trimite doar textul căutat, când apeși butonul)."
       }
     },
     "dataTitle": "Datele tale",
@@ -325,6 +325,26 @@
       "confirm": "Confirmă și salvează",
       "atLeastOne": "Adaugă cel puțin un aliment.",
       "saveError": "Masa nu a putut fi salvată."
+    },
+    "online": {
+      "search": "Caută produse ambalate online",
+      "searching": "Se caută online…",
+      "privacy": "Caută în Open Food Facts, o bază publică de produse ambalate. Se trimite doar textul pe care l-ai scris, și doar când apeși butonul.",
+      "resultsTitle": "Găsite online (Open Food Facts)",
+      "noResults": "Nici online nu s-a găsit nimic utilizabil. Nu se ghicește nimic: reformulează căutarea sau adaugă un aliment personalizat.",
+      "use": "Folosește acest produs",
+      "adding": "Se adaugă…",
+      "attribution": "Datele produselor vin de la contribuitorii Open Food Facts (licență ODbL) și pot fi incomplete sau greșite. Verifică-le pe ambalaj.",
+      "consentAction": "Deschide setările de confidențialitate",
+      "errors": {
+        "consent_required": "Căutarea online necesită consimțământul Integrări externe.",
+        "food_online_unavailable": "Baza de date online de alimente nu este disponibilă acum.",
+        "food_online_disabled": "Căutarea online este dezactivată pe acest server.",
+        "rate_limited": "Căutarea online este ocupată. Încearcă din nou peste un minut.",
+        "product_data_unusable": "Datele acestui produs sunt incomplete sau neplauzibile, deci nu a fost adăugat.",
+        "not_found": "Produsul nu a fost găsit online.",
+        "generic": "Căutarea online a eșuat. Încearcă din nou."
+      }
     },
     "summary": {
       "title": "Rezumat zilnic",

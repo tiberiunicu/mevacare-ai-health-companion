@@ -86,6 +86,11 @@ dotnet ef database update --project src/backend/MevaCare.AI.HealthCompanion.Infr
 #     extract it, then import it (public domain; takes ~15 s; safe to repeat). Without it the food search finds nothing.
 dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-usda "C:\path\to\FoodData_Central_sr_legacy_food_csv_2018-04"
 
+# 3c. Optional: packaged products with brands (Open Food Facts, ODbL licence, community data). Download
+#     https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz (~0.8 GB, do not extract) and import the countries you want
+#     (English names, lower case). Slow for many countries; safe to repeat. Without it, products can still be looked up online one by one (consent required).
+dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-openfoodfacts "C:\path\to\en.openfoodfacts.org.products.csv.gz" romania,germany
+
 # 4. API   -> http://localhost:5080  (OpenAPI: /openapi/v1.json, reference UI: /scalar)
 dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api --launch-profile http
 
@@ -204,7 +209,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
-- State at the end of Phase 6: 328 unit tests, 166 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 13 evaluation tests (+3 live-model tests skipped), 93 frontend tests; all pass.
+- State after the Open Food Facts work: 407 unit tests, 176 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 13 evaluation tests (+3 live-model tests skipped), 98 frontend tests; all pass. The Open Food Facts tests use a scripted stand-in for the service; the real service was only checked by hand.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.

@@ -1,12 +1,13 @@
-import { Plus, Search, Trash2 } from 'lucide-react'
+import { Globe, Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { Alert, Button, Field, SelectInput, TextInput } from '../../components/ui'
 import { ApiError } from '../../lib/api'
 import { toOffsetIso } from '../../lib/dates'
-import { MEAL_TYPES, type FoodSearchItem, type Meal, type MealType } from '../../lib/types'
-import { searchFoods, useSaveMeal } from './hooks'
+import { MEAL_TYPES, type FoodSearchItem, type Meal, type MealType, type OnlineFoodCandidate } from '../../lib/types'
+import { addOnlineFood, searchFoods, searchOnlineFoods, useSaveMeal } from './hooks'
 import {
   NUTRIENT_KEYS,
   blankItem,
@@ -294,19 +295,125 @@ export function FoodPicker({ onPick, onCancel }: { onPick: (food: FoodSearchItem
           {shown.map((food) => (
             <li key={food.foodId}>
               <button type="button" onClick={() => onPick(food)} className="block min-h-11 w-full px-3 py-2 text-left hover:bg-surface-2">
-                <span className="block text-sm font-medium">{food.description}</span>
+                <span className="block text-sm font-medium">
+                  {food.description}
+                  {food.brand && <span className="font-normal text-muted"> · {food.brand}</span>}
+                </span>
                 <span className="block text-xs text-muted">
-                  {t(`nutrition.prepValues.${food.preparation}`)} · {fmt(food.per100g.calories)} {t('nutrition.nutrients.kcal')} {t('nutrition.editor.per100')} ·{' '}
-                  {food.sourceLabel}
+                  {food.brand ? '' : `${t(`nutrition.prepValues.${food.preparation}`)} · `}
+                  {fmt(food.per100g.calories)} {t('nutrition.nutrients.kcal')} {t('nutrition.editor.per100')} · {food.sourceLabel}
                 </span>
               </button>
             </li>
           ))}
         </ul>
       )}
+      {query.trim().length >= 2 && !busy && <OnlineFoodSearch query={query.trim()} onPick={onPick} />}
       <Button type="button" variant="ghost" onClick={onCancel}>
         {t('nutrition.editor.cancel')}
       </Button>
+    </div>
+  )
+}
+
+const ONLINE_ERRORS = ['consent_required', 'food_online_unavailable', 'food_online_disabled', 'rate_limited', 'product_data_unusable', 'not_found']
+
+/**
+ * Optional lookup of packaged products in Open Food Facts, only when the user asks for it. A search only previews candidates; adding one makes the
+ * server read the product again by barcode and store it with its source, so the numbers shown here are never what gets saved.
+ */
+function OnlineFoodSearch({ query, onPick }: { query: string; onPick: (food: FoodSearchItem) => void }) {
+  const { t } = useTranslation()
+  const [candidates, setCandidates] = useState<OnlineFoodCandidate[] | null>(null)
+  const [searchedFor, setSearchedFor] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
+
+  const fail = (error: unknown) => {
+    const code = error instanceof ApiError ? error.code : undefined
+    setErrorCode(code && ONLINE_ERRORS.includes(code) ? code : 'generic')
+  }
+
+  const search = async () => {
+    setBusy('search')
+    setErrorCode(null)
+    try {
+      setCandidates(await searchOnlineFoods(query))
+      setSearchedFor(query)
+    } catch (error) {
+      fail(error)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const add = async (candidate: OnlineFoodCandidate) => {
+    setBusy(candidate.barcode)
+    setErrorCode(null)
+    try {
+      onPick(await addOnlineFood(candidate.barcode))
+    } catch (error) {
+      fail(error)
+      setBusy(null)
+    }
+  }
+
+  // Results belong to the text they were searched with; after the text changes the button comes back.
+  const showResults = candidates !== null && searchedFor === query
+
+  return (
+    <div className="space-y-2 border-t border-line pt-2">
+      {showResults ? (
+        <>
+          <p className="text-xs font-semibold text-muted">{t('nutrition.online.resultsTitle')}</p>
+          {candidates.length === 0 && <p className="text-sm text-muted">{t('nutrition.online.noResults')}</p>}
+          {candidates.length > 0 && (
+            <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+              {candidates.map((candidate) => (
+                <li key={candidate.barcode}>
+                  <button
+                    type="button"
+                    disabled={busy !== null}
+                    onClick={() => void add(candidate)}
+                    className="block min-h-11 w-full px-3 py-2 text-left hover:bg-surface-2 disabled:opacity-60"
+                  >
+                    <span className="block text-sm font-medium">
+                      {candidate.name}
+                      {candidate.brand && <span className="font-normal text-muted"> · {candidate.brand}</span>}
+                    </span>
+                    <span className="block text-xs text-muted">
+                      {fmt(candidate.per100g.calories)} {t('nutrition.nutrients.kcal')} {t('nutrition.editor.per100')}
+                      {candidate.quantity ? ` · ${candidate.quantity}` : ''} · {candidate.sourceLabel}
+                    </span>
+                    <span className="block text-xs font-semibold text-primary">
+                      {busy === candidate.barcode ? t('nutrition.online.adding') : t('nutrition.online.use')}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-muted">{t('nutrition.online.attribution')}</p>
+        </>
+      ) : (
+        <>
+          <Button type="button" variant="secondary" onClick={() => void search()} disabled={busy !== null}>
+            <Globe className="size-4" aria-hidden />
+            {busy === 'search' ? t('nutrition.online.searching') : t('nutrition.online.search')}
+          </Button>
+          <p className="text-xs text-muted">{t('nutrition.online.privacy')}</p>
+        </>
+      )}
+      {errorCode && (
+        <p role="alert" className="text-xs text-danger">
+          {t(`nutrition.online.errors.${errorCode}`)}{' '}
+          {errorCode === 'consent_required' && (
+            <Link to="/settings/privacy" className="font-semibold underline">
+              {t('nutrition.online.consentAction')}
+            </Link>
+          )}
+        </p>
+      )}
     </div>
   )
 }

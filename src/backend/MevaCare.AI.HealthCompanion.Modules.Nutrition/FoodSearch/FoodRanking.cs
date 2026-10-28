@@ -130,6 +130,42 @@ public static partial class FoodRanking
         return tokens.All(t => words.Any(w => WordMatches(w, t)));
     }
 
+    /// <summary>True when every token matches a word of the food's name or brand (a brand typed in the query counts).</summary>
+    public static bool MatchesAll(Food food, IReadOnlyList<string> tokens) =>
+        MatchesAll(food.Brand is null ? food.Description : food.Description + " " + food.Brand, tokens);
+
+    /// <summary>
+    /// Score of a packaged product. Names of products are free text ("Hochland Cottage cheese 175 g"), so the USDA position rules do not
+    /// apply; instead: each token found in the name scores, a typed brand scores more, unrelated extra words cost a little (a plainer name is
+    /// a closer match), and without a brand in the query a product ranks below generic foods, which are the better answer to "cottage cheese".
+    /// </summary>
+    public static double ScoreBranded(Food food, IReadOnlyList<string> tokens)
+    {
+        var nameWords = Words(food.Description);
+        var brandWords = food.Brand is null ? [] : Words(food.Brand);
+        double score = 0;
+        var brandTyped = false;
+        foreach (var token in tokens)
+        {
+            if (nameWords.Any(w => WordMatches(w, token)))
+            {
+                score += 6;
+            }
+            else if (brandWords.Any(w => WordMatches(w, token)))
+            {
+                score += 5;
+                brandTyped = true;
+            }
+        }
+
+        var extraWords = nameWords.Count(w => w.Length > 1 && !brandWords.Contains(w) && !tokens.Any(t => WordMatches(w, t)));
+        score -= Math.Min(extraWords * 0.6, 6);
+        // A brand written inside the product name ("Hochland Cottage cheese") also counts as typed when the query contains it.
+        brandTyped |= brandWords.Count > 0 && brandWords.All(b => tokens.Any(t => WordMatches(b, t)));
+        score += brandTyped ? 8 : -8;
+        return Math.Round(score, 2);
+    }
+
     /// <summary>
     /// Scores how well a food answers a query. USDA names are "base food, descriptor, descriptor, ...", so a match on the
     /// base food and early descriptors counts more, unrelated words in the first segments count against the match
@@ -139,6 +175,11 @@ public static partial class FoodRanking
     /// </summary>
     public static double Score(Food food, IReadOnlyList<string> tokens, PreparationState wanted)
     {
+        if (food.IsBranded)
+        {
+            return ScoreBranded(food, tokens);
+        }
+
         var segments = Segments(food.Description);
         double score = 0;
 
@@ -236,7 +277,7 @@ public static partial class FoodRanking
         word == token || (word.StartsWith(token, StringComparison.Ordinal) && word.Length <= token.Length + 2);
 
     private static List<string> Words(string text) =>
-        WordPattern().Matches(text.ToLowerInvariant()).Select(m => Singular(m.Value)).ToList();
+        WordPattern().Matches(FoodText.Fold(text)).Select(m => Singular(m.Value)).ToList();
 
     private static string Singular(string word) =>
         word.Length > 4 && word.EndsWith("ies", StringComparison.Ordinal) ? word[..^3] + "y"

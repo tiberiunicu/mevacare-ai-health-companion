@@ -221,3 +221,116 @@ describe('NutritionGoalsPage', () => {
     expect(within(document.body).queryByText(/prescribe/)).toBeInTheDocument()
   })
 })
+
+describe('online food search', () => {
+  const hochland: FoodSearchItem = {
+    foodId: 'f-hochland', description: 'Hochland Cottage cheese', preparation: 'Unspecified', category: 'Cottage cheeses', sourceLabel: 'OpenFoodFacts #5941238007810',
+    per100g: { calories: 95, proteinG: 12, carbohydratesG: 2, fatG: 4.5, fiberG: 0 }, ambiguous: false, preparationAssumed: false, brand: 'Hochland', barcode: '5941238007810',
+  }
+  const candidate = {
+    barcode: '5941238007810', name: 'Hochland Cottage cheese', brand: 'Hochland', category: 'Cottage cheeses', quantity: '175 g', per100g: hochland.per100g,
+    sourceLabel: 'OpenFoodFacts #5941238007810', foodId: null,
+  }
+
+  const openPicker = async () => {
+    renderWithProviders(<FoodJournalPage />)
+    await screen.findByText(/Nothing logged for this day yet/)
+    await userEvent.click(screen.getByRole('button', { name: 'Add meal' }))
+    return screen.findByLabelText('Search the food database')
+  }
+
+  it('shows the brand of packaged products in the local results', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/summary/daily')) return json(summary([]))
+      if (url.includes('/foods/search')) return json([hochland])
+      return json({})
+    }))
+
+    await userEvent.type(await openPicker(), 'hochland')
+
+    const row = await screen.findByRole('button', { name: /Hochland Cottage cheese/ })
+    expect(within(row).getByText(/· Hochland/)).toBeInTheDocument()
+    expect(row).toHaveTextContent('95 kcal per 100 g')
+    expect(row).toHaveTextContent('OpenFoodFacts #5941238007810')
+  })
+
+  it('sends nothing online until the button is pressed, then previews candidates and adds the chosen one by barcode only', async () => {
+    const calls: string[] = []
+    const posts: unknown[] = []
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      calls.push(url)
+      if (url.includes('/summary/daily')) return json(summary([]))
+      if (url.includes('/foods/online/search')) return json([candidate])
+      if (url.includes('/foods/online/add') && init?.method === 'POST') {
+        posts.push(JSON.parse(init.body as string))
+        return json(hochland)
+      }
+      if (url.includes('/foods/search')) return json([])
+      return json({})
+    }))
+
+    await userEvent.type(await openPicker(), 'cottage cheese hochland')
+    await screen.findByText(/No matching food found/)
+    expect(calls.some((c) => c.includes('/foods/online'))).toBe(false)
+    expect(screen.getByText(/Only the text you typed is sent/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Search packaged products online' }))
+    const row = await screen.findByRole('button', { name: /Hochland Cottage cheese/ })
+    expect(row).toHaveTextContent('175 g')
+    expect(screen.getByText(/Open Food Facts contributors/)).toBeInTheDocument()
+    await userEvent.click(row)
+
+    await waitFor(() => expect(posts).toEqual([{ barcode: '5941238007810' }]))
+    await userEvent.type(await screen.findByLabelText('Weight (g)'), '175')
+    expect((await screen.findAllByText(/166 kcal/)).length).toBeGreaterThan(0)
+  })
+
+  it('explains a missing consent with a link to the privacy settings', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/summary/daily')) return json(summary([]))
+      if (url.includes('/foods/online/search')) return json({ title: 'Consent required', status: 403, code: 'consent_required' }, 403)
+      if (url.includes('/foods/search')) return json([])
+      return json({})
+    }))
+
+    await userEvent.type(await openPicker(), 'cottage cheese')
+    await userEvent.click(await screen.findByRole('button', { name: 'Search packaged products online' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Searching online needs the External integrations consent.')
+    expect(screen.getByRole('link', { name: 'Open privacy settings' })).toHaveAttribute('href', '/settings/privacy')
+  })
+
+  it('says so when the online database is unavailable and keeps nothing', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/summary/daily')) return json(summary([]))
+      if (url.includes('/foods/online/search')) return json({ title: 'Unavailable', status: 503, code: 'food_online_unavailable' }, 503)
+      if (url.includes('/foods/search')) return json([])
+      return json({})
+    }))
+
+    await userEvent.type(await openPicker(), 'cottage cheese')
+    await userEvent.click(await screen.findByRole('button', { name: 'Search packaged products online' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('The online food database is not available right now.')
+    expect(screen.getByRole('button', { name: 'Save meal' })).toBeDisabled()
+  })
+
+  it('reports an empty online result without inventing anything', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/summary/daily')) return json(summary([]))
+      if (url.includes('/foods/online/search')) return json([])
+      if (url.includes('/foods/search')) return json([])
+      return json({})
+    }))
+
+    await userEvent.type(await openPicker(), 'dragon steak')
+    await userEvent.click(await screen.findByRole('button', { name: 'Search packaged products online' }))
+
+    expect(await screen.findByText(/Nothing usable was found online either/)).toBeInTheDocument()
+  })
+})

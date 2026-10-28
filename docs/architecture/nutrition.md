@@ -14,14 +14,21 @@ Food journal, daily and range summaries, user-set targets, and the deterministic
   `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-usda <folder>`. It validates that `nutrient.csv` still defines
   nutrients 1008/1003/1005/1004/1079 as expected (refusing to import otherwise), keeps only those five nutrients plus portions, and is safe to re-run
   (existing foods are skipped). The dataset is **not** committed to the repository.
-- Other databases (Romanian tables, Open Food Facts) plug in as another importer and a new `FoodSource` value; callers use `IFoodCatalog`.
 - SR Legacy is a 2018 snapshot of mostly generic US foods. It contains few branded products and no Romanian specialities (see limitations).
+- Second source: **Open Food Facts** (packaged products with brand and barcode, ODbL licence, community-contributed data; [ADR-0016](../decisions/0016-open-food-facts-products.md)), added in two ways:
+  - *Bulk import for chosen countries*: download the CSV export (`https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz`, ~0.8 GB compressed, streamed, do not extract it) and run
+    `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-openfoodfacts <file> romania,germany,austria [--limit N]` (English country names as Open Food Facts writes them,
+    lower case, hyphens). Products are validated (see the ADR); the command prints how many were imported, skipped and rejected per reason. Safe to re-run; existing products are never changed.
+  - *Online lookup on request*: in the food picker, after a local search, the user can press "Search packaged products online". The server queries Open Food Facts (`cgi/search.pl`), the user
+    chooses a product and the server stores it by barcode (it re-reads the product itself). Requires the External integrations consent; settings under `Nutrition:OpenFoodFacts`
+    (`Enabled`, `ContactEmail` for the User-Agent, `TimeoutSeconds`, `MaxResults`, `SearchesPerMinute` ≤ 10 and `ProductReadsPerMinute` for the whole server).
+- Other databases (Romanian tables...) plug in as another importer and a new `FoodSource` value; callers use `IFoodCatalog`.
 
 ## Data model (schema `nutrition`)
 
 | Table | Notes |
 |---|---|
-| `Foods` | source, source id (unique together), description, category, `Preparation` (Raw/Cooked/Unspecified, inferred from the description) |
+| `Foods` | source, source id (unique together), description, category, `Preparation` (Raw/Cooked/Unspecified, inferred from the description), `Brand` and `Barcode` (packaged products), `SearchText` (name + brand + barcode, lower case, no diacritics: what the search runs on) |
 | `FoodNutrients` | (FoodId, Nutrient) → amount **per 100 g**. A nutrient the source does not report has **no row** (unknown ≠ 0) |
 | `FoodPortions` | household measures with gram weights, e.g. "1 cup = 158 g" |
 | `Meals` | user, type, `EatenAtUtc`, `LocalDate`, `UtcOffsetMinutes` (source time zone), notes, origin (Manual/Assistant), `SourceProposalId` (unique) |
@@ -60,7 +67,10 @@ The first version of the heuristic picked a deli "chicken breast roll" for "chic
 ## Limitations
 
 - Heuristic matching can still pick a poor first result for uncommon queries; alternatives and a search box are always offered, and the user confirms every AI-prepared meal.
-- Romanian foods and branded products are not in SR Legacy; the assistant translates names to generic English, which works for staples, not for local dishes.
+- Romanian foods and branded products are not in SR Legacy; the assistant translates names to generic English, which works for staples, not for local dishes. Packaged products come from Open Food Facts
+  (import or online lookup); traditional dishes without a barcode are still missing.
+- Open Food Facts data is contributed by volunteers: values can be incomplete or wrong. The importer and the online path reject impossible values only. Products rank after generic foods unless the query names the brand.
+- The local search scans `SearchText` with substring matching: fine for hundreds of thousands of rows (import a few countries), not for all of Europe without a real index (SQL Server full-text or a dedicated search index).
 - Only five nutrients are stored (calories, protein, carbohydrates, fat, fibre): no sugars, sodium, vitamins.
 - Liquids in ml need a gram weight (no densities are assumed). Piece sizes depend on the portions recorded by USDA.
 - No barcode scan, photo recognition, recipes, or favourites yet.

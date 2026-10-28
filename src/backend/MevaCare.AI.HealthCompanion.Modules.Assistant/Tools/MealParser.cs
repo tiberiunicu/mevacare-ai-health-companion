@@ -18,7 +18,8 @@ public sealed record ExtractedFood(
     [property: Description("The amount as a number. Use 1 when no amount is given.")] decimal Quantity,
     [property: Description("One of: g, kg, oz, lb, cup, tbsp, tsp, slice, piece. Use piece when no unit is given.")] string Unit,
     [property: Description("raw, cooked or unspecified, exactly as the user stated it.")] string Preparation,
-    [property: Description("The part of the text this entry came from.")] string OriginalText);
+    [property: Description("The part of the text this entry came from.")] string OriginalText,
+    [property: Description("The brand if the user named one, exactly as written (e.g. 'Hochland'); an empty string otherwise. Never put the brand in FoodName.")] string? Brand);
 
 /// <summary>
 /// Turns a free-text meal description into structured data using the LLM's structured-output mode (a JSON schema derived
@@ -37,6 +38,7 @@ public sealed class MealParser(IChatClient chat, IOptions<AiOptions>? aiOptions 
         - Do not estimate weights or nutrition. If the user gives no amount, use quantity 1 and unit "piece".
         - Preparation must be exactly what the user stated (raw, cooked) or "unspecified". Never guess it.
         - Use generic English food names; translate from other languages.
+        - If the user names a brand (for example "Hochland cottage cheese"), put the brand only in the brand field exactly as written and the generic name in the food name.
         - Keep the original wording of each part in originalText.
         """;
 
@@ -67,7 +69,9 @@ public sealed class MealParser(IChatClient chat, IOptions<AiOptions>? aiOptions 
             {
                 return new ParsedMeal(
                     extraction.MealType,
-                    extraction.Items.Select(i => new ParsedFoodItem(i.FoodName.Trim(), i.Quantity, i.Unit.Trim(), i.Preparation.Trim(), i.OriginalText?.Trim())).ToList());
+                    extraction.Items.Select(i => new ParsedFoodItem(
+                        i.FoodName.Trim(), i.Quantity, i.Unit.Trim(), i.Preparation.Trim(), i.OriginalText?.Trim(),
+                        string.IsNullOrWhiteSpace(i.Brand) ? null : (i.Brand.Trim().Length > 60 ? i.Brand.Trim()[..60] : i.Brand.Trim()))).ToList());
             }
 
             problem ??= "The answer was not valid JSON for the requested structure.";

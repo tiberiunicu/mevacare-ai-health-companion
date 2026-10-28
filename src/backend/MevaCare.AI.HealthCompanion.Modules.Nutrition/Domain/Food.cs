@@ -1,11 +1,19 @@
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
+using MevaCare.AI.HealthCompanion.Modules.Nutrition.FoodSearch;
 
 namespace MevaCare.AI.HealthCompanion.Modules.Nutrition.Domain;
 
-/// <summary>Where a food record comes from. New databases (Romanian tables, Open Food Facts...) add a value here.</summary>
+/// <summary>Where a food record comes from. New databases (Romanian tables...) add a value here.</summary>
 public enum FoodSource
 {
+    /// <summary>Generic foods, public domain, imported with <c>import-usda</c>.</summary>
     UsdaSrLegacy = 1,
+
+    /// <summary>
+    /// Packaged products with brand and barcode, from Open Food Facts (community data under the ODbL licence): imported in bulk with
+    /// <c>import-openfoodfacts</c> or added one product at a time after an online lookup.
+    /// </summary>
+    OpenFoodFacts = 2,
 }
 
 /// <summary>
@@ -36,23 +44,40 @@ public sealed class Food : Entity
 
     private Food() { }
 
-    public Food(FoodSource source, string sourceFoodId, string description, string? category, PreparationState preparation)
+    public Food(
+        FoodSource source, string sourceFoodId, string description, string? category, PreparationState preparation,
+        string? brand = null, string? barcode = null)
     {
         Source = source;
         SourceFoodId = sourceFoodId;
         Description = description;
         Category = category;
         Preparation = preparation;
+        Brand = brand;
+        Barcode = barcode;
+        SearchText = FoodText.BuildSearchText(description, brand, barcode);
     }
 
     public FoodSource Source { get; private set; }
 
-    /// <summary>The id in the source database (for USDA: the FDC id), used for citation and re-import.</summary>
+    /// <summary>The id in the source database (for USDA: the FDC id; for Open Food Facts: the barcode), used for citation and re-import.</summary>
     public string SourceFoodId { get; private set; } = null!;
 
     public string Description { get; private set; } = null!;
     public string? Category { get; private set; }
     public PreparationState Preparation { get; private set; }
+
+    /// <summary>Brand of a packaged product ("Hochland"); null for generic foods.</summary>
+    public string? Brand { get; private set; }
+
+    /// <summary>EAN/UPC barcode of a packaged product; null for generic foods.</summary>
+    public string? Barcode { get; private set; }
+
+    /// <summary>Name, brand and barcode without diacritics and in lower case: what the search runs on (see <see cref="FoodText"/>).</summary>
+    public string SearchText { get; private set; } = "";
+
+    /// <summary>Packaged and branded products rank after generic foods unless the search names the brand.</summary>
+    public bool IsBranded => Source != FoodSource.UsdaSrLegacy;
     public IReadOnlyCollection<FoodNutrient> Nutrients => _nutrients;
     public IReadOnlyCollection<FoodPortion> Portions => _portions;
 

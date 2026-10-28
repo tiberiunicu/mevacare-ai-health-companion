@@ -33,24 +33,33 @@ public sealed class LocalFoodCatalog(AppDbContext db) : IFoodCatalog
 
     public async Task<FoodSearchResult> SearchAsync(FoodQuery query, CancellationToken ct)
     {
+        if (FoodText.IsBarcode(query.Text))
+        {
+            return await SearchBarcodeAsync(query, ct);
+        }
+
         var (tokens, wanted) = FoodRanking.SplitPreparation(query.Text, query.Preparation);
         if (tokens.Count == 0)
         {
             return new FoodSearchResult([], false, false);
         }
 
-        // Narrow in SQL (substring per token), then match whole words and rank in code.
+        // Narrow in SQL (substring per token on the folded name+brand column), then match whole words and rank in code.
+        // Generic foods are taken first, so a flood of packaged products cannot push them out of the candidate window.
         IQueryable<Food> candidates = db.Set<Food>().AsNoTracking();
         foreach (var token in tokens)
         {
-            var t = token;
-            var stem = SqlStem(t);
-            candidates = candidates.Where(f => f.Description.ToLower().Contains(stem));
+            var stem = SqlStem(token);
+            candidates = candidates.Where(f => f.SearchText.Contains(stem));
         }
 
-        var found = await candidates.OrderBy(f => f.Description.Length).Take(CandidateLimit).ToListAsync(ct);
+        var found = await candidates
+            .OrderBy(f => f.Source == FoodSource.UsdaSrLegacy ? 0 : 1)
+            .ThenBy(f => f.Description.Length)
+            .Take(CandidateLimit)
+            .ToListAsync(ct);
         var ranked = found
-            .Where(f => FoodRanking.MatchesAll(f.Description, tokens))
+            .Where(f => FoodRanking.MatchesAll(f, tokens))
             .Select(f => new FoodMatch(f, FoodRanking.Score(f, tokens, wanted)))
             .OrderByDescending(m => m.Score)
             .ThenBy(m => m.Food.Description.Length)
@@ -69,6 +78,20 @@ public sealed class LocalFoodCatalog(AppDbContext db) : IFoodCatalog
             && FoodRanking.IsAmbiguous(ranked[0].Food, ranked[0].Score, ranked[1].Food, ranked[1].Score, tokens, AmbiguityMargin);
         var assumed = ranked.Count > 0 && wanted == PreparationState.Unspecified && ranked[0].Food.Preparation != PreparationState.Unspecified;
         return new FoodSearchResult(ranked, ambiguous, assumed);
+    }
+
+    /// <summary>A product barcode typed as the query finds exactly that product (if it is in the local database).</summary>
+    private async Task<FoodSearchResult> SearchBarcodeAsync(FoodQuery query, CancellationToken ct)
+    {
+        var barcode = query.Text.Trim();
+        IQueryable<Food> products = db.Set<Food>().AsNoTracking().Where(f => f.Barcode == barcode);
+        if (query.IncludeNutrients)
+        {
+            products = products.Include(f => f.Nutrients);
+        }
+
+        var found = await products.OrderBy(f => f.Description.Length).Take(Math.Clamp(query.Limit, 1, 25)).ToListAsync(ct);
+        return new FoodSearchResult(found.Select(f => new FoodMatch(f, 100)).ToList(), false, false);
     }
 
     /// <summary>"berry" must still find "blueberries" in SQL; exact word matching happens afterwards in code.</summary>

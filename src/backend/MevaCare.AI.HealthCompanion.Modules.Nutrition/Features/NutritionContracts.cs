@@ -24,7 +24,10 @@ public sealed record SaveMealResult(MealDto Meal, bool Created);
 
 public sealed record FoodSearchItemDto(
     Guid FoodId, string Description, string Preparation, string? Category, string SourceLabel, NutrientValues Per100g,
-    bool Ambiguous, bool PreparationAssumed);
+    bool Ambiguous, bool PreparationAssumed, string? Brand = null, string? Barcode = null);
+
+/// <summary>Body of <c>POST /api/nutrition/foods/online/add</c>.</summary>
+public sealed record AddOnlineFoodRequest(string Barcode);
 
 public sealed class SaveMealRequestValidator : AbstractValidator<SaveMealRequest>
 {

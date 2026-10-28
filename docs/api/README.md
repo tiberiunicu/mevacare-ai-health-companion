@@ -17,7 +17,9 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 | `GET/PUT /api/health-profile` | profile (needs `HealthDataProcessing`) |
 | `GET/POST /api/health-goals` · `DELETE /api/health-goals/{id}` | goals, max 5 (needs `HealthDataProcessing`) |
 | `GET/PUT /api/health-preferences` | language, units, theme (no consent needed) |
-| `GET /api/nutrition/foods/search?q=&preparation=&limit=` | ranked foods with nutrients per 100 g (public food data, any signed-in user) |
+| `GET /api/nutrition/foods/search?q=&preparation=&limit=` | ranked foods with nutrients per 100 g (public food data, any signed-in user); packaged products also carry `brand` and `barcode`; a barcode as the whole query finds that product |
+| `GET /api/nutrition/foods/online/search?q=` | preview of packaged products in Open Food Facts (`barcode, name, brand, category, quantity, per100g, sourceLabel, foodId`); nothing is stored; needs the `ExternalIntegrations` consent; `400 invalid_query`, `403 consent_required`, `429 rate_limited` (server-wide limit), `503 food_online_unavailable \| food_online_disabled` |
+| `POST /api/nutrition/foods/online/add` `{barcode}` | stores that product (the server re-reads it by barcode; values from the client are never accepted) and returns it like a search result; idempotent; `400 invalid_barcode \| product_data_unusable`, `404` (not found online), plus the errors above |
 | `GET /api/nutrition/summary/daily?date=` · `GET /api/nutrition/summary/range?from=&to=` | totals, targets, remaining, meals (needs `HealthDataProcessing`; range ≤ 366 days) |
 | `GET/PUT /api/nutrition/targets` | the user's own daily targets (every value optional) |
 | `POST /api/nutrition/meals` · `GET/PUT/DELETE /api/nutrition/meals/{id}` | meals; items carry a food id and grams (server calculates nutrients) or a custom estimate; `proposalId` confirms an assistant proposal (201 created, 200 if it was already created) |
