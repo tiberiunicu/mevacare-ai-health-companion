@@ -91,6 +91,31 @@ public class OpenFoodFactsMappingTests
     [InlineData(null)]
     public void Package_weights_are_never_guessed(string? quantity) => Assert.Null(OpenFoodFactsMapping.PackageGrams(quantity));
 
+    [Theory]
+    [InlineData(0.04)]
+    [InlineData(0)]
+    [InlineData(-5)]
+    [InlineData(100000)]
+    public void An_implausible_serving_size_is_ignored_but_the_product_is_kept(double serving)
+    {
+        var product = Hochland() with { ServingQuantityG = (decimal)serving, Quantity = null };
+
+        Assert.True(OpenFoodFactsMapping.TryCreateFood(product, out var food, out _));
+        Assert.Empty(food!.Portions);
+    }
+
+    [Fact]
+    public void A_plausible_serving_size_becomes_a_portion()
+    {
+        var product = Hochland() with { ServingQuantityG = 30m, ServingSize = "30 g", Quantity = null };
+
+        OpenFoodFactsMapping.TryCreateFood(product, out var food, out _);
+
+        var serving = Assert.Single(food!.Portions);
+        Assert.Equal("serving", serving.Unit);
+        Assert.Equal(30m, serving.GramWeight);
+    }
+
     [Fact]
     public void Energy_in_kilojoules_is_converted_when_kilocalories_are_missing()
     {
@@ -217,6 +242,25 @@ public class BrandedFoodSearchTests
         var result = await new LocalFoodCatalog(db).SearchAsync(new FoodQuery("cottage cheese"), default);
 
         Assert.Equal(3, result.Matches.Count);
+        Assert.Equal(generic.Id, result.Matches[0].Food.Id);
+    }
+
+    [Theory]
+    [InlineData("rice", "Sun Rice", "Rice")]
+    [InlineData("chicken breast", "Chicken Breast", "Chicken breast hot and spicy")]
+    [InlineData("egg", "Eggo", "Egg waffles")]
+    public async Task A_product_whose_brand_or_name_equals_the_query_never_outranks_the_generic_food(string query, string brand, string productName)
+    {
+        var generic = query switch
+        {
+            "rice" => Usda("1", "Rice, white, long-grain, regular, enriched, cooked", "Cereal Grains and Pasta"),
+            "chicken breast" => Usda("2", "Chicken, broilers or fryers, breast, meat only, cooked, roasted", "Poultry Products"),
+            _ => Usda("3", "Egg, whole, cooked, hard-boiled", "Dairy and Egg Products"),
+        };
+        await using var db = await SeedAsync(Product("4000000000001", productName, brand), Product("4000000000002", brand, brand), generic);
+
+        var result = await new LocalFoodCatalog(db).SearchAsync(new FoodQuery(query), default);
+
         Assert.Equal(generic.Id, result.Matches[0].Food.Id);
     }
 
@@ -757,6 +801,18 @@ public class BrandedMealProposalTests
         var item = Assert.Single(proposal.Items);
         Assert.Equal(generic.Id, item.Food!.FoodId);
         Assert.Contains(proposal.Warnings, w => w.Contains("'Napolact' was not found", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_packaged_product_used_without_a_named_brand_is_flagged_for_checking()
+    {
+        var (api, db, _, _) = await SetupAsync();
+        await using var _ = db;
+
+        var proposal = await api.PrepareMealAsync(Guid.NewGuid(), new ParsedMeal(null, [new ParsedFoodItem("hochland", 100, "g", "unspecified", "100 g hochland", null)]), default);
+
+        Assert.Equal("Matched", Assert.Single(proposal.Items).Status);
+        Assert.Contains(proposal.Warnings, w => w.Contains("packaged product", StringComparison.Ordinal));
     }
 
     [Fact]

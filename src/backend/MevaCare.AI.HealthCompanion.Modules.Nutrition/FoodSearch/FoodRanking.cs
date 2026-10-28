@@ -139,6 +139,9 @@ public static partial class FoodRanking
     /// apply; instead: each token found in the name scores, a typed brand scores more, unrelated extra words cost a little (a plainer name is
     /// a closer match), and without a brand in the query a product ranks below generic foods, which are the better answer to "cottage cheese".
     /// </summary>
+    /// <summary>Subtracted from the score of every packaged product so that it ranks below any matching generic food.</summary>
+    public const double BrandedOffset = 1000;
+
     public static double ScoreBranded(Food food, IReadOnlyList<string> tokens)
     {
         var nameWords = Words(food.Description);
@@ -177,7 +180,9 @@ public static partial class FoodRanking
     {
         if (food.IsBranded)
         {
-            return ScoreBranded(food, tokens);
+            // A generic food that matches every word always comes first: with a million products, brands such as "Sun Rice" or "Eggo" would otherwise
+            // beat "Rice, white, ..." for the query "rice". A brand in the query cannot clash with this, because generic foods then do not match all words.
+            return ScoreBranded(food, tokens) - BrandedOffset;
         }
 
         var segments = Segments(food.Description);

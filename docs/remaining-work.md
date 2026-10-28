@@ -42,7 +42,8 @@ The detailed list lives in [architecture/security-and-privacy.md](architecture/s
 5. **Retention and backups**: jobs for expired refresh tokens and old audit events; backup/restore with matching retention; verify GDPR deletion against backups. M
 6. **Admin tooling and role-based authorization** (roles exist in the token, no admin endpoint does) — needed to operate the knowledge corpus without a shell. M
 7. Penetration test, dependency vulnerability monitoring in CI, a review of rate-limit values and of the audit log content. M
-8. **Consent wording and policy version**: the *External integrations* text was extended to cover the online food lookup (Open Food Facts) without bumping `ConsentPolicy.CurrentVersion`; bump it (which asks everyone to consent again) and have the wording reviewed before real users. Also decide whether to keep the ODbL attribution/share-alike obligations in mind if the food table is ever published ([ADR-0016](decisions/0016-open-food-facts-products.md)). S
+8. **Food search at scale**: ~1.05 million Open Food Facts products are imported for eight countries and the substring search takes ~0.5 s. Add a real index (SQL Server full-text or a dedicated search index) before more countries or several concurrent users. S–M
+9. **Consent wording and policy version**: the *External integrations* text was extended to cover the online food lookup (Open Food Facts) without bumping `ConsentPolicy.CurrentVersion`; bump it (which asks everyone to consent again) and have the wording reviewed before real users. Also decide whether to keep the ODbL attribution/share-alike obligations in mind if the food table is ever published ([ADR-0016](decisions/0016-open-food-facts-products.md)). S
 
 ## 4. Operating it (nothing below exists yet)
 

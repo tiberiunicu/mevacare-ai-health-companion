@@ -32,8 +32,10 @@ million rows and an index problem); a vendor food API (cost, keys); only the liv
 **Consequences.**
 - Quality is that of volunteers' data: incomplete or wrong products exist. The validation removes impossible values only; products stay "estimates by a community", which the UI states.
 - Only five nutrients are kept, as before; a missing nutrient is unknown, not zero.
-- The substring search scans `SearchText`; it stays fast for hundreds of thousands of rows, but **all of Europe (millions) would need a real index** (SQL Server full-text, or a vector/keyword
-  index). Import a few countries and use the online lookup for the rest.
+- The substring search scans `SearchText`: measured at about 0.5 s with the ~1.05 million products of eight countries; **more countries or many concurrent users would need a real index** (SQL Server
+  full-text, or a keyword/vector index). The online lookup covers the rest.
+- Packaged products rank below any generic food that matches every query word (otherwise "Sun Rice" or "Eggo" beat "Rice, white, ..." for "rice"); a brand in the query cannot clash, because generic foods then
+  do not match all words.
 - Matching from chat (`PrepareMeal`) can now return a branded product when a brand is named; products are flagged by their source label in the card.
 - The consent text "External integrations" now also covers this lookup (wording extended, policy version not bumped; bump it before real users).
 - Open Food Facts availability and terms can change; the lookup degrades to a clear 503 and everything stored locally keeps working.

@@ -19,6 +19,10 @@ Food journal, daily and range summaries, user-set targets, and the deterministic
   - *Bulk import for chosen countries*: download the CSV export (`https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz`, ~0.8 GB compressed, streamed, do not extract it) and run
     `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-openfoodfacts <file> romania,germany,austria [--limit N]` (English country names as Open Food Facts writes them,
     lower case, hyphens). Products are validated (see the ADR); the command prints how many were imported, skipped and rejected per reason. Safe to re-run; existing products are never changed.
+  - *Measured import (2026-10-28, dump of the same day)*: `romania,germany,austria,hungary,poland,france,italy,spain` → 2.1 million rows read, 1.34 million in those countries, **~1.05 million products
+    stored** in about 5 minutes; rejected: 222,325 without energy and without all three macronutrients, 40,453 without a name, 14,318 inconsistent energy, 6,184 bad barcodes, 5,491 without macronutrients,
+    1,430 implausible energy, 1,231 implausible macronutrients. A search over all rows takes about 0.5 s (a barcode about 0.02 s); acceptable for a single user, the limit of the substring scan.
+    Real data found two defects that synthetic tests missed (a serving size of 0.04 g breaking a table constraint; branded products outranking generic foods for "rice"), both fixed and covered by tests.
   - *Online lookup on request*: in the food picker, after a local search, the user can press "Search packaged products online". The server queries Open Food Facts' search service
     (`search.openfoodfacts.org`; the older `cgi/search.pl` answered 503 when tried), requests a pool of 100 results in several languages (its ranking depends on the order of the words),
     keeps only products whose name or brand contains every word of the query and whose data validates, and shows at most `MaxResults`. The user chooses a product and the server stores it by barcode
@@ -75,7 +79,8 @@ The first version of the heuristic picked a deli "chicken breast roll" for "chic
 - Romanian foods and branded products are not in SR Legacy; the assistant translates names to generic English, which works for staples, not for local dishes. Packaged products come from Open Food Facts
   (import or online lookup); traditional dishes without a barcode are still missing.
 - Open Food Facts data is contributed by volunteers: values can be incomplete or wrong. The importer and the online path reject impossible values only. Products rank after generic foods unless the query names the brand.
-- The local search scans `SearchText` with substring matching: fine for hundreds of thousands of rows (import a few countries), not for all of Europe without a real index (SQL Server full-text or a dedicated search index).
+- The local search scans `SearchText` with substring matching: about 0.5 s with 1.05 million products (see the measured import above). More countries or several users at once need a real index (SQL Server full-text or a dedicated search index).
+- Packaged products always rank after generic foods that match every word; a meal item matched to a product without a named brand carries a warning ("no generic food matched ... check it").
 - Only five nutrients are stored (calories, protein, carbohydrates, fat, fibre): no sugars, sodium, vitamins.
 - Liquids in ml need a gram weight (no densities are assumed). Piece sizes depend on the portions recorded by USDA.
 - No barcode scan, photo recognition, recipes, or favourites yet.

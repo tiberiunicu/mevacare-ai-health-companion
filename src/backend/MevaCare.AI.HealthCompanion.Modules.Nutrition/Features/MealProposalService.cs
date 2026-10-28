@@ -90,6 +90,11 @@ public sealed class NutritionAssistantApi(
         }
 
         var top = await catalog.GetAsync(result.Matches[0].Food.Id, ct) ?? throw new InvalidOperationException("Matched food disappeared.");
+        if (top.IsBranded && string.IsNullOrWhiteSpace(parsed.Brand))
+        {
+            warnings.Add($"'{parsed.FoodName}': no generic food matched, so a packaged product ('{top.Description}') was used. Please check it.");
+        }
+
         var conversion = QuantityConverter.ToGrams(parsed.Quantity, parsed.Unit, top.Portions);
         var alternatives = result.Matches.Skip(1).Select(m => ToCandidate(m.Food)).ToList();
 

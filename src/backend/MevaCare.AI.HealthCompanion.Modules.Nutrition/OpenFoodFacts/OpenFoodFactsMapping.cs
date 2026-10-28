@@ -107,7 +107,8 @@ public static partial class OpenFoodFactsMapping
         AddIfPresent(food, NutrientType.Fat, fat);
         AddIfPresent(food, NutrientType.Fiber, fiber);
 
-        if (product.ServingQuantityG is > 0 and <= 2000)
+        // At least 1 g: values like 0.04 are typing errors and would round to 0, which the table does not allow.
+        if (product.ServingQuantityG is >= 1 and <= 2000)
         {
             food.AddPortion(1, "serving", Clean(product.ServingSize, 200), Math.Round(product.ServingQuantityG.Value, 1));
         }
