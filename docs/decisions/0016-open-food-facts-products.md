@@ -11,11 +11,12 @@ their websites would break their terms. Nutrition values must never be invented 
   of European branded products.
 - **Bulk import** (`import-openfoodfacts <csv or csv.gz> <countries> [--limit N]`): streams the official CSV export, keeps only the selected countries, validates every product and stores
   it as a `Food` with `Source = OpenFoodFacts`, brand, barcode and the barcode as source id. Idempotent; existing products are never overwritten (past meals and stored values stay stable).
-- **Online lookup, only on request** (`GET /api/nutrition/foods/online/search`, `POST /api/nutrition/foods/online/add`): a search only previews candidates; **add** re-reads the
+- **Online lookup, only on request** (`GET /api/nutrition/foods/online/search`, `POST /api/nutrition/foods/online/add`): a search only previews candidates (the official search service, a pool of 100 results filtered so that every query word is in the name or brand); **add** re-reads the
   product by barcode **on the server** and stores it with its provenance. The client sends a barcode, never nutrient values. It needs the *External integrations* consent because the
   search text is sent to a third party; nothing else is sent (no user id, no health data). A server-wide limit keeps the application below Open Food Facts' published limits, and the
   requests carry an identifying User-Agent as their terms ask.
-- **Validation** (`OpenFoodFactsMapping`, shared by both paths): barcode of 8, 12, 13 or 14 digits; a name; energy (kcal, or kJ ÷ 4.184) within 0–900 per 100 g; at least one of protein, carbohydrates,
+- **Validation** (`OpenFoodFactsMapping`, shared by both paths): barcode of 8, 12, 13 or 14 digits; a name; energy (kcal, or kJ ÷ 4.184) within 0–900 per 100 g, **or, when the product has protein,
+  carbohydrates and fat but no energy (common: the owner's Hochland example), calories calculated from them and the food flagged `EnergyDerived`, which makes meal items estimates**; at least one of protein, carbohydrates,
   fat; each ≤ 100 g and their sum ≤ 102 g; energy not far *below* what the macronutrients provide (higher is allowed: alcohol). Free text is cleaned of control characters. Rejections are counted by
   reason. The checks catch impossible data, not a wrongly typed label, so the UI says that product data is contributed by volunteers.
 - **Search**: foods are found on a pre-folded column `SearchText` (name + brand + barcode, lower case, no diacritics) because the database collation is accent-sensitive and Romanian names

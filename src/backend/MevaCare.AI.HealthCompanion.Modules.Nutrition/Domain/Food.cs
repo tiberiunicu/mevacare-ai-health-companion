@@ -46,7 +46,7 @@ public sealed class Food : Entity
 
     public Food(
         FoodSource source, string sourceFoodId, string description, string? category, PreparationState preparation,
-        string? brand = null, string? barcode = null)
+        string? brand = null, string? barcode = null, bool energyDerived = false)
     {
         Source = source;
         SourceFoodId = sourceFoodId;
@@ -55,6 +55,7 @@ public sealed class Food : Entity
         Preparation = preparation;
         Brand = brand;
         Barcode = barcode;
+        EnergyDerived = energyDerived;
         SearchText = FoodText.BuildSearchText(description, brand, barcode);
     }
 
@@ -72,6 +73,12 @@ public sealed class Food : Entity
 
     /// <summary>EAN/UPC barcode of a packaged product; null for generic foods.</summary>
     public string? Barcode { get; private set; }
+
+    /// <summary>
+    /// True when the source gave no energy value and the calories were calculated from protein, carbohydrates and fat (4/4/9 kcal per gram, 2 for fibre).
+    /// Meal items made from such a food are marked as estimated.
+    /// </summary>
+    public bool EnergyDerived { get; private set; }
 
     /// <summary>Name, brand and barcode without diacritics and in lower case: what the search runs on (see <see cref="FoodText"/>).</summary>
     public string SearchText { get; private set; } = "";

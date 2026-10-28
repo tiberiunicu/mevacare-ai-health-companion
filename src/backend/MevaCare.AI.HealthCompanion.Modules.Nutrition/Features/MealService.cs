@@ -140,7 +140,7 @@ public sealed class MealService(
 
                 // The food's own name and raw/cooked state are authoritative; the client only chooses which food and how many grams.
                 items.Add(new MealItem(
-                    food.Id, food.Description, input.QuantityGrams, food.Preparation, isEstimated: false, food.SourceLabel,
+                    food.Id, food.Description, input.QuantityGrams, food.Preparation, isEstimated: food.EnergyDerived, food.SourceLabel,
                     NutrientCalculator.ForQuantity(food, input.QuantityGrams)));
             }
             else

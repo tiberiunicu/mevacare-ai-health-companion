@@ -303,6 +303,7 @@ export function FoodPicker({ onPick, onCancel }: { onPick: (food: FoodSearchItem
                   {food.brand ? '' : `${t(`nutrition.prepValues.${food.preparation}`)} · `}
                   {fmt(food.per100g.calories)} {t('nutrition.nutrients.kcal')} {t('nutrition.editor.per100')} · {food.sourceLabel}
                 </span>
+                {food.energyDerived && <span className="block text-xs text-warning">{t('nutrition.editor.energyDerived')}</span>}
               </button>
             </li>
           ))}
@@ -385,6 +386,7 @@ function OnlineFoodSearch({ query, onPick }: { query: string; onPick: (food: Foo
                       {fmt(candidate.per100g.calories)} {t('nutrition.nutrients.kcal')} {t('nutrition.editor.per100')}
                       {candidate.quantity ? ` · ${candidate.quantity}` : ''} · {candidate.sourceLabel}
                     </span>
+                    {candidate.energyDerived && <span className="block text-xs text-warning">{t('nutrition.editor.energyDerived')}</span>}
                     <span className="block text-xs font-semibold text-primary">
                       {busy === candidate.barcode ? t('nutrition.online.adding') : t('nutrition.online.use')}
                     </span>

@@ -319,6 +319,22 @@ describe('online food search', () => {
     expect(screen.getByRole('button', { name: 'Save meal' })).toBeDisabled()
   })
 
+  it('says when the calories of a product were calculated because the source gives none', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/summary/daily')) return json(summary([]))
+      if (url.includes('/foods/online/search')) return json([{ ...candidate, energyDerived: true, per100g: { ...candidate.per100g, calories: 96.5 } }])
+      if (url.includes('/foods/search')) return json([])
+      return json({})
+    }))
+
+    await userEvent.type(await openPicker(), 'cottage cheese hochland')
+    await userEvent.click(await screen.findByRole('button', { name: 'Search packaged products online' }))
+
+    const row = await screen.findByRole('button', { name: /Hochland Cottage cheese/ })
+    expect(row).toHaveTextContent('calculated from protein, carbohydrates and fat (an estimate)')
+  })
+
   it('reports an empty online result without inventing anything', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input)

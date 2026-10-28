@@ -51,7 +51,21 @@ public static partial class OpenFoodFactsMapping
             return false;
         }
 
+        var protein = Round(product.Protein);
+        var carbohydrates = Round(product.Carbohydrates);
+        var fat = Round(product.Fat);
+        var fiber = Round(product.Fiber);
+
         var kcal = product.EnergyKcal ?? (product.EnergyKj is { } kj ? Math.Round(kj / KilojoulesPerKilocalorie, 1) : null);
+        var derived = false;
+        if (kcal is null && protein is not null && carbohydrates is not null && fat is not null)
+        {
+            // Many products have the macronutrients but no energy. Calories are then calculated (general Atwater factors; fibre 2 kcal/g) and the
+            // food is flagged, so meal items made from it are shown as estimated instead of looking like label values.
+            kcal = Math.Round(4 * protein.Value + 4 * carbohydrates.Value + 9 * fat.Value + 2 * (fiber ?? 0), 1);
+            derived = true;
+        }
+
         if (kcal is null)
         {
             rejection = "missing_energy";
@@ -64,10 +78,6 @@ public static partial class OpenFoodFactsMapping
             return false;
         }
 
-        var protein = Round(product.Protein);
-        var carbohydrates = Round(product.Carbohydrates);
-        var fat = Round(product.Fat);
-        var fiber = Round(product.Fiber);
         if (protein is null && carbohydrates is null && fat is null)
         {
             rejection = "no_macronutrients";
@@ -82,7 +92,7 @@ public static partial class OpenFoodFactsMapping
         }
 
         // Energy cannot be (much) lower than what the macronutrients provide. Higher is allowed: alcohol and polyols add energy that is not tracked here.
-        if (protein is not null && carbohydrates is not null && fat is not null
+        if (!derived && protein is not null && carbohydrates is not null && fat is not null
             && kcal < 0.6m * (4 * protein.Value + 4 * carbohydrates.Value + 9 * fat.Value) - 20)
         {
             rejection = "inconsistent_energy";
@@ -90,7 +100,7 @@ public static partial class OpenFoodFactsMapping
         }
 
         var brand = FirstBrand(product.Brands);
-        food = new Food(FoodSource.OpenFoodFacts, code, name, CategoryName(product.CategoryTag), PreparationState.Unspecified, brand, code);
+        food = new Food(FoodSource.OpenFoodFacts, code, name, CategoryName(product.CategoryTag), PreparationState.Unspecified, brand, code, derived);
         food.AddNutrient(NutrientType.Calories, Math.Round(kcal.Value, 1));
         AddIfPresent(food, NutrientType.Protein, protein);
         AddIfPresent(food, NutrientType.Carbohydrates, carbohydrates);
@@ -104,7 +114,8 @@ public static partial class OpenFoodFactsMapping
 
         if (PackageGrams(product.Quantity) is { } packageGrams)
         {
-            food.AddPortion(1, "package", Clean(product.Quantity, 200), packageGrams);
+            // Volunteers write "175 g," and "250g."; the stray punctuation is not part of the quantity.
+            food.AddPortion(1, "package", Clean(product.Quantity, 200)?.TrimEnd(',', ';', '.', ' '), packageGrams);
         }
 
         return true;

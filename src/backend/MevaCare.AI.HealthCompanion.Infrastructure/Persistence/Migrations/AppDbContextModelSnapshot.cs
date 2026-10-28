@@ -982,6 +982,11 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
+                    b.Property<bool>("EnergyDerived")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Preparation")
                         .IsRequired()
                         .HasMaxLength(20)

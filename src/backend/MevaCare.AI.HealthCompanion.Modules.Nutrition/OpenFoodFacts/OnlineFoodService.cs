@@ -13,14 +13,15 @@ namespace MevaCare.AI.HealthCompanion.Modules.Nutrition.OpenFoodFacts;
 /// <summary>A product found online. It is a preview: nothing is stored until the user adds it (<see cref="OnlineFoodService.AddAsync"/>).</summary>
 /// <param name="FoodId">Set when the product is already in the local database, so it can be used right away.</param>
 public sealed record OnlineFoodCandidateDto(
-    string Barcode, string Name, string? Brand, string? Category, string? Quantity, NutrientValues Per100g, string SourceLabel, Guid? FoodId);
+    string Barcode, string Name, string? Brand, string? Category, string? Quantity, NutrientValues Per100g, string SourceLabel, Guid? FoodId,
+    bool EnergyDerived);
 
 /// <summary>
 /// The optional, user-triggered lookup in Open Food Facts for products the local database does not have. Two steps by design: a search that only
 /// previews candidates, and an explicit "add" that re-reads the product by barcode on the server (client-supplied numbers are never stored)
 /// and saves it with its provenance. Needs the External integrations consent because the text searched for is sent to a third party.
 /// </summary>
-public sealed class OnlineFoodService(AppDbContext db, IOpenFoodFactsClient client, IConsentService consents)
+public sealed class OnlineFoodService(AppDbContext db, IOpenFoodFactsClient client, IConsentService consents, Microsoft.Extensions.Options.IOptions<OpenFoodFactsOptions> options)
 {
     public const int MinQueryLength = 2;
     public const int MaxQueryLength = 100;
@@ -35,12 +36,22 @@ public sealed class OnlineFoodService(AppDbContext db, IOpenFoodFactsClient clie
         }
 
         var products = await client.SearchAsync(query, ct);
+        // The service ranks loosely ("hochland cottage cheese" also returns other cottage cheeses). Like the local search, keep only products
+        // whose name or brand contains every word of the query, and only those with usable data.
+        var tokens = FoodRanking.Tokenize(query);
         var foods = new List<Food>();
         foreach (var product in products)
         {
-            if (OpenFoodFactsMapping.TryCreateFood(product, out var food, out _) && foods.All(f => f.SourceFoodId != food!.SourceFoodId))
+            if (OpenFoodFactsMapping.TryCreateFood(product, out var food, out _)
+                && FoodRanking.MatchesAll(food!, tokens)
+                && foods.All(f => f.SourceFoodId != food!.SourceFoodId))
             {
                 foods.Add(food!);
+            }
+
+            if (foods.Count >= options.Value.MaxResults)
+            {
+                break;
             }
         }
 
@@ -52,7 +63,7 @@ public sealed class OnlineFoodService(AppDbContext db, IOpenFoodFactsClient clie
 
         return foods.Select(f => new OnlineFoodCandidateDto(
             f.SourceFoodId, f.Description, f.Brand, f.Category, QuantityText(f), NutrientCalculator.ForQuantity(f, 100m), f.SourceLabel,
-            stored.TryGetValue(f.SourceFoodId, out var id) ? id : null)).ToList();
+            stored.TryGetValue(f.SourceFoodId, out var id) ? id : null, f.EnergyDerived)).ToList();
     }
 
     /// <summary>Stores one product, found by barcode, in the local database. Idempotent: an existing product is returned unchanged.</summary>
@@ -110,5 +121,5 @@ public static class FoodDtos
 {
     public static FoodSearchItemDto ToSearchItem(Food food, bool ambiguous = false, bool preparationAssumed = false) => new(
         food.Id, food.Description, food.Preparation.ToString(), food.Category, food.SourceLabel, NutrientCalculator.ForQuantity(food, 100m),
-        ambiguous, preparationAssumed, food.Brand, food.Barcode);
+        ambiguous, preparationAssumed, food.Brand, food.Barcode, food.EnergyDerived);
 }

@@ -71,6 +71,7 @@ public class OpenFoodFactsMappingTests
         var package = Assert.Single(food!.Portions);
         Assert.Equal("package", package.Unit);
         Assert.Equal(175m, package.GramWeight);
+        Assert.Equal("175 g", package.Description);   // the source says "175 g,"; stray punctuation is dropped
     }
 
     [Theory]
@@ -100,6 +101,26 @@ public class OpenFoodFactsMappingTests
     }
 
     [Fact]
+    public void Without_an_energy_value_the_calories_are_calculated_from_the_macronutrients_and_the_food_is_flagged()
+    {
+        var product = Hochland() with { EnergyKcal = null, EnergyKj = null, Fiber = 1m };
+
+        Assert.True(OpenFoodFactsMapping.TryCreateFood(product, out var food, out _));
+
+        Assert.True(food!.EnergyDerived);
+        Assert.Equal(98.5m, food.Nutrients.Single(n => n.Type == NutrientType.Calories).AmountPer100g);   // 4×12 + 4×2 + 9×4.5 + 2×1
+    }
+
+    [Fact]
+    public void Reported_energy_is_never_replaced_by_a_calculation()
+    {
+        OpenFoodFactsMapping.TryCreateFood(Hochland(), out var food, out _);
+
+        Assert.False(food!.EnergyDerived);
+        Assert.Equal(95m, food.Nutrients.Single(n => n.Type == NutrientType.Calories).AmountPer100g);
+    }
+
+    [Fact]
     public void A_nutrient_the_product_does_not_report_has_no_row_so_it_is_unknown_not_zero()
     {
         var product = Hochland() with { Fiber = null };
@@ -126,7 +147,7 @@ public class OpenFoodFactsMappingTests
         yield return ["invalid_barcode", ok with { Code = "123" }];
         yield return ["invalid_barcode", ok with { Code = null }];
         yield return ["missing_name", ok with { ProductName = "  " }];
-        yield return ["missing_energy", ok with { EnergyKcal = null, EnergyKj = null }];
+        yield return ["missing_energy", ok with { EnergyKcal = null, EnergyKj = null, Carbohydrates = null }];
         yield return ["implausible_energy", ok with { EnergyKcal = 1500m }];
         yield return ["implausible_energy", ok with { EnergyKcal = -5m }];
         yield return ["no_macronutrients", ok with { Protein = null, Carbohydrates = null, Fat = null }];
@@ -410,7 +431,7 @@ public class OpenFoodFactsClientTests
             gate ?? new SlidingRateGate(TimeProvider.System), NullLogger<OpenFoodFactsClient>.Instance);
 
     private const string SearchBody = """
-        {"count":2,"products":[
+        {"count":2,"hits":[
           {"code":"5941238007810","product_name":"Hochland Cottage cheese","brands":"Hochland","quantity":"175 g,",
            "categories_tags":["en:dairies","en:cottage-cheeses"],
            "nutriments":{"energy-kcal_100g":95,"proteins_100g":"12","carbohydrates_100g":2,"fat_100g":4.5,"fiber_100g":0}},
@@ -436,13 +457,14 @@ public class OpenFoodFactsClientTests
     [Fact]
     public async Task The_search_text_is_escaped_and_only_the_text_is_sent()
     {
-        var handler = new FakeHandler(_ => Json("""{"products":[]}"""));
+        var handler = new FakeHandler(_ => Json("""{"hits":[]}"""));
 
-        await Client(handler).SearchAsync("brânză & lapte", default);
+        await Client(handler, new OpenFoodFactsOptions { SearchBaseUrl = "https://search.example.test" }).SearchAsync("brânză & lapte", default);
 
         var uri = Assert.Single(handler.Requests);
-        Assert.Contains("search_terms=br%C3%A2nz%C4%83%20%26%20lapte", uri.AbsoluteUri);
-        Assert.Equal("off.example.test", uri.Host);
+        Assert.Contains("q=br%C3%A2nz%C4%83%20%26%20lapte", uri.AbsoluteUri);
+        Assert.Contains("langs=en%2Cro", uri.AbsoluteUri);
+        Assert.Equal("search.example.test", uri.Host);
     }
 
     [Fact]
@@ -495,7 +517,7 @@ public class OpenFoodFactsClientTests
     public async Task The_server_wide_limit_protects_the_provider_and_recovers_after_a_minute()
     {
         var clock = TestDb.Clock();
-        var handler = new FakeHandler(_ => Json("""{"products":[]}"""));
+        var handler = new FakeHandler(_ => Json("""{"hits":[]}"""));
         var client = Client(handler, new OpenFoodFactsOptions { SearchesPerMinute = 2 }, new SlidingRateGate(clock));
 
         await client.SearchAsync("a1", default);
@@ -532,7 +554,7 @@ public class OnlineFoodServiceTests
     {
         var db = TestDb.Create();
         var client = new FakeClient();
-        return (new OnlineFoodService(db, client, new StubConsentService(consent)), client, db);
+        return (new OnlineFoodService(db, client, new StubConsentService(consent), Options.Create(new OpenFoodFactsOptions { MaxResults = 3 })), client, db);
     }
 
     [Fact]
@@ -551,6 +573,35 @@ public class OnlineFoodServiceTests
         Assert.Equal(95m, candidate.Per100g.Calories);
         Assert.Null(candidate.FoodId);
         Assert.Empty(db.Set<Food>());
+    }
+
+    [Fact]
+    public async Task Only_products_containing_every_word_of_the_query_are_offered_and_the_list_is_capped()
+    {
+        var (service, client, db) = Create();
+        await using var _ = db;
+        client.Products.AddRange([
+            Hochland("4000000000001") with { ProductName = "Other cottage cheese", Brands = "Milbona" },
+            Hochland("4000000000002"), Hochland("4000000000003"), Hochland("4000000000004"), Hochland("4000000000005")]);
+
+        var candidates = await service.SearchAsync(Guid.NewGuid(), "hochland cottage", default);
+
+        Assert.Equal(3, candidates.Count);                                  // MaxResults = 3 in this test
+        Assert.All(candidates, c => Assert.Equal("Hochland", c.Brand));
+        Assert.DoesNotContain(candidates, c => c.Barcode == "4000000000001");
+    }
+
+    [Fact]
+    public async Task A_product_without_an_energy_value_is_offered_with_calculated_calories_and_a_flag()
+    {
+        var (service, client, db) = Create();
+        await using var _ = db;
+        client.Products.Add(Hochland() with { EnergyKcal = null });
+
+        var candidate = Assert.Single(await service.SearchAsync(Guid.NewGuid(), "hochland", default));
+
+        Assert.True(candidate.EnergyDerived);
+        Assert.Equal(96.5m, candidate.Per100g.Calories);
     }
 
     [Fact]

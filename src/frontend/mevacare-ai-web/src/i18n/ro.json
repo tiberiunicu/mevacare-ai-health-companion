@@ -310,6 +310,7 @@
       "name": "Nume",
       "customHint": "Valorile introduse sunt salvate și marcate ca estimate.",
       "per100": "la 100 g",
+      "energyDerived": "Sursa nu indică caloriile: sunt calculate din proteine, carbohidrați și grăsimi (o estimare).",
       "unresolved": "Nepotrivit. Caută un aliment sau folosește un element personalizat.",
       "needsGrams": "Introdu greutatea în grame.",
       "assumedPrep": "Nu s-a precizat crud sau gătit; s-a presupus: {{state}}. Greutățile alimentelor crude și gătite nu sunt interschimbabile.",

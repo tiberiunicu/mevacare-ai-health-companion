@@ -152,6 +152,8 @@ export interface FoodSearchItem {
   /** Packaged products (Open Food Facts) have a brand and a barcode; generic foods do not. */
   brand?: string | null
   barcode?: string | null
+  /** The source gave no energy value; the calories were calculated from protein, carbohydrates and fat. */
+  energyDerived?: boolean
 }
 
 /** A product found online (Open Food Facts). A preview: nothing is stored until it is added. */
@@ -165,6 +167,7 @@ export interface OnlineFoodCandidate {
   sourceLabel: string
   /** Set when the product is already in the local database. */
   foodId: string | null
+  energyDerived: boolean
 }
 
 export interface SaveMealItem {

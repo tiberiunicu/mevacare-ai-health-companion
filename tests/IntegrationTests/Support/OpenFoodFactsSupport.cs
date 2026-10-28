@@ -47,9 +47,9 @@ public sealed class FakeOpenFoodFactsHandler : HttpMessageHandler
             }
 
             var path = request.RequestUri.AbsolutePath;
-            if (path.EndsWith("/cgi/search.pl", StringComparison.Ordinal))
+            if (path.EndsWith("/search", StringComparison.Ordinal))
             {
-                return Task.FromResult(Json($$"""{"count":{{Products.Count}},"products":[{{string.Join(',', Products.Values)}}]}"""));
+                return Task.FromResult(Json($$"""{"count":{{Products.Count}},"hits":[{{string.Join(',', Products.Values)}}]}"""));
             }
 
             const string productPrefix = "/api/v2/product/";

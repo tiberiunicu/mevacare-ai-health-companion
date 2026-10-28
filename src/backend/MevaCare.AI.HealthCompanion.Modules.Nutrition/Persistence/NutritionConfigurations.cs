@@ -19,6 +19,7 @@ internal sealed class FoodConfiguration : IEntityTypeConfiguration<Food>
         builder.Property(f => f.Preparation).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(f => f.Brand).HasMaxLength(120);
         builder.Property(f => f.Barcode).HasMaxLength(14);
+        builder.Property(f => f.EnergyDerived).HasDefaultValue(false);
         builder.Property(f => f.SearchText).HasMaxLength(FoodText.MaxSearchTextLength).IsRequired();
         builder.Ignore(f => f.SourceLabel);
         builder.Ignore(f => f.IsBranded);

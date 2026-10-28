@@ -308,6 +308,7 @@
       "name": "Name",
       "customHint": "Values you enter are saved and marked as estimated.",
       "per100": "per 100 g",
+      "energyDerived": "The source gives no calories: they are calculated from protein, carbohydrates and fat (an estimate).",
       "unresolved": "Not matched. Search for a food or use a custom item.",
       "needsGrams": "Enter the weight in grams.",
       "assumedPrep": "Raw or cooked was not stated; assumed {{state}}. Weights of raw and cooked food are not interchangeable.",

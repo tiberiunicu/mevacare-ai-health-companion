@@ -19,9 +19,14 @@ Food journal, daily and range summaries, user-set targets, and the deterministic
   - *Bulk import for chosen countries*: download the CSV export (`https://static.openfoodfacts.org/data/en.openfoodfacts.org.products.csv.gz`, ~0.8 GB compressed, streamed, do not extract it) and run
     `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- import-openfoodfacts <file> romania,germany,austria [--limit N]` (English country names as Open Food Facts writes them,
     lower case, hyphens). Products are validated (see the ADR); the command prints how many were imported, skipped and rejected per reason. Safe to re-run; existing products are never changed.
-  - *Online lookup on request*: in the food picker, after a local search, the user can press "Search packaged products online". The server queries Open Food Facts (`cgi/search.pl`), the user
-    chooses a product and the server stores it by barcode (it re-reads the product itself). Requires the External integrations consent; settings under `Nutrition:OpenFoodFacts`
-    (`Enabled`, `ContactEmail` for the User-Agent, `TimeoutSeconds`, `MaxResults`, `SearchesPerMinute` ≤ 10 and `ProductReadsPerMinute` for the whole server).
+  - *Online lookup on request*: in the food picker, after a local search, the user can press "Search packaged products online". The server queries Open Food Facts' search service
+    (`search.openfoodfacts.org`; the older `cgi/search.pl` answered 503 when tried), requests a pool of 100 results in several languages (its ranking depends on the order of the words),
+    keeps only products whose name or brand contains every word of the query and whose data validates, and shows at most `MaxResults`. The user chooses a product and the server stores it by barcode
+    (`api/v2/product/{barcode}`, re-read on the server). Requires the External integrations consent; settings under `Nutrition:OpenFoodFacts` (`Enabled`, `ContactEmail` for the User-Agent,
+    `TimeoutSeconds`, `MaxResults`, `SearchBaseUrl`, `SearchLanguages`, `SearchPoolSize`, `SearchesPerMinute` ≤ 10 and `ProductReadsPerMinute`, both for the whole server).
+  - *Products without calories*: many products have protein, carbohydrates and fat but no energy value (for example the Hochland cottage cheese). The calories are then calculated (4/4/9 kcal per g,
+    2 for fibre), the food is flagged `EnergyDerived`, the UI says so, and meal items made from it are saved as **estimates**. Reported energy is never replaced by a calculation. Products with
+    too little data are rejected.
 - Other databases (Romanian tables...) plug in as another importer and a new `FoodSource` value; callers use `IFoodCatalog`.
 
 ## Data model (schema `nutrition`)

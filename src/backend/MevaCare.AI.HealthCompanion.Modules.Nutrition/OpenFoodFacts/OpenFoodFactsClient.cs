@@ -22,7 +22,22 @@ public sealed class OpenFoodFactsOptions
 
     [Range(1, 30)] public int TimeoutSeconds { get; init; } = 10;
 
+    /// <summary>Products shown to the user after the words of the query were checked against name and brand.</summary>
     [Range(1, 20)] public int MaxResults { get; init; } = 10;
+
+    /// <summary>
+    /// Open Food Facts' search service (the older <c>cgi/search.pl</c> endpoint answers 503 most of the time). It ranks loosely, so a larger pool
+    /// is requested and filtered here; the words of the query are matched in these languages (without a list only English names are searched).
+    /// </summary>
+    [Required, Url] public string SearchBaseUrl { get; init; } = "https://search.openfoodfacts.org";
+
+    public string SearchLanguages { get; init; } = "en,ro,de,fr,it,es,hu,pl,bg";
+
+    /// <summary>
+    /// How many results are requested before filtering. The service's ranking depends on the order of the words ("cottage cheese hochland" lists
+    /// the second Hochland product only after 50 other results), so the pool is large; 100 results are about 40 KB.
+    /// </summary>
+    [Range(10, 100)] public int SearchPoolSize { get; init; } = 100;
 
     /// <summary>
     /// Search requests per minute for the whole server. Open Food Facts documents 10 per minute and IP address and bans abusive clients,
@@ -55,14 +70,14 @@ public sealed class OpenFoodFactsClient(HttpClient http, IOptions<OpenFoodFactsO
     {
         EnsureEnabled();
         gate.Acquire("search", _options.SearchesPerMinute);
-        var url = $"cgi/search.pl?search_terms={Uri.EscapeDataString(text)}&search_simple=1&action=process&json=1&page_size={_options.MaxResults}&fields={Fields}";
+        var url = $"{_options.SearchBaseUrl.TrimEnd('/')}/search?q={Uri.EscapeDataString(text)}&langs={Uri.EscapeDataString(_options.SearchLanguages)}&page_size={_options.SearchPoolSize}&fields={Fields}";
         using var document = await GetJsonAsync(url, ct);
-        if (!document.RootElement.TryGetProperty("products", out var products) || products.ValueKind != JsonValueKind.Array)
+        if (!document.RootElement.TryGetProperty("hits", out var hits) || hits.ValueKind != JsonValueKind.Array)
         {
             return [];
         }
 
-        return products.EnumerateArray().Where(p => p.ValueKind == JsonValueKind.Object).Select(ParseProduct).ToList();
+        return hits.EnumerateArray().Where(p => p.ValueKind == JsonValueKind.Object).Select(ParseProduct).ToList();
     }
 
     public async Task<OffProduct?> GetProductAsync(string barcode, CancellationToken ct)

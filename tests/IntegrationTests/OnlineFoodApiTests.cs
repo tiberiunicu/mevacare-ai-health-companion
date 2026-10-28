@@ -106,6 +106,26 @@ public class OnlineFoodApiTests : IDisposable
     }
 
     [Fact]
+    public async Task A_product_without_an_energy_value_gets_calculated_calories_and_its_meal_items_are_marked_as_estimates()
+    {
+        var user = await UserAsync();
+        var code = Barcode();
+        _factory.OpenFoodFacts.Products[code] = FakeOpenFoodFactsHandler.Hochland(code, kcal: "null", brand: "Vrelka");
+
+        var added = await (await user.Client.PostAsJsonAsync("/api/nutrition/foods/online/add", new { barcode = code })).Content.ReadFromJsonAsync<JsonElement>();
+        var meal = await (await user.Client.PostAsJsonAsync("/api/nutrition/meals", new
+        {
+            type = "Snack",
+            items = new object[] { new { foodId = added.GetProperty("foodId").GetGuid(), name = "ignored", quantityGrams = 100, preparation = "Unspecified" } },
+        })).Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.True(added.GetProperty("energyDerived").GetBoolean());
+        Assert.Equal(96.5m, added.GetProperty("per100g").GetProperty("calories").GetDecimal());   // 4×12 + 4×2 + 9×4.5
+        Assert.True(meal.GetProperty("items")[0].GetProperty("isEstimated").GetBoolean());
+        Assert.True(meal.GetProperty("totals").GetProperty("includesEstimates").GetBoolean());
+    }
+
+    [Fact]
     public async Task Adding_the_same_product_twice_reads_the_provider_once_and_returns_the_same_food()
     {
         var user = await UserAsync();
