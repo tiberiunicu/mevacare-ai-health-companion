@@ -150,7 +150,7 @@ public sealed class AiChatService(
         if (_options.ToolsEnabled)
         {
             // The tools are bound to THIS user and conversation; the model never supplies a user id.
-            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge, measurements, insights, turn.UserNow, profileApi, wearables);
+            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge, measurements, insights, turn.UserNow, profileApi, wearables, turn.UserText);
             chatOptions.Tools = [.. tools.Functions];
             client = new FunctionInvokingChatClient(chat)
             {

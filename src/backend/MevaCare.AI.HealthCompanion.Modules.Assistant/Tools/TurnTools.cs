@@ -35,6 +35,7 @@ public sealed class TurnTools
     private readonly ILogger _logger;
     private readonly IKnowledgeSearch? _knowledge;
     private readonly DateTimeOffset? _userNow;
+    private readonly string _userText;
     private readonly IProfileAssistantApi? _profileApi;
     private readonly IWearablesAssistantApi? _wearables;
     private readonly IMeasurementsAssistantApi? _measurements;
@@ -45,8 +46,9 @@ public sealed class TurnTools
         Guid userId, Guid conversationId, int assistantSequence, INutritionAssistantApi nutrition, IHealthProfileReader profiles,
         MealParser parser, AppDbContext db, TimeProvider clock, ILogger logger, IKnowledgeSearch? knowledge = null,
         IMeasurementsAssistantApi? measurements = null, IInsightsAssistantApi? insights = null, DateTimeOffset? userNow = null,
-        IProfileAssistantApi? profileApi = null, IWearablesAssistantApi? wearables = null)
+        IProfileAssistantApi? profileApi = null, IWearablesAssistantApi? wearables = null, string? userText = null)
     {
+        _userText = userText ?? "";
         _userNow = userNow;
         _profileApi = profileApi;
         _wearables = wearables;
@@ -66,7 +68,7 @@ public sealed class TurnTools
         var functions = new List<AITool>
         {
             AIFunctionFactory.Create(GetHealthProfileAsync, "GetHealthProfile",
-                "Returns the user's saved health profile facts (age, sex, height, activity level, goal types). Read-only."),
+                "Returns the user's saved health profile facts (age, sex, height, activity level, goal types). It does NOT contain nutrition targets, meals or weight entries. Read-only."),
             AIFunctionFactory.Create(GetDailyNutritionSummaryAsync, "GetDailyNutritionSummary",
                 "Returns what the user logged on one day: totals of calories, protein, carbohydrates, fat and fibre, their targets and what remains. Read-only."),
             AIFunctionFactory.Create(GetNutritionSummaryAsync, "GetNutritionSummary",
@@ -75,7 +77,7 @@ public sealed class TurnTools
                 "Prepares a meal from the user's own words. It only shows the user a proposal card to review; NOTHING is saved until the user confirms in the app."),
         };
         functions.Add(AIFunctionFactory.Create(ProposeNutritionTargetsAsync, ActionKinds.Targets,
-            "Prepares a change of the user's daily nutrition targets (calories, protein, carbohydrates, fat, fibre; give only the ones that change) for the user to confirm. NOTHING changes until the user confirms it with the button in the card."));
+            "Prepares a change of the user's daily nutrition targets (calories, protein, carbohydrates, fat, fibre; give only the ones that change, and at least one number the user actually stated) for the user to confirm. NOTHING changes until the user confirms it with the button in the card."));
         functions.Add(AIFunctionFactory.Create(ProposeMealDeletionAsync, ActionKinds.DeleteMeal,
             "Prepares the deletion of one meal in the user's journal (its id comes from GetDailyNutritionSummary) for the user to confirm. NOTHING is deleted until the user confirms it with the button in the card."));
         if (profileApi is not null)
@@ -95,7 +97,7 @@ public sealed class TurnTools
         if (measurements is not null)
         {
             functions.Add(AIFunctionFactory.Create(ProposeWeightAsync, ActionKinds.Weight,
-                "Prepares a body-weight entry (kilograms, optional day) for the user to confirm. Use it when the user says what they weigh. NOTHING is saved until the user confirms it with the button in the card."));
+                "Prepares a body-weight entry (kilograms, optional day) for the user to confirm. Use it only when the user has stated a weight; if they gave no number, ask for it first. NOTHING is saved until the user confirms it with the button in the card."));
             functions.Add(AIFunctionFactory.Create(GetWeightHistoryAsync, "GetWeightHistory",
                 "Returns the user's body-weight entries between two dates (at most 366 days) with the latest value and the change over the period. Read-only."));
             functions.Add(AIFunctionFactory.Create(GetSleepAndRecoveryAsync, "GetSleepAndRecovery",
@@ -335,6 +337,42 @@ public sealed class TurnTools
 
     // ---- prepared changes (the user confirms in a card; nothing is applied here) ----
 
+    /// <summary>
+    /// A prepared change may only contain numbers the user wrote in THIS message ("81.5", "82,4", "2.300"). The model is told not to guess or calculate
+    /// values; this enforces it: an invented or computed number is refused and the model has to ask. Fails closed when no message text is known.
+    /// </summary>
+    private void EnsureStated(params decimal?[] values)
+    {
+        var stated = StatedNumbers(_userText);
+        foreach (var value in values.OfType<decimal>().Where(v => !stated.Contains(v)))
+        {
+            throw new BadRequestException(
+                "value_not_stated", $"The value {value.ToString(CultureInfo.InvariantCulture)} is not in the user's message. Use only numbers the user wrote; ask them for the value instead of guessing or calculating it.");
+        }
+    }
+
+    internal static HashSet<decimal> StatedNumbers(string text)
+    {
+        var numbers = new HashSet<decimal>();
+        foreach (System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(text, @"\d+(?:[.,]\d+)*", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)))
+        {
+            var raw = match.Value;
+            // 2.300 or 2,300 as a thousands separator, and 82,4 or 82.4 as a decimal point: accept every reading the user could have meant.
+            if (System.Text.RegularExpressions.Regex.IsMatch(raw, @"^\d{1,3}([.,]\d{3})+$", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1))
+                && decimal.TryParse(raw.Replace(".", "").Replace(",", ""), NumberStyles.None, CultureInfo.InvariantCulture, out var grouped))
+            {
+                numbers.Add(grouped);
+            }
+
+            if (decimal.TryParse(raw.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out var plain))
+            {
+                numbers.Add(plain);
+            }
+        }
+
+        return numbers;
+    }
+
     private DateOnly UserToday => DateOnly.FromDateTime((_userNow ?? _clock.GetUtcNow()).DateTime);
 
     private ToolResult Proposed(string kind, object payload, object summary)
@@ -370,6 +408,7 @@ public sealed class TurnTools
                 throw new BadRequestException("invalid_weight", "The weight must be between 20 and 500 kg.");
             }
 
+            EnsureStated(kilograms);
             var today = UserToday;
             var day = string.IsNullOrWhiteSpace(date) ? today : ParseDate(date);
             if (day > today || day < today.AddYears(-5))
@@ -406,6 +445,7 @@ public sealed class TurnTools
             Check("carbohydrates", carbohydratesG, 2_000m);
             Check("fat", fatG, 1_000m);
             Check("fibre", fiberG, 300m);
+            EnsureStated(calories, proteinG, carbohydratesG, fatG, fiberG);
 
             var before = await _nutrition.GetTargetsAsync(_userId, ct);
             var after = new NutritionTargetDto(
@@ -431,6 +471,7 @@ public sealed class TurnTools
                 throw new BadRequestException("invalid_height", "The height must be between 50 and 260 cm.");
             }
 
+            EnsureStated(heightCm);
             string? level = null;
             if (!string.IsNullOrWhiteSpace(activityLevel))
             {

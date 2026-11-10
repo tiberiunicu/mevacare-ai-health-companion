@@ -47,11 +47,12 @@ public class ChatActionTests : IDisposable
     }
 
     /// <summary>The model calls one tool and then answers; returns the card the stream showed, if any.</summary>
-    private async Task<(JsonElement? Card, List<SseEvent> Events)> Propose(TestUser user, string tool, object arguments)
+    private async Task<(JsonElement? Card, List<SseEvent> Events)> Propose(TestUser user, string tool, object arguments, string? message = null)
     {
         _factory.Chat.EnqueueToolCall(tool, arguments);
         _factory.Chat.EnqueueText("I prepared it. Please check it and press Confirm.");
-        var events = await Send(user, "please do that");
+        // By default the user states exactly the numbers the model passes (a change may only contain numbers the user wrote).
+        var events = await Send(user, message ?? $"please do that {JsonSerializer.Serialize(arguments)}");
         var action = events.SingleOrDefault(e => e.Name == "action");
         return (action is null ? null : action.Data.GetProperty("card"), events);
     }
@@ -137,6 +138,76 @@ public class ChatActionTests : IDisposable
 
         Assert.Equal(twoDaysAgo, Assert.Single((await WeightsAsync(user)).GetProperty("points").EnumerateArray()).GetProperty("localDate").GetString());
         Assert.Null(future);
+    }
+
+    // ---- the model may only use numbers the user wrote ----
+
+    [Theory]
+    [InlineData("Log my weight", 81.5)]                       // no number at all: the model made one up
+    [InlineData("I weigh about eighty kilos", 80)]            // a number in words is not a stated number: the model has to ask for digits
+    [InlineData("I gained 2 kg since last week", 84.2)]       // computed from earlier data, not stated
+    public async Task A_weight_the_user_did_not_write_is_refused_and_no_card_is_shown(string message, double kilograms)
+    {
+        var user = await TestUser.RegisterAsync(_factory, aiConsent: true);
+
+        var (card, _) = await Propose(user, "ProposeWeight", new { kilograms }, message);
+
+        Assert.Null(card);
+        var execution = Assert.Single(await ExecutionsAsync(user.Id));
+        Assert.Equal(ToolOutcome.Rejected, execution.Outcome);
+        Assert.Equal("value_not_stated", execution.ErrorCode);
+    }
+
+    [Theory]
+    [InlineData("Azi cântăresc 82,4 kg", 82.4)]               // a decimal comma
+    [InlineData("I weigh 82.4kg", 82.4)]                       // no space before the unit
+    [InlineData("am 82.4 de kilograme acum, nu 83", 82.4)]     // several numbers in the message
+    public async Task A_weight_the_user_wrote_is_accepted_in_the_ways_people_write_numbers(string message, double kilograms)
+    {
+        var user = await TestUser.RegisterAsync(_factory, aiConsent: true);
+
+        var (card, _) = await Propose(user, "ProposeWeight", new { kilograms }, message);
+
+        Assert.NotNull(card);
+    }
+
+    [Theory]
+    [InlineData("Set my target to 2.300 calories", 2300)]      // a thousands separator
+    [InlineData("target 2,300 kcal", 2300)]
+    [InlineData("make it 2300", 2300)]
+    public async Task A_target_written_with_a_thousands_separator_is_accepted(string message, int calories)
+    {
+        var user = await TestUser.RegisterAsync(_factory, aiConsent: true);
+
+        var (card, _) = await Propose(user, "ProposeNutritionTargets", new { calories }, message);
+
+        Assert.NotNull(card);
+    }
+
+    [Fact]
+    public async Task A_number_the_model_calculated_or_invented_is_refused_for_targets_and_height_too()
+    {
+        var user = await TestUser.RegisterAsync(_factory, aiConsent: true);
+        (await user.Client.PutAsJsonAsync("/api/nutrition/targets", new { calories = 2300, proteinG = (int?)null, carbohydratesG = (int?)null, fatG = (int?)null, fiberG = (int?)null })).EnsureSuccessStatusCode();
+
+        var (invented, _) = await Propose(user, "ProposeNutritionTargets", new { calories = 1800 }, "Change my calorie target");
+        var (computed, _) = await Propose(user, "ProposeNutritionTargets", new { calories = 2400 }, "increase my target by 100");
+        var (height, _) = await Propose(user, "ProposeProfileUpdate", new { heightCm = 175 }, "update my height");
+
+        Assert.Null(invented);
+        Assert.Null(computed);
+        Assert.Null(height);
+        Assert.Equal(2300m, (await user.Client.GetFromJsonAsync<JsonElement>("/api/nutrition/targets")).GetProperty("calories").GetDecimal());
+    }
+
+    [Fact]
+    public async Task A_prepared_activity_level_without_any_number_needs_no_stated_number()
+    {
+        var user = await TestUser.RegisterAsync(_factory, aiConsent: true);
+
+        var (card, _) = await Propose(user, "ProposeProfileUpdate", new { activityLevel = "VeryActive" }, "I am very active, I train every day");
+
+        Assert.NotNull(card);
     }
 
     // ---- targets ----

@@ -12,11 +12,14 @@
 .EXAMPLE
   ./scripts/run-live-eval.ps1 -Filter 'FullyQualifiedName~MealExtraction'
 .EXAMPLE
+  # does the model pick the right tool? (41 labelled requests; prints every call and a pass rate per category)
+  ./scripts/run-live-eval.ps1 -Filter 'FullyQualifiedName~ToolSelection'
+.EXAMPLE
   # retrieval with the real embedding model, on the five sample pages in .local/knowledge-corpus, trying another MinScore
   ./scripts/run-live-eval.ps1 -Filter 'FullyQualifiedName~RetrievalEvaluationTests' -KnowledgeDir .local/knowledge-corpus -MinScore 0.3
 #>
 param(
-  [string]$Filter = 'FullyQualifiedName~LiveModelEvaluationTests|FullyQualifiedName~MealExtractionEvaluationTests',
+  [string]$Filter = 'FullyQualifiedName~LiveModelEvaluationTests|FullyQualifiedName~MealExtractionEvaluationTests|FullyQualifiedName~ToolSelectionEvaluationTests',
   # Folder with sources.json for the real-corpus retrieval evaluation (MEVACARE_KNOWLEDGE_DIR).
   [string]$KnowledgeDir = '',
   # Overrides Knowledge:Retrieval:MinScore for this run only.
