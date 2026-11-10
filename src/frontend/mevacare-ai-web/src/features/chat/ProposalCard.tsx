@@ -1,11 +1,12 @@
+import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, ClipboardList } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui'
-import { ApiError } from '../../lib/api'
+import { ApiError, api } from '../../lib/api'
 import { toOffsetIso } from '../../lib/dates'
-import type { ProposalCard as ProposalCardData } from '../../lib/types'
+import type { Meal, ProposalCard as ProposalCardData } from '../../lib/types'
 import { useSaveMeal } from '../nutrition/hooks'
 import { MealEditor } from '../nutrition/MealEditor'
 import { buildRequest, isProposalReady, itemsFromProposal, proposalEatenAt, proposalMealType } from '../nutrition/mealEditorModel'
@@ -25,14 +26,26 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
   const save = useSaveMeal()
   const { proposal } = card
   const eatenAt = proposalEatenAt(proposal)
-  const ready = isProposalReady(proposal)
+  const replacesId = proposal.replacesMealId
+  // A correction replaces a meal that is already in the journal: its type, time and notes are kept.
+  const replaced = useQuery({
+    queryKey: ['nutrition', 'meal', replacesId],
+    queryFn: () => api<Meal>(`/api/nutrition/meals/${replacesId}`),
+    enabled: replacesId !== null && card.state === 'Proposed',
+    retry: false,
+  })
+  const replacedGone = replacesId !== null && replaced.isError
+  const ready = isProposalReady(proposal) && !replacedGone && (replacesId === null || replaced.data !== undefined)
 
   /** One tap: saves exactly what the card shows (the server recalculates and checks it again). */
   const saveNow = () => {
     setSaveError(null)
-    const request = buildRequest(proposalMealType(proposal, eatenAt), toOffsetIso(eatenAt), '', itemsFromProposal(proposal), card.id)
+    const base = replaced.data
+    const request = base
+      ? buildRequest(base.mealType, toOffsetIso(new Date(base.eatenAtUtc)), base.notes ?? '', itemsFromProposal(proposal), card.id)
+      : buildRequest(proposalMealType(proposal, eatenAt), toOffsetIso(eatenAt), '', itemsFromProposal(proposal), card.id)
     save.mutate(
-      { request },
+      { id: replacesId ?? undefined, request },
       {
         onSuccess: (meal) => onChange({ state: 'Committed', mealId: meal.id }),
         onError: (error) => setSaveError(error instanceof ApiError && error.code === 'proposal_not_open' ? error.message : t('proposal.confirmError')),
@@ -95,6 +108,17 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
         </div>
       )}
 
+      {card.state === 'Proposed' && replaced.data && (
+        <p className="mt-2 text-xs text-muted">
+          {t('proposal.replaces', { type: t(`nutrition.mealTypes.${replaced.data.mealType}`), date: replaced.data.localDate })}
+        </p>
+      )}
+      {card.state === 'Proposed' && replacedGone && (
+        <p role="alert" className="mt-2 text-xs text-warning">
+          {t('proposal.replacedGone')}
+        </p>
+      )}
+
       {card.state === 'Committed' && (
         <p className="mt-3 flex flex-wrap items-center gap-2 text-success" role="status">
           <CheckCircle2 className="size-4" aria-hidden />
@@ -117,9 +141,11 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
                 {t('proposal.save')}
               </Button>
             )}
-            <Button variant={ready ? 'secondary' : 'primary'} onClick={() => setReviewing(true)}>
-              {t(ready ? 'proposal.edit' : 'proposal.review')}
-            </Button>
+            {!replacedGone && (
+              <Button variant={ready ? 'secondary' : 'primary'} onClick={() => setReviewing(true)} disabled={replacesId !== null && !replaced.data}>
+                {t(ready ? 'proposal.edit' : 'proposal.review')}
+              </Button>
+            )}
             <Button variant="ghost" onClick={() => void dismiss()}>
               {t('proposal.dismiss')}
             </Button>
@@ -140,6 +166,7 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
       {card.state === 'Proposed' && reviewing && (
         <div className="mt-3 border-t border-line pt-3">
           <MealEditor
+            meal={replaced.data}
             proposalId={card.id}
             initialItems={itemsFromProposal(proposal)}
             initialType={proposalMealType(proposal, eatenAt)}

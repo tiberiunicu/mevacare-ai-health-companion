@@ -380,6 +380,30 @@
       "saved": "Ținte salvate"
     }
   },
+  "action": {
+    "title": {
+      "ProposeWeight": "Greutate pregătită",
+      "ProposeNutritionTargets": "Schimbare de ținte pregătită",
+      "ProposeProfileUpdate": "Schimbare de profil pregătită",
+      "ProposeMealDeletion": "Ștergere de masă pregătită"
+    },
+    "confirm": {
+      "ProposeWeight": "Salvează greutatea",
+      "ProposeNutritionTargets": "Schimbă țintele",
+      "ProposeProfileUpdate": "Actualizează profilul",
+      "ProposeMealDeletion": "Șterge masa"
+    },
+    "done": {
+      "ProposeWeight": "Greutate salvată",
+      "ProposeNutritionTargets": "Ținte schimbate",
+      "ProposeProfileUpdate": "Profil actualizat",
+      "ProposeMealDeletion": "Masă ștearsă"
+    },
+    "notApplied": "Încă nu s-a schimbat nimic. Verifică și confirmă.",
+    "dismissed": "Ignorat",
+    "confirmError": "Nu am putut aplica schimbarea. Încearcă din nou.",
+    "consentError": "Procesarea datelor de sănătate e oprită, deci nu s-a schimbat nimic. Permite-o în Confidențialitate și consimțăminte."
+  },
   "dock": {
     "open": "Întreabă sau notează",
     "title": "Asistent",
@@ -392,6 +416,8 @@
     "edit": "Modifică",
     "fixFirst": "La unele alimente trebuie să alegi sau să indici greutatea, ca să se poată salva.",
     "forDay": "Pentru {{date}}",
+    "replaces": "Înlocuiește {{type}} din {{date}}: alimentele ei sunt înlocuite cu cele de mai sus.",
+    "replacedGone": "Masa de corectat nu mai există. Închide acest card.",
     "review": "Verifică și confirmă",
     "dismiss": "Renunță",
     "dismissed": "Respinsă",
@@ -408,6 +434,15 @@
     "GetDailyNutritionSummary": "Se caută ziua ta",
     "GetNutritionSummary": "Se caută rezumatul nutrițional",
     "PrepareMeal": "Se pregătește masa",
+    "ProposeWeight": "Se pregătește o înregistrare de greutate",
+    "ProposeNutritionTargets": "Se pregătește schimbarea țintelor",
+    "ProposeProfileUpdate": "Se pregătește schimbarea profilului",
+    "ProposeMealDeletion": "Se pregătește ștergerea unei mese",
+    "GetWearableStatus": "Se verifică dispozitivele conectate",
+    "SyncWearable": "Se sincronizează dispozitivul",
+    "GetWeightHistory": "Se caută greutatea ta",
+    "GetSleepAndRecovery": "Se caută somnul și recuperarea",
+    "GetHealthInsights": "Se analizează tendințele",
     "SearchMedicalKnowledge": "Se caută în surse medicale aprobate"
   },
   "dashboardNutrition": {

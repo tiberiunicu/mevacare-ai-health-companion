@@ -377,6 +377,30 @@
       "saved": "Targets saved"
     }
   },
+  "action": {
+    "title": {
+      "ProposeWeight": "Weight entry prepared",
+      "ProposeNutritionTargets": "Target change prepared",
+      "ProposeProfileUpdate": "Profile change prepared",
+      "ProposeMealDeletion": "Meal deletion prepared"
+    },
+    "confirm": {
+      "ProposeWeight": "Save weight",
+      "ProposeNutritionTargets": "Change targets",
+      "ProposeProfileUpdate": "Update profile",
+      "ProposeMealDeletion": "Delete meal"
+    },
+    "done": {
+      "ProposeWeight": "Weight saved",
+      "ProposeNutritionTargets": "Targets changed",
+      "ProposeProfileUpdate": "Profile updated",
+      "ProposeMealDeletion": "Meal deleted"
+    },
+    "notApplied": "Nothing has changed yet. Check it and confirm.",
+    "dismissed": "Dismissed",
+    "confirmError": "Could not apply the change. Please try again.",
+    "consentError": "Health data processing is switched off, so nothing was changed. Allow it in Privacy & Consent."
+  },
   "dock": {
     "open": "Ask or log",
     "title": "Assistant",
@@ -389,6 +413,8 @@
     "edit": "Edit",
     "fixFirst": "Some foods need a choice or a weight before this can be saved.",
     "forDay": "For {{date}}",
+    "replaces": "Replaces your {{type}} of {{date}}: its foods are replaced by the ones above.",
+    "replacedGone": "The meal to correct no longer exists. Dismiss this card.",
     "review": "Review and confirm",
     "dismiss": "Dismiss",
     "dismissed": "Dismissed",
@@ -405,6 +431,15 @@
     "GetDailyNutritionSummary": "Looking up your day",
     "GetNutritionSummary": "Looking up your nutrition summary",
     "PrepareMeal": "Preparing your meal",
+    "ProposeWeight": "Preparing a weight entry",
+    "ProposeNutritionTargets": "Preparing a target change",
+    "ProposeProfileUpdate": "Preparing a profile change",
+    "ProposeMealDeletion": "Preparing to delete a meal",
+    "GetWearableStatus": "Checking your connected devices",
+    "SyncWearable": "Synchronizing your device",
+    "GetWeightHistory": "Looking up your weight",
+    "GetSleepAndRecovery": "Looking up your sleep and recovery",
+    "GetHealthInsights": "Looking at your trends",
     "SearchMedicalKnowledge": "Searching approved medical sources"
   },
   "dashboardNutrition": {

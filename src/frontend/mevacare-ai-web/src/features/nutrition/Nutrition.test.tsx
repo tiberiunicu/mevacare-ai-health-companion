@@ -72,7 +72,7 @@ describe('meal editor model', () => {
 
   it('treats unmatched items as invalid until resolved and needs a name and a value for custom items', () => {
     const proposal: MealProposal = {
-      mealType: 'Lunch', localDate: null, warnings: [], totals: totals(0),
+      mealType: 'Lunch', localDate: null, replacesMealId: null, warnings: [], totals: totals(0),
       items: [{
         clientItemId: 'i1', inputText: 'dragon steak', status: 'Unmatched', food: null, alternatives: [], quantityGrams: null, preparation: 'Unspecified',
         preparationAssumed: false, ambiguousMatch: false, nutrients: { calories: null, proteinG: null, carbohydratesG: null, fatG: null, fiberG: null }, note: 'Not found',
@@ -89,7 +89,7 @@ describe('meal editor model', () => {
 
   it('derives per-100-g values from a proposal so the preview follows weight edits', () => {
     const proposal: MealProposal = {
-      mealType: null, localDate: null, warnings: [], totals: totals(330),
+      mealType: null, localDate: null, replacesMealId: null, warnings: [], totals: totals(330),
       items: [{
         clientItemId: 'i1', inputText: '200 g chicken', status: 'Matched', alternatives: [], quantityGrams: 200, preparation: 'Cooked', preparationAssumed: true, ambiguousMatch: false,
         food: { foodId: 'f-chicken', description: chicken.description, preparation: 'Cooked', category: null, sourceLabel: 'x' },
@@ -105,7 +105,7 @@ describe('meal editor model', () => {
 
 describe('meal proposals: day, meal type and readiness', () => {
   const proposal = (overrides: Partial<MealProposal> = {}): MealProposal => ({
-    mealType: null, localDate: null, warnings: [], totals: totals(330),
+    mealType: null, localDate: null, replacesMealId: null, warnings: [], totals: totals(330),
     items: [{
       clientItemId: 'i1', inputText: '200 g chicken', status: 'Matched', alternatives: [], quantityGrams: 200, preparation: 'Cooked', preparationAssumed: false,
       ambiguousMatch: false, food: { foodId: 'f-chicken', description: chicken.description, preparation: 'Cooked', category: null, sourceLabel: 'x' },

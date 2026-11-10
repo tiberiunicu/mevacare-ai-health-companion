@@ -45,6 +45,16 @@ public sealed class MeasurementQueryService(AppDbContext db, IConsentService con
             measurement.Id, measurement.MeasuredAtUtc, measurement.LocalDate, measurement.UtcOffsetMinutes, measurement.Value, HealthMetrics.ManualProvider);
     }
 
+    public Task<WeightPointDto> RecordWeightAsync(Guid userId, decimal kilograms, DateTimeOffset measuredAt, CancellationToken ct)
+    {
+        if (kilograms is < 20m or > 500m)
+        {
+            throw new BadRequestException("invalid_weight", "The weight must be between 20 and 500 kg.");
+        }
+
+        return AddWeightAsync(userId, new AddWeightRequest(kilograms, measuredAt), ct);
+    }
+
     public async Task DeleteManualWeightAsync(Guid userId, Guid id, CancellationToken ct)
     {
         await consents.EnsureGrantedAsync(userId, ConsentType.HealthDataProcessing, ct);

@@ -39,6 +39,7 @@ public sealed class AssistantModule : IModule
         services.AddScoped<MealParser>();
         services.AddScoped<IMealProposalGate, ProposalGate>();
         services.AddScoped<ProposalService>();
+        services.AddScoped<ActionService>();
         services.AddScoped<IUserDataExporter, AssistantExporter>();
         services.AddValidatorsFromAssemblyContaining<AssistantModule>();
     }
@@ -73,6 +74,8 @@ public sealed class AssistantModule : IModule
             TypedResults.Ok(await service.GetMessagesAsync(user.UserId, id, ct)));
         conversations.MapGet("/{id:guid}/proposals", async (Guid id, ICurrentUser user, ProposalService service, CancellationToken ct) =>
             TypedResults.Ok(await service.ListAsync(user.UserId, id, ct)));
+        conversations.MapGet("/{id:guid}/actions", async (Guid id, ICurrentUser user, ActionService service, CancellationToken ct) =>
+            TypedResults.Ok(await service.ListAsync(user.UserId, id, ct)));
         conversations.MapDelete("/{id:guid}", async (Guid id, ICurrentUser user, ConversationService service, CancellationToken ct) =>
         {
             await service.DeleteAsync(user.UserId, id, ct);
@@ -83,6 +86,17 @@ public sealed class AssistantModule : IModule
     private static void MapProposals(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/assistant/proposals/{id:guid}/dismiss", async (Guid id, ICurrentUser user, ProposalService service, CancellationToken ct) =>
+            {
+                await service.DismissAsync(user.UserId, id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithTags("Chat");
+
+        // Weight, targets, profile and meal deletion: the user's own confirmation applies exactly what the card showed.
+        app.MapPost("/api/assistant/actions/{id:guid}/confirm", async (Guid id, ICurrentUser user, ActionService service, CancellationToken ct) =>
+                TypedResults.Ok(await service.ConfirmAsync(user.UserId, id, ct)))
+            .WithTags("Chat");
+        app.MapPost("/api/assistant/actions/{id:guid}/dismiss", async (Guid id, ICurrentUser user, ActionService service, CancellationToken ct) =>
             {
                 await service.DismissAsync(user.UserId, id, ct);
                 return TypedResults.NoContent();

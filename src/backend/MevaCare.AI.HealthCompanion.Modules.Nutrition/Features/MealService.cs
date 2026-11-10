@@ -80,6 +80,16 @@ public sealed class MealService(
     public async Task<MealDto> UpdateAsync(Guid userId, Guid mealId, SaveMealRequest request, CancellationToken ct)
     {
         await consents.EnsureGrantedAsync(userId, ConsentType.HealthDataProcessing, ct);
+        if (request.ProposalId is { } proposalId)
+        {
+            // A correction prepared by the assistant: checked and marked in the same transaction, so saving it twice changes nothing.
+            var gate = await proposals.BeginCommitAsync(userId, proposalId, ct);
+            if (gate.State == ProposalGateState.AlreadyCommitted)
+            {
+                return await LoadAsync(userId, mealId, ct);
+            }
+        }
+
         var meal = await db.Set<Meal>().Include(m => m.Items).SingleOrDefaultAsync(m => m.Id == mealId && m.UserId == userId, ct)
             ?? throw new NotFoundException("Meal not found.");
 
@@ -100,6 +110,11 @@ public sealed class MealService(
         }
 
         audit.Record("meal.updated", userId);
+        if (request.ProposalId is { } committedProposal)
+        {
+            proposals.MarkCommitted(committedProposal, meal.Id);
+        }
+
         await db.SaveChangesAsync(ct);
         return meal.ToDto();
     }

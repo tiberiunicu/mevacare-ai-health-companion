@@ -7,7 +7,8 @@ import ReactMarkdown from 'react-markdown'
 import { Link } from 'react-router-dom'
 import remarkGfm from 'remark-gfm'
 import { Alert, Button, Spinner } from '../../components/ui'
-import type { ProposalCard as ProposalCardData } from '../../lib/types'
+import type { ActionCard as ActionCardData, ProposalCard as ProposalCardData } from '../../lib/types'
+import { ActionCard } from './ActionCard'
 import { Citations } from './Citations'
 import { useChat } from './chatSession'
 import type { LocalMessage } from './chatSession'
@@ -57,7 +58,13 @@ function EmptyChat({ onPick, disabled }: { onPick: (text: string) => void; disab
   )
 }
 
-export function MessageBubble({ message, onProposalChange }: { message: LocalMessage; onProposalChange: (proposalId: string, patch: Partial<ProposalCardData>) => void }) {
+export function MessageBubble({
+  message, onProposalChange, onActionChange,
+}: {
+  message: LocalMessage
+  onProposalChange: (proposalId: string, patch: Partial<ProposalCardData>) => void
+  onActionChange: (actionId: string, patch: Partial<ActionCardData>) => void
+}) {
   const { t } = useTranslation()
   const isUser = message.role === 'User'
   return (
@@ -120,6 +127,9 @@ export function MessageBubble({ message, onProposalChange }: { message: LocalMes
         {message.proposals?.map((card) => (
           <ProposalCard key={card.id} card={card} onChange={(patch) => onProposalChange(card.id, patch)} />
         ))}
+        {message.actions?.map((card) => (
+          <ActionCard key={card.id} card={card} onChange={(patch) => onActionChange(card.id, patch)} />
+        ))}
         {message.state === 'failed' && (
           <p role="alert" className="text-xs text-danger">
             {message.errorCode === 'ai_unavailable' ? t('chat.providerDown') : t('chat.failed')}
@@ -149,7 +159,12 @@ export function ChatThread({ className }: { className?: string }) {
         <EmptyChat onPick={(text) => void chat.send(text)} disabled={!allowed || chat.streaming} />
       ) : (
         chat.messages.map((m) => (
-          <MessageBubble key={m.key} message={m} onProposalChange={(proposalId, patch) => chat.changeProposal(m.key, proposalId, patch)} />
+          <MessageBubble
+            key={m.key}
+            message={m}
+            onProposalChange={(proposalId, patch) => chat.changeProposal(m.key, proposalId, patch)}
+            onActionChange={(actionId, patch) => chat.changeAction(m.key, actionId, patch)}
+          />
         ))
       )}
       <div ref={bottomRef} />

@@ -209,7 +209,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
-- State after the chat-first meal logging ([ADR-0017](docs/decisions/0017-chat-first-actions.md)): 420 unit tests, 178 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 13 evaluation tests (+3 live-model tests skipped), 113 frontend tests; all pass. The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
+- State after the chat-first actions ([ADR-0017](docs/decisions/0017-chat-first-actions.md)): 420 unit tests, 199 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 13 evaluation tests (+3 live-model tests skipped), 124 frontend tests; all pass. The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.

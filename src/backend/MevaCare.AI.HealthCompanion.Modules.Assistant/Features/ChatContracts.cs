@@ -45,6 +45,9 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
     /// <summary>A meal prepared by the assistant that the user must confirm; nothing is saved yet.</summary>
     public sealed record Proposal(ProposalDto Card) : ChatStreamEvent(Names.Proposal);
 
+    /// <summary>A change other than a meal (weight, targets, profile, meal deletion) that the user must confirm; nothing is applied yet.</summary>
+    public sealed record Action(ActionProposalDto Card) : ChatStreamEvent(Names.Action);
+
     /// <summary>The approved sources used for this answer (cited ones first flagged). Sent before <c>done</c>.</summary>
     public sealed record Citations(IReadOnlyList<MevaCare.AI.HealthCompanion.Contracts.Knowledge.KnowledgeCitation> Items) : ChatStreamEvent(Names.Citations);
 
@@ -60,6 +63,7 @@ public abstract record ChatStreamEvent([property: System.Text.Json.Serialization
         public const string Citations = "citations";
         public const string Tool = "tool";
         public const string Proposal = "proposal";
+        public const string Action = "action";
         public const string Done = "done";
         public const string Error = "error";
     }

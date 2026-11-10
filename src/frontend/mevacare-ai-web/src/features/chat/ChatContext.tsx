@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ApiError } from '../../lib/api'
 import { toOffsetIso } from '../../lib/dates'
-import type { ProposalCard as ProposalCardData } from '../../lib/types'
-import { chatKeys, fetchMessages, fetchProposals } from './hooks'
+import type { ActionCard, ProposalCard as ProposalCardData } from '../../lib/types'
+import { chatKeys, fetchActions, fetchMessages, fetchProposals } from './hooks'
 import { ChatContext } from './chatSession'
 import type { ChatNotice, ChatSession, LocalMessage } from './chatSession'
 import { streamChat } from './stream'
@@ -40,7 +40,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setConversation(id)
       setLoadingHistory(true)
       try {
-        const [stored, proposals] = await Promise.all([fetchMessages(id), fetchProposals(id).catch(() => [] as ProposalCardData[])])
+        const [stored, proposals, actions] = await Promise.all([
+          fetchMessages(id),
+          fetchProposals(id).catch(() => [] as ProposalCardData[]),
+          fetchActions(id).catch(() => [] as ActionCard[]),
+        ])
         setMessages(
           stored.map((m) => ({
             key: m.id,
@@ -49,6 +53,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             isSafety: m.isSafetyResponse,
             state: m.status === 'Complete' ? 'done' : m.status === 'Failed' ? 'failed' : 'interrupted',
             proposals: m.role === 'Assistant' ? proposals.filter((p) => p.assistantMessageSequence === m.sequence) : undefined,
+            actions: m.role === 'Assistant' ? actions.filter((a) => a.assistantMessageSequence === m.sequence) : undefined,
             citations: m.citations,
           })),
         )
@@ -118,6 +123,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               case 'proposal':
                 patchLast((m) => ({ ...m, proposals: [...(m.proposals ?? []), event.card] }))
                 break
+              case 'action':
+                patchLast((m) => ({ ...m, actions: [...(m.actions ?? []), event.card] }))
+                break
               case 'delta':
                 patchLast((m) => ({ ...m, content: m.content + event.text, state: 'streaming' }))
                 break
@@ -162,6 +170,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const stop = useCallback(() => abortRef.current?.abort(), [])
 
+  const changeAction = useCallback(
+    (messageKey: string, actionId: string, patch: Partial<ActionCard>) =>
+      setMessages((current) =>
+        current.map((m) =>
+          m.key === messageKey ? { ...m, actions: m.actions?.map((a) => (a.id === actionId ? ({ ...a, ...patch } as ActionCard) : a)) } : m,
+        ),
+      ),
+    [],
+  )
+
   const changeProposal = useCallback(
     (messageKey: string, proposalId: string, patch: Partial<ProposalCardData>) =>
       setMessages((current) =>
@@ -175,9 +193,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ChatSession>(
     () => ({
       conversationId, messages, draft, setDraft, streaming, loadingHistory, notice, send, stop, openConversation, startNewChat,
-      changeProposal, dockOpen, setDockOpen, ask,
+      changeProposal, changeAction, dockOpen, setDockOpen, ask,
     }),
-    [conversationId, messages, draft, streaming, loadingHistory, notice, send, stop, openConversation, startNewChat, changeProposal, dockOpen, ask],
+    [
+      conversationId, messages, draft, streaming, loadingHistory, notice, send, stop, openConversation, startNewChat, changeProposal, changeAction,
+      dockOpen, ask,
+    ],
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>

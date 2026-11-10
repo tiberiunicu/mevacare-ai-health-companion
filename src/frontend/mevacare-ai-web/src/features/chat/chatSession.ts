@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Citation, ProposalCard as ProposalCardData } from '../../lib/types'
+import type { ActionCard, Citation, ProposalCard as ProposalCardData } from '../../lib/types'
 
 export interface LocalMessage {
   key: string
@@ -13,6 +13,8 @@ export interface LocalMessage {
   tools?: { name: string; status: string }[]
   /** Meals the assistant prepared in this answer, waiting for the user's confirmation. */
   proposals?: ProposalCardData[]
+  /** Other changes (weight, targets, profile, meal deletion) the assistant prepared in this answer. */
+  actions?: ActionCard[]
   /** Approved sources used for this answer. */
   citations?: Citation[]
 }
@@ -33,6 +35,7 @@ export interface ChatSession {
   openConversation: (id: string) => Promise<void>
   startNewChat: () => void
   changeProposal: (messageKey: string, proposalId: string, patch: Partial<ProposalCardData>) => void
+  changeAction: (messageKey: string, actionId: string, patch: Partial<ActionCard>) => void
   /** The floating chat panel that is available on every page except the full chat page. */
   dockOpen: boolean
   setDockOpen: (open: boolean) => void

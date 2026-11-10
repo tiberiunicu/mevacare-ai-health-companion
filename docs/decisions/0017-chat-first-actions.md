@@ -1,6 +1,6 @@
 # ADR-0017: Chat-first actions: one assistant panel on every page; the user still saves with one tap
 
-**Status:** Accepted for meals (built). Accepted as a plan for the other actions (not built, see *Next*).
+**Status:** Accepted and built: meals (one-tap Save), then weight, nutrition targets, profile basics, correcting and deleting meals, WHOOP status and sync.
 
 **Context.** The owner wants to do most things by talking: "I had two eggs and toast" instead of searching a list, and the same for
 other actions. The first assistant (ADR-0009) already turned a sentence into a meal proposal, but it lived on its own page, needed two
@@ -28,10 +28,14 @@ changes ADR-0009); a chat bar on every page with its own conversation (several h
 - Logging a meal is: type a sentence, check the card, tap Save. Two model calls as before; the proposal is still stored and audited.
 - Reloading a conversation restores cards and their state (Proposed / Saved / Dismissed); the panel and the page show the same messages.
 - A wrong day is possible when the model misreads a relative date; it is visible on the card before saving.
-- Cards exist only for meals so far. Edits and deletions of past meals, weight, targets, profile and WHOOP actions still need their pages.
+- The same card pattern now covers the other actions (see below), so the pages stay for browsing and for what chat deliberately does not do.
 
-**Next (planned, not built).** Other actions follow the same rule with a generalized proposal: write tools (`ProposeWeight`,
-`ProposeNutritionTargets`, `ProposeProfileUpdate`, meal change and deletion that identify a meal by id) validate the arguments, store a
-typed proposal and show a card; a new `POST /api/assistant/actions/{id}/confirm` applies exactly the stored payload through contract
-interfaces of the owning module, in one transaction, idempotently. The model never supplies the final payload after the user has seen it.
-WHOOP status and "synchronize now" are low-risk and idempotent and could run directly. Connecting an account (OAuth) stays on its page.
+**Other actions (built).** They follow the same rule with a generalized proposal:
+- **Write tools only prepare.** `ProposeWeight`, `ProposeNutritionTargets`, `ProposeProfileUpdate` and `ProposeMealDeletion` validate their arguments (the same limits as the pages: weight 20-500 kg and not in the future or older than five years; each target within its range; height 50-260 cm; a known activity level; a meal id that belongs to the user), store a typed payload in `ToolExecutions` and stream an `action` event with a card. Changing targets keeps every value the user did not mention (the card shows before and after); a change that changes nothing is rejected.
+- **The user applies exactly that payload.** `POST /api/assistant/actions/{id}/confirm` claims the proposal with one conditional UPDATE (Proposed to Committed), so a double click or parallel requests apply it once, then calls the owning module through a contract interface (`IMeasurementsAssistantApi.RecordWeightAsync`, `INutritionAssistantApi.SetTargetsAsync` / `DeleteMealAsync`, `IProfileAssistantApi.SetBasicsAsync`). If applying fails the claim is released, so the card can be confirmed again. Dismissed cards cannot be confirmed; applied cards cannot be dismissed; another user's card is a 404. Consents are re-checked by the module at that moment.
+- **Correcting a meal** reuses the meal card: `PrepareMeal(description, replacesMealId)` (the id comes from `GetDailyNutritionSummary`, which now lists meal ids) produces a proposal with `replacesMealId`; Save sends `PUT /api/nutrition/meals/{id}` with the proposal id, which `MealService.UpdateAsync` checks and marks committed in the same transaction (saving twice changes nothing). The card keeps the old meal's type, time and notes.
+- **Wearables:** `GetWearableStatus` is a read. `SyncWearable` runs a manual synchronization directly, with no card: it is idempotent, imports only the user's own data from an account they already connected, and the integrations module keeps the consent checks, the per-account lock and the minimum interval between manual runs. Connecting or disconnecting an account (OAuth) is never offered to the assistant.
+- **Deliberately not offered:** changing date of birth, sex or time zone, health goals, preferences, consents, deleting weight entries or the account. They remain on their pages.
+- The assistant never has a tool that applies a change, and no tool takes a user id (a test checks both).
+
+**Consequences of the other actions.** Each prepared change costs one model call plus the tool; a card is one tap. The model may misunderstand a value, which is why every card shows exactly what will change before anything does. The prompt tells the model to say a change was *prepared*, never *made*.

@@ -35,6 +35,13 @@ user message ──► AiChatService ──► FunctionInvokingChatClient(IChatC
 | `GetWeightHistory(from, to)` | Read | weight entries between two dates (≤ 366 days), latest value and change; the model sees at most the last 60 points and the source of each |
 | `GetSleepAndRecovery(from, to)` | Read | per day: time asleep, deep/REM, sleep performance, naps, recovery score, resting heart rate, HRV, with the provider named, plus per-provider averages (last 31 days shown); the result tells the model that scores are the provider's own and must not be compared across providers or turned into medical conclusions |
 | `GetHealthInsights(days, endDate)` | Read | trends, comparison with the previous period and combined insights calculated by the application (7–90 days); the result tells the model to explain only these numbers, as associations, with the listed caveats. See [insight-explanations.md](insight-explanations.md) |
+| `ProposeWeight(kilograms, date?)` | Write (proposal only) | validates 20-500 kg and the day; shows a card; **stores nothing** until the user confirms |
+| `ProposeNutritionTargets(calories?, proteinG?, ...)` | Write (proposal only) | merges with the current targets (unmentioned values stay); card shows before and after; a change that changes nothing is rejected |
+| `ProposeProfileUpdate(heightCm?, activityLevel?)` | Write (proposal only) | height 50-260 cm and a known activity level; nothing else in the profile can be changed |
+| `ProposeMealDeletion(mealId)` | Write (proposal only) | the meal must be the user's own; card names it and its foods |
+| `PrepareMeal(description, replacesMealId?)` | Write (proposal only) | with `replacesMealId` the card corrects that meal instead of adding one |
+| `GetWearableStatus()` | Read | connected accounts and their last synchronization |
+| `SyncWearable(provider)` | Write (runs at once) | manual synchronization of an account the user connected; refused when not connected or too soon after the last run |
 | `SearchMedicalKnowledge(query)` | Read | searches the approved reference documents (not the user's data); returns numbered passages labelled as data, to be cited with `[n]`; query ≤ 1,000 characters; registered only if `Knowledge:Enabled`. See [rag-embeddings-memory.md](rag-embeddings-memory.md) |
 
 ### The rules and where they are enforced
@@ -45,6 +52,7 @@ user message ──► AiChatService ──► FunctionInvokingChatClient(IChatC
 | Authorization and consent | each tool calls a service that re-checks `HealthDataProcessing` and filters by user id; a missing consent returns `{ error, code: "consent_required" }` to the model |
 | Read vs write | `ToolKind` is recorded; the only write-type tool just stores a proposal |
 | Explicit confirmation | a meal is created only by `POST /api/nutrition/meals` with `proposalId`, by the signed-in user; the system prompt also forbids saying it was saved |
+| Prepared changes (weight, targets, profile, meal deletion) | the tool stores a typed payload (`ToolExecutions`, state `Proposed`) and streams an `action` event; only `POST /api/assistant/actions/{id}/confirm` by the signed-in user applies **that stored payload**, once (conditional UPDATE claims it), through the owning module (ADR-0017). Tests cover double and parallel confirmation, dismissal, another user's card, missing consent and a failed apply releasing the claim |
 | Duplicate writes on retry | `Meals.SourceProposalId` has a unique index, and `ProposalGate` marks the proposal committed in the **same transaction**; confirming twice (or three parallel requests) returns the same meal (tested) |
 | Argument validation | dates must be `YYYY-MM-DD`; the meal description is limited to 1,000 characters; extraction is validated (≤ 15 items, quantity 0–10,000, unit present) and then re-validated by the nutrition module; failures become `Rejected` executions and a small error object for the model, never an exception or a stack trace |
 | Unknown tools | the model can only call registered functions; a request for `DeleteAllMeals` is not executed (tested) |

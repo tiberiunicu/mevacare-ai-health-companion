@@ -16,6 +16,7 @@ const card = (overrides: Partial<Card> = {}): Card => ({
   proposal: {
     mealType: 'Lunch',
     localDate: null,
+    replacesMealId: null,
     warnings: ['rice: raw or cooked was not stated; the cooked version was assumed.'],
     totals: { calories: 525, proteinG: 66.1, carbohydratesG: 42.3, fatG: 7.6, fiberG: 0.6, incompleteData: false, includesEstimates: false },
     items: [

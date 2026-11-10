@@ -1,5 +1,6 @@
 using FluentValidation;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
+using MevaCare.AI.HealthCompanion.Contracts.Assistant;
 using MevaCare.AI.HealthCompanion.Contracts.Nutrition;
 using MevaCare.AI.HealthCompanion.Contracts.Validation;
 using MevaCare.AI.HealthCompanion.Modules.HealthProfile.Features;
@@ -20,6 +21,7 @@ public sealed class HealthProfileModule : IModule
         services.AddScoped<HealthProfileService>();
         services.AddScoped<IUserDataExporter, HealthProfileExporter>();
         services.AddScoped<IHealthProfileReader, HealthProfileReader>();
+        services.AddScoped<IProfileAssistantApi, ProfileAssistantApi>();
         services.AddValidatorsFromAssemblyContaining<HealthProfileModule>();
     }
 

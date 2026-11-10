@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
+using MevaCare.AI.HealthCompanion.Contracts.Assistant;
 using MevaCare.AI.HealthCompanion.Contracts.Errors;
 using MevaCare.AI.HealthCompanion.Contracts.Insights;
 using MevaCare.AI.HealthCompanion.Contracts.Knowledge;
@@ -54,7 +55,9 @@ public sealed class AiChatService(
     ILogger<AiChatService> logger,
     IKnowledgeSearch? knowledge = null,
     IMeasurementsAssistantApi? measurements = null,
-    IInsightsAssistantApi? insights = null)
+    IInsightsAssistantApi? insights = null,
+    IProfileAssistantApi? profileApi = null,
+    IWearablesAssistantApi? wearables = null)
 {
     private readonly AiOptions _options = options.Value;
 
@@ -147,7 +150,7 @@ public sealed class AiChatService(
         if (_options.ToolsEnabled)
         {
             // The tools are bound to THIS user and conversation; the model never supplies a user id.
-            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge, measurements, insights, turn.UserNow);
+            tools = new TurnTools(turn.UserId, turn.Conversation.Id, turn.NextSequence, nutrition, profiles, mealParser, db, clock, logger, knowledge, measurements, insights, turn.UserNow, profileApi, wearables);
             chatOptions.Tools = [.. tools.Functions];
             client = new FunctionInvokingChatClient(chat)
             {
@@ -236,7 +239,9 @@ public sealed class AiChatService(
             if (failureCode is null && answer.Length == 0 && tools is { ProposalCount: > 0 })
             {
                 // The model produced only a tool call. The card is on screen, so give a short deterministic sentence.
-                const string fallback = "I prepared this meal from what you wrote. Please check the items and confirm it below.";
+                var fallback = tools.ActionCount == tools.ProposalCount
+                    ? "I prepared this change for you. Please check it and confirm it with the button below."
+                    : "I prepared this meal from what you wrote. Please check the items and confirm it below.";
                 answer.Append(fallback);
                 yield return new ChatStreamEvent.Delta(fallback);
             }

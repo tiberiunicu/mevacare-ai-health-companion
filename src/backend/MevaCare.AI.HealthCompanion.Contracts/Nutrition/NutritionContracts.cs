@@ -39,7 +39,7 @@ public sealed record NutritionRangeSummaryDto(
 public sealed record ParsedFoodItem(string FoodName, decimal Quantity, string Unit, string Preparation, string? OriginalText, string? Brand = null);
 
 /// <param name="LocalDate">The day the user said the meal was eaten ("yesterday"), in their calendar; null means today.</param>
-public sealed record ParsedMeal(string? MealType, IReadOnlyList<ParsedFoodItem> Items, DateOnly? LocalDate = null);
+public sealed record ParsedMeal(string? MealType, IReadOnlyList<ParsedFoodItem> Items, DateOnly? LocalDate = null, Guid? ReplacesMealId = null);
 
 public sealed record FoodCandidateDto(Guid FoodId, string Description, string Preparation, string? Category, string SourceLabel);
 
@@ -58,8 +58,9 @@ public sealed record ProposedItemDto(
     string? Note);
 
 /// <param name="LocalDate">The day the meal was eaten when the user named one; null means "now".</param>
+/// <param name="ReplacesMealId">Set when the proposal corrects an existing meal: saving it replaces that meal's items instead of adding a meal.</param>
 public sealed record MealProposalDto(
-    string? MealType, IReadOnlyList<ProposedItemDto> Items, NutrientTotals Totals, IReadOnlyList<string> Warnings, DateOnly? LocalDate = null);
+    string? MealType, IReadOnlyList<ProposedItemDto> Items, NutrientTotals Totals, IReadOnlyList<string> Warnings, DateOnly? LocalDate = null, Guid? ReplacesMealId = null);
 
 /// <summary>Read/prepare operations the AI assistant may use. Every call is scoped to the given user id.</summary>
 public interface INutritionAssistantApi
@@ -70,6 +71,17 @@ public interface INutritionAssistantApi
 
     /// <summary>Matches parsed foods against the food database and calculates nutrients. Writes nothing.</summary>
     Task<MealProposalDto> PrepareMealAsync(Guid userId, ParsedMeal meal, CancellationToken ct);
+
+    Task<NutritionTargetDto> GetTargetsAsync(Guid userId, CancellationToken ct);
+
+    /// <summary>Replaces the user's targets. Called only after the user confirmed the change.</summary>
+    Task<NutritionTargetDto> SetTargetsAsync(Guid userId, NutritionTargetDto targets, CancellationToken ct);
+
+    /// <summary>The user's own meal, or null when it does not exist or belongs to someone else.</summary>
+    Task<MealDto?> FindMealAsync(Guid userId, Guid mealId, CancellationToken ct);
+
+    /// <summary>Deletes the user's meal. Called only after the user confirmed it.</summary>
+    Task DeleteMealAsync(Guid userId, Guid mealId, CancellationToken ct);
 }
 
 public enum ProposalGateState

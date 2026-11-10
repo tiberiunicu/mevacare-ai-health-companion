@@ -145,4 +145,7 @@ public interface IMeasurementsAssistantApi
     Task<WeightHistoryDto> GetWeightHistoryAsync(Guid userId, DateOnly from, DateOnly to, CancellationToken ct);
 
     Task<SleepRecoveryRangeDto> GetSleepRecoveryAsync(Guid userId, DateOnly from, DateOnly to, CancellationToken ct);
+
+    /// <summary>Stores a manual weight entry. Called only after the user confirmed it; range checks (20 to 500 kg) apply.</summary>
+    Task<WeightPointDto> RecordWeightAsync(Guid userId, decimal kilograms, DateTimeOffset measuredAt, CancellationToken ct);
 }

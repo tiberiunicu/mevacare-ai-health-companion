@@ -1,4 +1,5 @@
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
+using MevaCare.AI.HealthCompanion.Contracts.Assistant;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Integrations.Domain;
 using MevaCare.AI.HealthCompanion.Modules.Integrations.Features;
@@ -42,6 +43,7 @@ public sealed class IntegrationsModule : IModule
         services.AddTransient<IWearableProvider>(sp => sp.GetRequiredService<WhoopProvider>());
         services.AddScoped<ConnectionService>();
         services.AddScoped<SyncService>();
+        services.AddScoped<IWearablesAssistantApi, WearablesAssistantApi>();
         services.AddHostedService<SyncBackgroundService>();
         services.AddScoped<IUserDataExporter, IntegrationsExporter>();
     }

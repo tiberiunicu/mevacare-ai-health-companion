@@ -22,7 +22,7 @@ Chat, tool calling, streaming, meal extraction and insight explanations were ver
 
 ### 1b. Chat-first actions ([ADR-0017](decisions/0017-chat-first-actions.md))
 
-Meals can be logged by talking, from any page, and saved with one tap. **Not built yet:** the same for editing or deleting a past meal, weight, nutrition targets, profile and goals, and WHOOP status/sync. The plan (typed action proposals confirmed by the user, applied server-side) is in the ADR. *Effort M–L; needs a decision on which actions should skip confirmation.* Also open: tool-selection evaluation for the new tools (item 1.4) and the Romanian wording of the new texts (item 1.7).
+Built and checked live with the real model: meals (type a sentence, check the card, tap Save; a named day is honoured), correcting and deleting a meal, weight, nutrition targets, height and activity level, WHOOP status and "synchronize now", all from a panel available on every page. **Not offered through chat, by design:** date of birth, sex, time zone, goals, preferences, consents, deleting weight entries, connecting an account. **Still open:** the tool-selection evaluation (item 1.4) now has eleven write/read tools to cover; the Romanian wording of the new cards and prompts has not been read by a native speaker (item 1.7); `SyncWearable` has only been exercised against "not connected" and the scripted provider, not a live WHOOP account from the chat; a "weight goal" or a food favourite is not reachable by chat yet. *Effort S-M.*
 
 ## 2. Make WHOOP real (written from public documentation, never run against WHOOP)
 

@@ -769,8 +769,10 @@ public class BrandedMealProposalTests
         db.AddRange(generic, product);
         await db.SaveChangesAsync();
         var consent = new StubConsentService(true);
-        var targets = new NutritionTargetService(db, consent, new MevaCare.AI.HealthCompanion.Infrastructure.Auditing.AuditLog(db, clock));
-        return (new NutritionAssistantApi(new LocalFoodCatalog(db), new NutritionSummaryService(db, consent, targets), consent), db, generic, product);
+        var audit = new MevaCare.AI.HealthCompanion.Infrastructure.Auditing.AuditLog(db, clock);
+        var targets = new NutritionTargetService(db, consent, audit);
+        var meals = new MealService(db, consent, new StubGate(), audit, clock);
+        return (new NutritionAssistantApi(new LocalFoodCatalog(db), new NutritionSummaryService(db, consent, targets), consent, targets, meals), db, generic, product);
     }
 
     private static ParsedMeal Meal(string? brand) => new(null, [new ParsedFoodItem("cottage cheese", 175, "g", "unspecified", "175 g Hochland cottage cheese", brand)]);

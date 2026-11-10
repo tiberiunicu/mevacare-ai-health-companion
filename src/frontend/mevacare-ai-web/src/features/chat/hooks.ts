@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
-import type { Citation, KnowledgeSource, ProposalCard } from '../../lib/types'
+import type { ActionCard, Citation, KnowledgeSource, ProposalCard } from '../../lib/types'
 import { useConsents } from '../profile/hooks'
 
 export interface ConversationSummary {
@@ -43,6 +43,19 @@ export function useDeleteConversation() {
 
 export function fetchProposals(conversationId: string) {
   return api<ProposalCard[]>(`/api/conversations/${conversationId}/proposals`)
+}
+
+export function fetchActions(conversationId: string) {
+  return api<ActionCard[]>(`/api/conversations/${conversationId}/actions`)
+}
+
+/** Applies a prepared change. The server applies exactly what the card showed and does so once, however often this is called. */
+export function confirmAction(actionId: string) {
+  return api<ActionCard>(`/api/assistant/actions/${actionId}/confirm`, { method: 'POST' })
+}
+
+export function dismissAction(actionId: string) {
+  return api<void>(`/api/assistant/actions/${actionId}/dismiss`, { method: 'POST' })
 }
 
 export function dismissProposal(proposalId: string) {

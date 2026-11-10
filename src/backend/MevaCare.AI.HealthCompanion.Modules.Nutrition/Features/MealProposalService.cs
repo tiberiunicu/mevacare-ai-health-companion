@@ -13,7 +13,8 @@ namespace MevaCare.AI.HealthCompanion.Modules.Nutrition.Features;
 /// with deterministic code. It writes nothing: the result is a proposal the user must confirm.
 /// </summary>
 public sealed class NutritionAssistantApi(
-    IFoodCatalog catalog, NutritionSummaryService summaries, IConsentService consents) : INutritionAssistantApi
+    IFoodCatalog catalog, NutritionSummaryService summaries, IConsentService consents, NutritionTargetService targets, MealService meals)
+    : INutritionAssistantApi
 {
     public const int MaxItems = 15;
 
@@ -36,6 +37,11 @@ public sealed class NutritionAssistantApi(
             throw new BadRequestException("too_many_items", $"At most {MaxItems} foods can be prepared at once.");
         }
 
+        if (meal.ReplacesMealId is { } replaced && await FindMealAsync(userId, replaced, ct) is null)
+        {
+            throw new BadRequestException("meal_not_found", "The meal to correct was not found.");
+        }
+
         var items = new List<ProposedItemDto>();
         var warnings = new List<string>();
         for (var index = 0; index < meal.Items.Count; index++)
@@ -50,8 +56,26 @@ public sealed class NutritionAssistantApi(
             warnings.Add("Some nutrient values are not reported for these foods, so the totals may be incomplete.");
         }
 
-        return new MealProposalDto(NormalizeMealType(meal.MealType), items, totals, warnings, meal.LocalDate);
+        return new MealProposalDto(NormalizeMealType(meal.MealType), items, totals, warnings, meal.LocalDate, meal.ReplacesMealId);
     }
+
+    public Task<NutritionTargetDto> GetTargetsAsync(Guid userId, CancellationToken ct) => targets.GetAsync(userId, ct);
+
+    public Task<NutritionTargetDto> SetTargetsAsync(Guid userId, NutritionTargetDto values, CancellationToken ct) => targets.SetAsync(userId, values, ct);
+
+    public async Task<MealDto?> FindMealAsync(Guid userId, Guid mealId, CancellationToken ct)
+    {
+        try
+        {
+            return await meals.LoadAsync(userId, mealId, ct);
+        }
+        catch (NotFoundException)
+        {
+            return null;
+        }
+    }
+
+    public Task DeleteMealAsync(Guid userId, Guid mealId, CancellationToken ct) => meals.DeleteAsync(userId, mealId, ct);
 
     private async Task<ProposedItemDto> BuildItemAsync(string clientId, ParsedFoodItem parsed, List<string> warnings, CancellationToken ct)
     {

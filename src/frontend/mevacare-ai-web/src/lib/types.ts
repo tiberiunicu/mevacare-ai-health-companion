@@ -217,6 +217,8 @@ export interface MealProposal {
   warnings: string[]
   /** The day the user named for the meal (YYYY-MM-DD); null means now. */
   localDate: string | null
+  /** Set when the card corrects a meal that is already in the journal: saving replaces that meal's items. */
+  replacesMealId: string | null
 }
 
 export interface ProposalCard {
@@ -226,6 +228,26 @@ export interface ProposalCard {
   mealId: string | null
   proposal: MealProposal
 }
+
+/** A change other than a meal that the assistant prepared; applied only when the user confirms (weight, targets, profile, meal deletion). */
+interface ActionCardBase {
+  id: string
+  assistantMessageSequence: number
+  state: 'Proposed' | 'Committed' | 'Dismissed'
+}
+
+export interface ProfileBasics {
+  heightCm: number | null
+  activityLevel: string
+}
+
+export type ActionCard = ActionCardBase &
+  (
+    | { kind: 'ProposeWeight'; payload: { kilograms: number; measuredAt: string; localDate: string } }
+    | { kind: 'ProposeNutritionTargets'; payload: { before: NutritionTargets; after: NutritionTargets } }
+    | { kind: 'ProposeProfileUpdate'; payload: { before: ProfileBasics; after: ProfileBasics } }
+    | { kind: 'ProposeMealDeletion'; payload: { mealId: string; mealType: MealType; localDate: string; calories: number; items: string[] } }
+  )
 
 // ---- Medical knowledge ----
 

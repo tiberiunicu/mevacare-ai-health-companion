@@ -24,6 +24,7 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 | `GET/PUT /api/nutrition/targets` | the user's own daily targets (every value optional) |
 | `POST /api/nutrition/meals` · `GET/PUT/DELETE /api/nutrition/meals/{id}` | meals; items carry a food id and grams (server calculates nutrients) or a custom estimate; `proposalId` confirms an assistant proposal (201 created, 200 if it was already created) |
 | `GET /api/conversations/{id}/proposals` · `POST /api/assistant/proposals/{id}/dismiss` | meals prepared by the assistant (state Proposed, Committed or Dismissed) |
+| `GET /api/conversations/{id}/actions` · `POST /api/assistant/actions/{id}/confirm` · `POST /api/assistant/actions/{id}/dismiss` | changes prepared by the assistant (weight, nutrition targets, profile basics, meal deletion): `confirm` applies the stored payload once and returns the card with state `Committed`; `409 proposal_not_open` when dismissed; `404` when not the caller's |
 | `POST /api/chat/stream` | send a message, stream the answer (needs `AiProcessing`; per-user rate limit) |
 | `GET /api/conversations` · `GET /api/conversations/{id}/messages` · `DELETE /api/conversations/{id}` | chat history |
 | `POST /api/measurements/weight` `{kilograms, measuredAt?}` · `GET /api/measurements/weight?from=&to=` · `DELETE /api/measurements/weight/{id}` | manual weight entries (kg, 20–500) and weight history with latest value and change; imported values cannot be deleted here (needs `HealthDataProcessing`; ranges ≤ 366 days) |
@@ -49,8 +50,9 @@ Response: `200 text/event-stream`. Events (each `event: <name>` + `data: <json>`
 |---|---|---|
 | `conversation` | `{conversationId, title}` | always first |
 | `safety` | `{category}` | the following text is a fixed safety answer, not model output |
-| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge`, `GetWeightHistory`, `GetSleepAndRecovery`, `GetHealthInsights` |
+| `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge`, `GetWeightHistory`, `GetSleepAndRecovery`, `GetHealthInsights`, `ProposeWeight`, `ProposeNutritionTargets`, `ProposeProfileUpdate`, `ProposeMealDeletion`, `GetWearableStatus`, `SyncWearable` |
 | `proposal` | `{card}` | a meal prepared by the assistant (`card.id`, `card.proposal` with matched items, grams, nutrients, totals, warnings and `localDate`, the day the user named or null for now); **nothing is saved** until `POST /api/nutrition/meals` with that `proposalId` |
+| `action` | `{card}` | a change other than a meal that the assistant prepared (`card.id`, `card.kind`, `card.state`, `card.payload` with the values, or before and after); **nothing is applied** until `POST /api/assistant/actions/{id}/confirm` |
 | `delta` | `{text}` | zero or more |
 | `citations` | `{items:[{number, sourceId, title, publisher, url, license, retrievedOn, excerpt, cited}]}` | only when the model searched the approved sources and found something; sent after the last `delta`, before `done`; `cited=false` means consulted but not referenced by the answer. The same list is returned as `citations` on each message of `GET /api/conversations/{id}/messages` |
 | `done` | `{messageId}` | terminal, success |
