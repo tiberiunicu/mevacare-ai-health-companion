@@ -15,6 +15,7 @@ const card = (overrides: Partial<Card> = {}): Card => ({
   mealId: null,
   proposal: {
     mealType: 'Lunch',
+    localDate: null,
     warnings: ['rice: raw or cooked was not stated; the cooked version was assumed.'],
     totals: { calories: 525, proteinG: 66.1, carbohydratesG: 42.3, fatG: 7.6, fiberG: 0.6, incompleteData: false, includesEstimates: false },
     items: [
@@ -48,6 +49,12 @@ const card = (overrides: Partial<Card> = {}): Card => ({
   },
   ...overrides,
 })
+
+/** A card whose every line has a food and a weight, so it can be saved in one tap. */
+const readyCard = (proposal: Partial<Card['proposal']> = {}): Card => {
+  const base = card()
+  return { ...base, proposal: { ...base.proposal, warnings: [], items: [base.proposal.items[0]], ...proposal } }
+}
 
 function sse(...events: [string, object][]) {
   const text = events.map(([name, data]) => `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`).join('')
@@ -152,6 +159,87 @@ describe('meal proposals in the chat', () => {
     expect(body.items[0]).toMatchObject({ foodId: 'f-chicken', quantityGrams: 100, estimated: null })
     expect(body.items[1]).toMatchObject({ foodId: null, quantityGrams: 150 })
     expect(await screen.findByText('Saved to your journal')).toBeInTheDocument()
+  })
+
+  it('saves a ready proposal in one tap with the proposal id, and a card with an unmatched item cannot be saved that way', async () => {
+    const posts: { body: Record<string, unknown> }[] = []
+    const save = (url: string, init?: RequestInit) => {
+      if (url === '/api/nutrition/meals' && init?.method === 'POST') {
+        posts.push({ body: JSON.parse(init.body as string) })
+        return json({ id: 'meal-1' }, 201)
+      }
+      return undefined
+    }
+
+    setup(save)
+    renderWithProviders(<ChatPage />)
+    await sendMeal()
+    expect(await screen.findByText('Meal prepared by the assistant')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
+    expect(screen.getByText(/need a choice or a weight/)).toBeInTheDocument()
+    expect(posts).toHaveLength(0)
+  })
+
+  it('saves what the card shows when the user taps Save', async () => {
+    const posts: { body: Record<string, unknown> }[] = []
+    setup(
+      (url, init) => {
+        if (url === '/api/nutrition/meals' && init?.method === 'POST') {
+          posts.push({ body: JSON.parse(init.body as string) })
+          return json({ id: 'meal-1' }, 201)
+        }
+        return undefined
+      },
+      readyCard(),
+    )
+
+    renderWithProviders(<ChatPage />)
+    await sendMeal()
+    await userEvent.click(await screen.findByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(posts).toHaveLength(1))
+    expect(posts[0].body).toMatchObject({ type: 'Lunch', proposalId: 'p1', notes: null })
+    expect(posts[0].body.items).toEqual([{ foodId: 'f-chicken', name: 'Chicken, roasted', quantityGrams: 200, preparation: 'Cooked', estimated: null }])
+    expect(await screen.findByText('Saved to your journal')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
+  })
+
+  it('logs the meal on the day the user named, at the usual hour of that meal', async () => {
+    const posts: { body: { eatenAt: string; type: string } }[] = []
+    setup(
+      (url, init) => {
+        if (url === '/api/nutrition/meals' && init?.method === 'POST') {
+          posts.push({ body: JSON.parse(init.body as string) })
+          return json({ id: 'meal-1' }, 201)
+        }
+        return undefined
+      },
+      readyCard({ mealType: 'Dinner', localDate: '2020-01-05' }),
+    )
+
+    renderWithProviders(<ChatPage />)
+    await sendMeal()
+    expect(await screen.findByText('For 2020-01-05')).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(posts).toHaveLength(1))
+    expect(posts[0].body.type).toBe('Dinner')
+    expect(posts[0].body.eatenAt).toMatch(/^2020-01-05T19:00:00[+-]\d\d:\d\d$/)
+  })
+
+  it('keeps the card open and says so when saving fails', async () => {
+    setup(
+      (url, init) =>
+        url === '/api/nutrition/meals' && init?.method === 'POST' ? json({ code: 'boom', message: 'x' }, 500) : undefined,
+      readyCard(),
+    )
+
+    renderWithProviders(<ChatPage />)
+    await sendMeal()
+    await userEvent.click(await screen.findByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save the meal')
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
   })
 
   it('can dismiss a proposal', async () => {

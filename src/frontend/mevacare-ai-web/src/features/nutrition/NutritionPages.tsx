@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Plus, SendHorizontal, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,8 @@ import { SubNav } from '../../components/AppShell'
 import { Alert, Button, Card, Field, PageHeader, Spinner, TextInput } from '../../components/ui'
 import { addDays, localDateString } from '../../lib/dates'
 import type { DailySummary, Meal, NutrientTotals, NutrientValues } from '../../lib/types'
+import { useChat } from '../chat/chatSession'
+import { useAiAllowed } from '../chat/hooks'
 import { isConsentRequired } from '../profile/hooks'
 import { useDailySummary, useDeleteMeal, useRangeSummary, useSetTargets, useTargets } from './hooks'
 import { MealEditor } from './MealEditor'
@@ -74,6 +76,47 @@ function Flags({ totals }: { totals: NutrientTotals }) {
   )
 }
 
+/**
+ * "What did you eat?": the sentence goes to the assistant, which prepares a card to check and save, in the side panel.
+ * It is the quickest way to log food; the list-based editor stays for corrections and for people who prefer it.
+ */
+function JournalChatBar() {
+  const { t } = useTranslation()
+  const chat = useChat()
+  const { loaded, allowed } = useAiAllowed()
+  const [text, setText] = useState('')
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const sentence = text.trim()
+    if (!sentence || chat.streaming) return
+    setText('')
+    void chat.ask(sentence)
+  }
+
+  return (
+    <form onSubmit={submit} className="mb-4 flex items-end gap-2">
+      <div className="flex-1">
+        <label htmlFor="journal-chat" className="sr-only">
+          {t('nutrition.journal.chatLabel')}
+        </label>
+        <TextInput
+          id="journal-chat"
+          value={text}
+          maxLength={1000}
+          disabled={loaded && !allowed}
+          placeholder={loaded && !allowed ? t('nutrition.journal.chatConsent') : t('nutrition.journal.chatPlaceholder')}
+          onChange={(e) => setText(e.target.value)}
+        />
+      </div>
+      <Button type="submit" disabled={!allowed || text.trim() === '' || chat.streaming}>
+        <SendHorizontal className="size-4" aria-hidden />
+        {t('nutrition.journal.chatSend')}
+      </Button>
+    </form>
+  )
+}
+
 export function FoodJournalPage() {
   const { t } = useTranslation()
   const [date, setDate] = useState(localDateString())
@@ -90,6 +133,7 @@ export function FoodJournalPage() {
         </Button>
       </PageHeader>
       <SubNav items={NUTRITION_NAV} />
+      <JournalChatBar />
       <DayNavigator
         date={date}
         onChange={(next) => {

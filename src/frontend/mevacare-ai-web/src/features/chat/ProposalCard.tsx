@@ -3,9 +3,12 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui'
+import { ApiError } from '../../lib/api'
+import { toOffsetIso } from '../../lib/dates'
 import type { ProposalCard as ProposalCardData } from '../../lib/types'
+import { useSaveMeal } from '../nutrition/hooks'
 import { MealEditor } from '../nutrition/MealEditor'
-import { itemsFromProposal } from '../nutrition/mealEditorModel'
+import { buildRequest, isProposalReady, itemsFromProposal, proposalEatenAt, proposalMealType } from '../nutrition/mealEditorModel'
 import { dismissProposal } from './hooks'
 
 const fmt = (value: number | null | undefined, digits = 0) => (value === null || value === undefined ? '–' : value.toFixed(digits))
@@ -18,7 +21,24 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
   const { t } = useTranslation()
   const [reviewing, setReviewing] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const save = useSaveMeal()
   const { proposal } = card
+  const eatenAt = proposalEatenAt(proposal)
+  const ready = isProposalReady(proposal)
+
+  /** One tap: saves exactly what the card shows (the server recalculates and checks it again). */
+  const saveNow = () => {
+    setSaveError(null)
+    const request = buildRequest(proposalMealType(proposal, eatenAt), toOffsetIso(eatenAt), '', itemsFromProposal(proposal), card.id)
+    save.mutate(
+      { request },
+      {
+        onSuccess: (meal) => onChange({ state: 'Committed', mealId: meal.id }),
+        onError: (error) => setSaveError(error instanceof ApiError && error.code === 'proposal_not_open' ? error.message : t('proposal.confirmError')),
+      },
+    )
+  }
 
   const dismiss = async () => {
     setFailed(false)
@@ -89,12 +109,26 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
       {card.state === 'Proposed' && !reviewing && (
         <div className="mt-3 space-y-2">
           <p className="text-xs text-muted">{t('proposal.notSaved')}</p>
+          {!ready && <p className="text-xs text-warning">{t('proposal.fixFirst')}</p>}
+          {proposal.localDate && <p className="text-xs text-muted">{t('proposal.forDay', { date: proposal.localDate })}</p>}
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setReviewing(true)}>{t('proposal.review')}</Button>
+            {ready && (
+              <Button onClick={saveNow} disabled={save.isPending}>
+                {t('proposal.save')}
+              </Button>
+            )}
+            <Button variant={ready ? 'secondary' : 'primary'} onClick={() => setReviewing(true)}>
+              {t(ready ? 'proposal.edit' : 'proposal.review')}
+            </Button>
             <Button variant="ghost" onClick={() => void dismiss()}>
               {t('proposal.dismiss')}
             </Button>
           </div>
+          {saveError && (
+            <p role="alert" className="text-xs text-danger">
+              {saveError}
+            </p>
+          )}
           {failed && (
             <p role="alert" className="text-xs text-danger">
               {t('common.genericError')}
@@ -108,7 +142,8 @@ export function ProposalCard({ card, onChange }: { card: ProposalCardData; onCha
           <MealEditor
             proposalId={card.id}
             initialItems={itemsFromProposal(proposal)}
-            initialType={proposal.mealType ?? undefined}
+            initialType={proposalMealType(proposal, eatenAt)}
+            initialTime={eatenAt}
             submitLabelKey="nutrition.editor.confirm"
             onSaved={(meal) => {
               setReviewing(false)

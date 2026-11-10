@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import type { Citation, KnowledgeSource, ProposalCard } from '../../lib/types'
+import { useConsents } from '../profile/hooks'
 
 export interface ConversationSummary {
   id: string
@@ -50,4 +51,11 @@ export function dismissProposal(proposalId: string) {
 
 export function useKnowledgeSources() {
   return useQuery({ queryKey: ['knowledge', 'sources'] as const, queryFn: () => api<KnowledgeSource[]>('/api/knowledge/sources') })
+}
+
+/** Whether the user has allowed AI processing (the chat cannot be used without it). */
+export function useAiAllowed() {
+  const consents = useConsents()
+  const list = Array.isArray(consents.data) ? consents.data : []
+  return { loaded: consents.isSuccess, allowed: list.find((c) => c.type === 'AiProcessing')?.granted ?? false }
 }

@@ -50,7 +50,7 @@ Response: `200 text/event-stream`. Events (each `event: <name>` + `data: <json>`
 | `conversation` | `{conversationId, title}` | always first |
 | `safety` | `{category}` | the following text is a fixed safety answer, not model output |
 | `tool` | `{name, status}` | status `running`, `done` or `failed`; names: `GetHealthProfile`, `GetDailyNutritionSummary`, `GetNutritionSummary`, `PrepareMeal`, `SearchMedicalKnowledge`, `GetWeightHistory`, `GetSleepAndRecovery`, `GetHealthInsights` |
-| `proposal` | `{card}` | a meal prepared by the assistant (`card.id`, `card.proposal` with matched items, grams, nutrients, totals, warnings); **nothing is saved** until `POST /api/nutrition/meals` with that `proposalId` |
+| `proposal` | `{card}` | a meal prepared by the assistant (`card.id`, `card.proposal` with matched items, grams, nutrients, totals, warnings and `localDate`, the day the user named or null for now); **nothing is saved** until `POST /api/nutrition/meals` with that `proposalId` |
 | `delta` | `{text}` | zero or more |
 | `citations` | `{items:[{number, sourceId, title, publisher, url, license, retrievedOn, excerpt, cited}]}` | only when the model searched the approved sources and found something; sent after the last `delta`, before `done`; `cited=false` means consulted but not referenced by the answer. The same list is returned as `citations` on each message of `GET /api/conversations/{id}/messages` |
 | `done` | `{messageId}` | terminal, success |

@@ -146,6 +146,28 @@ public class ChatToolTests : IDisposable
     }
 
     [Fact]
+    public async Task A_named_past_day_reaches_the_proposal_and_an_implausible_day_is_ignored()
+    {
+        var user = await TestUser.RegisterAsync(_factory, aiConsent: true);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        async Task<JsonElement> ProposalFor(string eatenOn)
+        {
+            _factory.Chat.EnqueueToolCall("PrepareMeal", new { description = "I ate rice yesterday" });
+            _factory.Chat.EnqueueText($$"""{"mealType":"dinner","eatenOn":"{{eatenOn}}","items":[{"foodName":"rice","quantity":150,"unit":"g","preparation":"cooked","originalText":"150 g rice"}]}""");
+            _factory.Chat.EnqueueText("Prepared.");
+            var (_, events) = await Send(user, "I ate rice yesterday");
+            return events.Single(e => e.Name == "proposal").Data.GetProperty("card").GetProperty("proposal");
+        }
+
+        var yesterday = today.AddDays(-1).ToString("yyyy-MM-dd");
+        Assert.Equal(yesterday, (await ProposalFor(yesterday)).GetProperty("localDate").GetString());
+        Assert.Equal(JsonValueKind.Null, (await ProposalFor(today.AddDays(3).ToString("yyyy-MM-dd"))).GetProperty("localDate").ValueKind);
+        Assert.Equal(JsonValueKind.Null, (await ProposalFor("1999-01-01")).GetProperty("localDate").ValueKind);
+        Assert.Equal(JsonValueKind.Null, (await ProposalFor("")).GetProperty("localDate").ValueKind);
+    }
+
+    [Fact]
     public async Task Confirming_twice_returns_the_same_meal_and_never_duplicates_it()
     {
         var user = await TestUser.RegisterAsync(_factory, aiConsent: true);

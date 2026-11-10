@@ -242,7 +242,8 @@
       "hrv": "Explică-mi ce înseamnă HRV.",
       "protein": "Câtă proteină are nevoie în general un adult sănătos?",
       "sleep": "Dă-mi sfaturi practice pentru un somn mai bun.",
-      "plateau": "De ce ar putea încetini scăderea în greutate?"
+      "plateau": "De ce ar putea încetini scăderea în greutate?",
+      "logMeal": "Am mâncat la prânz 200 g piept de pui cu 150 g orez fiert."
     },
     "tools": "Instrumente folosite",
     "sources": "Surse",
@@ -291,7 +292,11 @@
       "dayTotal": "Total zilnic",
       "consentTitle": "Prelucrarea datelor de sănătate este oprită",
       "consentBody": "Pentru a ține un jurnal alimentar, permite prelucrarea datelor de sănătate.",
-      "consentAction": "Deschide Confidențialitate și consimțăminte"
+      "consentAction": "Deschide Confidențialitate și consimțăminte",
+      "chatLabel": "Spune-i asistentului ce ai mâncat",
+      "chatPlaceholder": "Ce ai mâncat? de ex. două ouă și pâine prăjită la micul dejun",
+      "chatSend": "Adaugă",
+      "chatConsent": "Ca să adaugi mâncare prin chat, permite procesarea AI."
     },
     "editor": {
       "newMeal": "Masă nouă",
@@ -375,9 +380,18 @@
       "saved": "Ținte salvate"
     }
   },
+  "dock": {
+    "open": "Întreabă sau notează",
+    "title": "Asistent",
+    "close": "Închide asistentul"
+  },
   "proposal": {
     "title": "Masă pregătită de asistent",
-    "notSaved": "Încă nesalvată. Verific-o și confirm-o.",
+    "notSaved": "Încă nesalvată. Verific-o și apasă Salvează.",
+    "save": "Salvează",
+    "edit": "Modifică",
+    "fixFirst": "La unele alimente trebuie să alegi sau să indici greutatea, ca să se poată salva.",
+    "forDay": "Pentru {{date}}",
     "review": "Verifică și confirmă",
     "dismiss": "Renunță",
     "dismissed": "Respinsă",

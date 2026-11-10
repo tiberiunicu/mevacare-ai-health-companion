@@ -20,6 +20,10 @@ Chat, tool calling, streaming, meal extraction and insight explanations were ver
 | 1.9 | Output moderation / PII filter on model answers is not implemented (documented in `ai-safety.md`). | M | — |
 | 1.10 | Expand the emergency-screen dataset and languages; have a clinician review the fixed safety texts and the product's wellness wording. | M | a clinical reviewer |
 
+### 1b. Chat-first actions ([ADR-0017](decisions/0017-chat-first-actions.md))
+
+Meals can be logged by talking, from any page, and saved with one tap. **Not built yet:** the same for editing or deleting a past meal, weight, nutrition targets, profile and goals, and WHOOP status/sync. The plan (typed action proposals confirmed by the user, applied server-side) is in the ADR. *Effort M–L; needs a decision on which actions should skip confirmation.* Also open: tool-selection evaluation for the new tools (item 1.4) and the Romanian wording of the new texts (item 1.7).
+
 ## 2. Make WHOOP real (written from public documentation, never run against WHOOP)
 
 | # | Task | Effort | Needs you |

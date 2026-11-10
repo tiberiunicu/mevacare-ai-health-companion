@@ -50,7 +50,7 @@ public sealed class NutritionAssistantApi(
             warnings.Add("Some nutrient values are not reported for these foods, so the totals may be incomplete.");
         }
 
-        return new MealProposalDto(NormalizeMealType(meal.MealType), items, totals, warnings);
+        return new MealProposalDto(NormalizeMealType(meal.MealType), items, totals, warnings, meal.LocalDate);
     }
 
     private async Task<ProposedItemDto> BuildItemAsync(string clientId, ParsedFoodItem parsed, List<string> warnings, CancellationToken ct)

@@ -31,7 +31,7 @@ user message ──► AiChatService ──► FunctionInvokingChatClient(IChatC
 | `GetHealthProfile()` | Read | age (derived, never the date of birth), sex, height, activity level, goal types |
 | `GetDailyNutritionSummary(date)` | Read | totals, targets and remaining for one local day, plus meals (name, grams, kcal) |
 | `GetNutritionSummary(from, to)` | Read | per-day totals and the average over *logged* days (≤ 366 days) |
-| `PrepareMeal(description)` | Write (proposal only) | extract, match, calculate; **writes nothing** |
+| `PrepareMeal(description)` | Write (proposal only) | extract (including a named day such as "yesterday", resolved against the user's local date), match, calculate; **writes nothing**; the user saves the card with one tap ([ADR-0017](../decisions/0017-chat-first-actions.md)) |
 | `GetWeightHistory(from, to)` | Read | weight entries between two dates (≤ 366 days), latest value and change; the model sees at most the last 60 points and the source of each |
 | `GetSleepAndRecovery(from, to)` | Read | per day: time asleep, deep/REM, sleep performance, naps, recovery score, resting heart rate, HRV, with the provider named, plus per-provider averages (last 31 days shown); the result tells the model that scores are the provider's own and must not be compared across providers or turned into medical conclusions |
 | `GetHealthInsights(days, endDate)` | Read | trends, comparison with the previous period and combined insights calculated by the application (7–90 days); the result tells the model to explain only these numbers, as associations, with the listed caveats. See [insight-explanations.md](insight-explanations.md) |

@@ -38,7 +38,8 @@ public sealed record NutritionRangeSummaryDto(
 /// <param name="Brand">A brand the user named ("Hochland"), kept apart from the generic <paramref name="FoodName"/> so that the match can try the product first and fall back to the generic food.</param>
 public sealed record ParsedFoodItem(string FoodName, decimal Quantity, string Unit, string Preparation, string? OriginalText, string? Brand = null);
 
-public sealed record ParsedMeal(string? MealType, IReadOnlyList<ParsedFoodItem> Items);
+/// <param name="LocalDate">The day the user said the meal was eaten ("yesterday"), in their calendar; null means today.</param>
+public sealed record ParsedMeal(string? MealType, IReadOnlyList<ParsedFoodItem> Items, DateOnly? LocalDate = null);
 
 public sealed record FoodCandidateDto(Guid FoodId, string Description, string Preparation, string? Category, string SourceLabel);
 
@@ -56,8 +57,9 @@ public sealed record ProposedItemDto(
     NutrientValues Nutrients,
     string? Note);
 
+/// <param name="LocalDate">The day the meal was eaten when the user named one; null means "now".</param>
 public sealed record MealProposalDto(
-    string? MealType, IReadOnlyList<ProposedItemDto> Items, NutrientTotals Totals, IReadOnlyList<string> Warnings);
+    string? MealType, IReadOnlyList<ProposedItemDto> Items, NutrientTotals Totals, IReadOnlyList<string> Warnings, DateOnly? LocalDate = null);
 
 /// <summary>Read/prepare operations the AI assistant may use. Every call is scoped to the given user id.</summary>
 public interface INutritionAssistantApi

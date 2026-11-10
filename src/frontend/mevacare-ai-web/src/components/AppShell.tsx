@@ -15,6 +15,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useLogout } from '../features/auth/hooks'
+import { ChatDock } from '../features/chat/ChatDock'
 import { useThemeStore } from '../stores/theme'
 import { useAuthStore } from '../stores/auth'
 
@@ -81,6 +82,7 @@ export function AppShell() {
         </main>
         <MobileNav />
       </div>
+      <ChatDock />
     </div>
   )
 }

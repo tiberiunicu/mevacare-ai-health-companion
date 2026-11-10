@@ -19,5 +19,7 @@ choosing whose data to access, writing data on its own, or acting as the authori
 **Why not let the model call a "SaveMeal" tool after asking the user in chat?** A chat sentence is not a reliable confirmation (the model may skip it, or be talked into it), and a retried tool
 call would duplicate data. A UI action by the signed-in user is unambiguous and testable.
 
+**Update (ADR-0017).** The two-step review became one tap (a **Save** button on the card when every line is complete) and the assistant is available on every page; the principle is unchanged.
+
 **Consequences.** Safer but one more step for the user. Three model round trips per meal. Proposals live in the Assistant schema and are deleted with the conversation (meals are not).
 `ToolExecutions.UserId` is a plain column because a second cascade path from `Users` is not allowed by SQL Server.

@@ -215,6 +215,8 @@ export interface MealProposal {
   items: ProposedItem[]
   totals: NutrientTotals
   warnings: string[]
+  /** The day the user named for the meal (YYYY-MM-DD); null means now. */
+  localDate: string | null
 }
 
 export interface ProposalCard {

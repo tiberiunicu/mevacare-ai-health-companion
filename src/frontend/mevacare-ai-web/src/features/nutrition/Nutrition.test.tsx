@@ -4,7 +4,10 @@ import { useAuthStore } from '../../stores/auth'
 import type { DailySummary, FoodSearchItem, Meal, MealProposal } from '../../lib/types'
 import { json, renderWithProviders, signIn, useEnglish } from '../../test/utils'
 import { DailySummaryPage, FoodJournalPage, NutritionGoalsPage } from './NutritionPages'
-import { buildRequest, isItemValid, itemFromFood, itemsFromMeal, itemsFromProposal, parseGrams, previewNutrients, sumPreview } from './mealEditorModel'
+import {
+  buildRequest, isItemValid, isProposalReady, itemFromFood, itemsFromMeal, itemsFromProposal, mealTypeForHour, parseGrams, previewNutrients,
+  proposalEatenAt, proposalMealType, sumPreview,
+} from './mealEditorModel'
 
 const chicken: FoodSearchItem = {
   foodId: 'f-chicken', description: 'Chicken, broilers or fryers, breast, meat only, cooked, roasted', preparation: 'Cooked', category: 'Poultry Products',
@@ -69,7 +72,7 @@ describe('meal editor model', () => {
 
   it('treats unmatched items as invalid until resolved and needs a name and a value for custom items', () => {
     const proposal: MealProposal = {
-      mealType: 'Lunch', warnings: [], totals: totals(0),
+      mealType: 'Lunch', localDate: null, warnings: [], totals: totals(0),
       items: [{
         clientItemId: 'i1', inputText: 'dragon steak', status: 'Unmatched', food: null, alternatives: [], quantityGrams: null, preparation: 'Unspecified',
         preparationAssumed: false, ambiguousMatch: false, nutrients: { calories: null, proteinG: null, carbohydratesG: null, fatG: null, fiberG: null }, note: 'Not found',
@@ -86,7 +89,7 @@ describe('meal editor model', () => {
 
   it('derives per-100-g values from a proposal so the preview follows weight edits', () => {
     const proposal: MealProposal = {
-      mealType: null, warnings: [], totals: totals(330),
+      mealType: null, localDate: null, warnings: [], totals: totals(330),
       items: [{
         clientItemId: 'i1', inputText: '200 g chicken', status: 'Matched', alternatives: [], quantityGrams: 200, preparation: 'Cooked', preparationAssumed: true, ambiguousMatch: false,
         food: { foodId: 'f-chicken', description: chicken.description, preparation: 'Cooked', category: null, sourceLabel: 'x' },
@@ -97,6 +100,39 @@ describe('meal editor model', () => {
 
     expect(previewNutrients({ ...item, grams: '100' })!.calories).toBe(165)
     expect(item.preparationAssumed).toBe(true)
+  })
+})
+
+describe('meal proposals: day, meal type and readiness', () => {
+  const proposal = (overrides: Partial<MealProposal> = {}): MealProposal => ({
+    mealType: null, localDate: null, warnings: [], totals: totals(330),
+    items: [{
+      clientItemId: 'i1', inputText: '200 g chicken', status: 'Matched', alternatives: [], quantityGrams: 200, preparation: 'Cooked', preparationAssumed: false,
+      ambiguousMatch: false, food: { foodId: 'f-chicken', description: chicken.description, preparation: 'Cooked', category: null, sourceLabel: 'x' },
+      nutrients: { calories: 330, proteinG: 62.04, carbohydratesG: 0, fatG: 7.14, fiberG: 0 }, note: null,
+    }],
+    ...overrides,
+  })
+
+  it('picks the meal type from the time of day when the user did not name one', () => {
+    expect([7, 12, 17, 20, 23, 2].map(mealTypeForHour)).toEqual(['Breakfast', 'Lunch', 'Snack', 'Dinner', 'Snack', 'Snack'])
+    expect(proposalMealType(proposal(), new Date(2026, 9, 21, 13, 0))).toBe('Lunch')
+    expect(proposalMealType(proposal({ mealType: 'Dinner' }), new Date(2026, 9, 21, 13, 0))).toBe('Dinner')
+  })
+
+  it('uses now for today and the usual hour of the meal for a named past day', () => {
+    const now = new Date(2026, 9, 21, 9, 30)
+    expect(proposalEatenAt(proposal(), now)).toBe(now)
+    expect(proposalEatenAt(proposal({ localDate: '2026-10-21' }), now)).toBe(now)
+    expect(proposalEatenAt(proposal({ localDate: '2026-10-20', mealType: 'Dinner' }), now)).toEqual(new Date(2026, 9, 20, 19, 0))
+    expect(proposalEatenAt(proposal({ localDate: '2026-10-20' }), now)).toEqual(new Date(2026, 9, 20, 12, 0))
+  })
+
+  it('can be saved in one tap only when every line has a food and a weight', () => {
+    expect(isProposalReady(proposal())).toBe(true)
+    expect(isProposalReady(proposal({ items: [] }))).toBe(false)
+    expect(isProposalReady(proposal({ items: [{ ...proposal().items[0], status: 'NeedsQuantity', quantityGrams: null }] }))).toBe(false)
+    expect(isProposalReady(proposal({ items: [{ ...proposal().items[0], food: null, status: 'Unmatched' }] }))).toBe(false)
   })
 })
 
@@ -112,6 +148,53 @@ describe('FoodJournalPage', () => {
     expect(screen.getByText('Estimated')).toBeInTheDocument()
     expect(screen.getAllByText(/Some values are not reported/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Includes values you estimated/).length).toBeGreaterThan(0)
+  })
+
+  it('hands the sentence typed in the journal to the assistant, which prepares the meal in the panel', async () => {
+    const calls: { url: string; init?: RequestInit }[] = []
+    const consent = [{ type: 'AiProcessing', granted: true, required: false, policyVersion: '2026-10', grantedAtUtc: null, revokedAtUtc: null }]
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        calls.push({ url, init })
+        if (url === '/api/consents') return json(consent)
+        if (url.includes('/summary/daily')) return json(summary([]))
+        if (url === '/api/chat/stream') {
+          const text = 'event: conversation\ndata: {"conversationId":"c1","title":"x"}\n\nevent: done\ndata: {"messageId":"m1"}\n\n'
+          return new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(text)); c.close() } }), { status: 200 })
+        }
+        return json([])
+      }),
+    )
+
+    renderWithProviders(<FoodJournalPage />)
+    const box = await screen.findByLabelText('Tell the assistant what you ate')
+    await waitFor(() => expect(box).toBeEnabled())
+    await userEvent.type(box, 'two eggs and toast for breakfast{Enter}')
+
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/chat/stream')).toBe(true))
+    const stream = calls.find((c) => c.url === '/api/chat/stream')!
+    expect(JSON.parse(stream.init?.body as string)).toMatchObject({ message: 'two eggs and toast for breakfast' })
+    expect(box).toHaveValue('')
+    expect(calls.some((c) => c.url === '/api/nutrition/meals')).toBe(false) // the sentence alone saves nothing
+  })
+
+  it('does not accept food sentences without the AI consent and says why', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url === '/api/consents') return json([{ type: 'AiProcessing', granted: false, required: false, policyVersion: '2026-10', grantedAtUtc: null, revokedAtUtc: null }])
+        return url.includes('/summary/daily') ? json(summary([])) : json([])
+      }),
+    )
+
+    renderWithProviders(<FoodJournalPage />)
+
+    const box = await screen.findByLabelText('Tell the assistant what you ate')
+    await waitFor(() => expect(box).toBeDisabled())
+    expect(box).toHaveAttribute('placeholder', 'To add food by chatting, allow AI processing.')
   })
 
   it('explains the missing health-data consent instead of showing an empty journal', async () => {

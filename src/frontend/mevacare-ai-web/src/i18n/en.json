@@ -240,7 +240,8 @@
       "hrv": "Explain what HRV means.",
       "protein": "How much protein does a healthy adult generally need?",
       "sleep": "Give me practical tips for better sleep.",
-      "plateau": "Why might weight loss slow down?"
+      "plateau": "Why might weight loss slow down?",
+      "logMeal": "I had 200 g chicken breast and 150 g cooked rice for lunch."
     },
     "tools": "Tools used",
     "sources": "Sources",
@@ -289,7 +290,11 @@
       "dayTotal": "Day total",
       "consentTitle": "Health data processing is switched off",
       "consentBody": "To keep a food journal, allow health data processing.",
-      "consentAction": "Open Privacy & Consent"
+      "consentAction": "Open Privacy & Consent",
+      "chatLabel": "Tell the assistant what you ate",
+      "chatPlaceholder": "What did you eat? e.g. two eggs and toast for breakfast",
+      "chatSend": "Add",
+      "chatConsent": "To add food by chatting, allow AI processing."
     },
     "editor": {
       "newMeal": "New meal",
@@ -372,9 +377,18 @@
       "saved": "Targets saved"
     }
   },
+  "dock": {
+    "open": "Ask or log",
+    "title": "Assistant",
+    "close": "Close the assistant"
+  },
   "proposal": {
     "title": "Meal prepared by the assistant",
-    "notSaved": "Not saved yet. Check it and confirm.",
+    "notSaved": "Not saved yet. Check it and press Save.",
+    "save": "Save",
+    "edit": "Edit",
+    "fixFirst": "Some foods need a choice or a weight before this can be saved.",
+    "forDay": "For {{date}}",
     "review": "Review and confirm",
     "dismiss": "Dismiss",
     "dismissed": "Dismissed",

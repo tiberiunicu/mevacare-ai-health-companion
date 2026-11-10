@@ -33,6 +33,7 @@ public sealed class TurnTools
     private readonly TimeProvider _clock;
     private readonly ILogger _logger;
     private readonly IKnowledgeSearch? _knowledge;
+    private readonly DateTimeOffset? _userNow;
     private readonly IMeasurementsAssistantApi? _measurements;
     private readonly IInsightsAssistantApi? _insights;
     private readonly List<(int Number, KnowledgePassage Passage)> _retrieved = [];
@@ -40,8 +41,9 @@ public sealed class TurnTools
     public TurnTools(
         Guid userId, Guid conversationId, int assistantSequence, INutritionAssistantApi nutrition, IHealthProfileReader profiles,
         MealParser parser, AppDbContext db, TimeProvider clock, ILogger logger, IKnowledgeSearch? knowledge = null,
-        IMeasurementsAssistantApi? measurements = null, IInsightsAssistantApi? insights = null)
+        IMeasurementsAssistantApi? measurements = null, IInsightsAssistantApi? insights = null, DateTimeOffset? userNow = null)
     {
+        _userNow = userNow;
         _knowledge = knowledge;
         _measurements = measurements;
         _insights = insights;
@@ -213,7 +215,7 @@ public sealed class TurnTools
         [Description("What the user said they ate, in their own words, including amounts.")] string description, CancellationToken ct) =>
         RunAsync(ToolExecution.PrepareMealTool, ToolKind.Write, new { description }, async () =>
         {
-            var parsed = await _parser.ParseAsync(description, ct);
+            var parsed = await _parser.ParseAsync(description, ct, _userNow is { } now ? DateOnly.FromDateTime(now.DateTime) : null);
             var proposal = await _nutrition.PrepareMealAsync(_userId, parsed, ct);
             var json = JsonSerializer.Serialize(proposal, ProposalJson.Options);
             return new ToolResult(

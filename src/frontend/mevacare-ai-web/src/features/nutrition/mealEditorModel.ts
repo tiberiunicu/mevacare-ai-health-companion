@@ -1,3 +1,4 @@
+import { localDateString } from '../../lib/dates'
 import type {
   FoodSearchItem,
   Meal,
@@ -149,4 +150,34 @@ export function buildRequest(
         },
   )
   return { type, eatenAt, notes: notes.trim() === '' ? null : notes.trim(), items: saveItems, proposalId }
+}
+
+/** The meal type that fits a time of day, used when the user did not say which meal it was. */
+export function mealTypeForHour(hour: number): MealType {
+  if (hour >= 5 && hour < 11) return 'Breakfast'
+  if (hour >= 11 && hour < 16) return 'Lunch'
+  if (hour >= 18 && hour < 22) return 'Dinner'
+  return 'Snack'
+}
+
+const TYPICAL_HOUR: Record<MealType, number> = { Breakfast: 8, Lunch: 13, Dinner: 19, Snack: 16 }
+
+/**
+ * When the meal of a proposal was eaten: now, unless the user named another day ("yesterday at dinner"); then that day at the
+ * usual hour of the meal (noon when no meal was named). The user can still change it in the editor.
+ */
+export function proposalEatenAt(proposal: MealProposal, now: Date = new Date()): Date {
+  if (!proposal.localDate || proposal.localDate === localDateString(now)) return now
+  const [year, month, day] = proposal.localDate.split('-').map(Number)
+  return new Date(year, month - 1, day, proposal.mealType ? TYPICAL_HOUR[proposal.mealType] : 12, 0, 0)
+}
+
+export function proposalMealType(proposal: MealProposal, eatenAt: Date): MealType {
+  return proposal.mealType ?? mealTypeForHour(eatenAt.getHours())
+}
+
+/** A proposal can be saved in one tap when every line has a food and a weight. */
+export function isProposalReady(proposal: MealProposal): boolean {
+  const items = itemsFromProposal(proposal)
+  return items.length > 0 && items.every(isItemValid)
 }

@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { LoginPage, RegisterPage, RequireAuth } from './features/auth/AuthPages'
 import { useBootstrapSession } from './features/auth/hooks'
+import { ChatProvider } from './features/chat/ChatContext'
 import { ChatPage } from './features/chat/ChatPage'
 import { DevicesPage } from './features/devices/DevicesPage'
 import { ActivityPage, SleepPage, WeightPage } from './features/health/HealthPages'
@@ -15,7 +16,11 @@ import { Dashboard } from './pages/Dashboard'
 
 function Authenticated() {
   usePreferencesSync()
-  return <AppShell />
+  return (
+    <ChatProvider>
+      <AppShell />
+    </ChatProvider>
+  )
 }
 
 const router = createBrowserRouter([

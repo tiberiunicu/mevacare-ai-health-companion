@@ -18,6 +18,7 @@ deserialised and validated.
 3. The result is an **untrusted suggestion**: `Validate` requires 1–15 items, names ≤ 100 characters, quantity 0–10,000 and a unit.
    One repair attempt tells the model what was wrong; a second failure raises `meal_parse_failed` (the tool returns a polite error, no proposal).
    JSON is never "repaired" by guessing.
+   The extraction also returns `eatenOn` (a `YYYY-MM-DD` day the user named, such as "yesterday"); the prompt is given the user's local date, and `ResolveDay` accepts only a real date from 60 days ago to today, otherwise the meal is for now.
 4. The nutrition module validates again (supported units, raw/cooked words), matches foods in the verified database and calculates
    nutrients. Nothing nutritional is ever requested from the model: only what the user said.
 5. The extraction prompt treats the text as data: instructions hidden in the meal description are ignored (and evaluated, see below).
