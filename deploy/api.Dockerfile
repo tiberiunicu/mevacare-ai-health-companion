@@ -15,6 +15,9 @@ COPY --from=build /out ./
 ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_gcServer=0 \
     DOTNET_GCHeapHardLimitPercent=60
+# The key-ring folder (a volume, see the compose file) must belong to the non-root user, or the encryption keys of the stored
+# wearable tokens cannot be saved. A new named volume copies this ownership from the image.
+RUN mkdir -p /app/keys && chown app:app /app/keys
 USER app
 
 # Arguments after the image name reach the API, so the maintenance commands work too:
