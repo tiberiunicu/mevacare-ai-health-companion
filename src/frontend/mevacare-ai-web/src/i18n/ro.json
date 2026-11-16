@@ -61,7 +61,15 @@
     "aiConsent": "Sunt de acord ca mesajele mele și contextul minim necesar să fie trimise furnizorului AI configurat pentru a genera răspunsuri.",
     "consentsOptional": "Cele două consimțăminte opționale pot fi modificate oricând în Setări → Confidențialitate și consimțăminte.",
     "invalidCredentials": "E-mail sau parolă incorecte, ori contul este blocat temporar.",
-    "emailInUse": "Există deja un cont cu această adresă de e-mail."
+    "emailInUse": "Există deja un cont cu această adresă de e-mail.",
+    "or": "sau",
+    "googleNewAccount": "Nu există încă un cont MevaCare pentru acest cont Google. Acceptă termenii ca să creezi unul.",
+    "googleCreateAccount": "Creează cont cu Google",
+    "googleNotLinked": "Există deja un cont cu această adresă de e-mail. Autentifică-te cu parola, apoi conectează Google în Setări → Confidențialitate și consimțăminte.",
+    "googleEmailNotVerified": "Google nu a verificat adresa de e-mail a acestui cont, deci nu poate fi folosit pentru autentificare.",
+    "googleFailed": "Autentificarea Google nu a putut fi verificată. Încearcă din nou.",
+    "googleUnavailable": "Autentificarea cu Google nu este disponibilă acum. Încearcă peste puțin timp sau folosește parola.",
+    "googleScriptBlocked": "Butonul Google nu a putut fi încărcat. Un blocant de conținut sau rețeaua îl poate opri."
   },
   "dashboard": {
     "greeting": "Salut, {{name}}",
@@ -195,7 +203,20 @@
     "deleteAction": "Șterge contul…",
     "deleteConfirmPassword": "Confirmă cu parola ta",
     "deleteConfirm": "Șterge definitiv",
-    "wrongPassword": "Parola este incorectă."
+    "wrongPassword": "Parola este incorectă.",
+    "signInMethodsTitle": "Metode de autentificare",
+    "signInMethodsBody": "Cum te poți autentifica în acest cont.",
+    "methodPassword": "Parola",
+    "methodPasswordSet": "Setată",
+    "methodPasswordNone": "Nesetată: acest cont se autentifică doar cu Google.",
+    "methodGoogle": "Google",
+    "googleConnected": "Conectat",
+    "googleNotConnected": "Neconectat. Conectează-l ca să te autentifici dintr-un clic.",
+    "googleDisconnect": "Deconectează",
+    "googleOnlyMethod": "Google este singura metodă de autentificare a acestui cont, deci nu poate fi deconectat.",
+    "googleInUse": "Acest cont Google este deja conectat la alt cont MevaCare.",
+    "deleteConfirmGoogle": "Acest cont nu are parolă. Confirmă încă o dată cu Google.",
+    "deleteGoogleOff": "Acest cont nu are parolă, iar autentificarea Google este oprită pe server, deci nu poate fi confirmat aici."
   },
   "aiSettings": {
     "title": "Setări AI",

@@ -5,7 +5,7 @@ import { api, ApiError } from './api'
 const session = (token: string) => ({
   accessToken: token,
   expiresAtUtc: new Date().toISOString(),
-  user: { id: '1', email: 'a@example.test', displayName: 'A', roles: ['User'] },
+  user: { id: '1', email: 'a@example.test', displayName: 'A', roles: ['User'], hasPassword: true, linkedProviders: [] },
 })
 
 const authHeader = (call: { init?: RequestInit }) => (call.init?.headers as Record<string, string> | undefined)?.Authorization

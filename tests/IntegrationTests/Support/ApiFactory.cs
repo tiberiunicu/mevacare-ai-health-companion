@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
+using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth.Google;
 using MevaCare.AI.HealthCompanion.Modules.Integrations.Providers.Whoop;
 using MevaCare.AI.HealthCompanion.Modules.Nutrition.OpenFoodFacts;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -71,8 +72,11 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Integrations:Whoop:ClientId", WhoopConfigured ? "test-client-id" : "");
         builder.UseSetting("Integrations:Whoop:ClientSecret", WhoopConfigured ? "test-client-secret" : "");
         builder.UseSetting("Integrations:Whoop:RedirectUri", "http://localhost:5080/api/integrations/whoop/callback");
+        builder.UseSetting("Auth:Google:ClientId", "test-client.apps.googleusercontent.com");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IGoogleIdTokenValidator>();
+            services.AddSingleton<IGoogleIdTokenValidator, FakeGoogleIdTokenValidator>();
             services.RemoveAll<IChatClient>();
             services.AddSingleton<IChatClient>(Chat);
             services.Decorate_EmbeddingService(Embeddings);

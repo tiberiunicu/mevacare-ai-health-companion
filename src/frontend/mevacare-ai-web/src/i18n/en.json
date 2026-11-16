@@ -61,7 +61,15 @@
     "aiConsent": "I agree that my messages and the minimum necessary context may be sent to the configured AI provider to generate answers.",
     "consentsOptional": "The two optional consents can be changed at any time in Settings → Privacy & Consent.",
     "invalidCredentials": "Invalid e-mail or password, or the account is temporarily locked.",
-    "emailInUse": "An account with this e-mail address already exists."
+    "emailInUse": "An account with this e-mail address already exists.",
+    "or": "or",
+    "googleNewAccount": "No MevaCare account exists for this Google account yet. Accept the terms to create one.",
+    "googleCreateAccount": "Create account with Google",
+    "googleNotLinked": "An account with this e-mail address already exists. Sign in with your password, then connect Google in Settings → Privacy & Consent.",
+    "googleEmailNotVerified": "Google has not verified the e-mail address of this account, so it cannot be used to sign in.",
+    "googleFailed": "The Google sign-in could not be verified. Try again.",
+    "googleUnavailable": "Google sign-in is not available right now. Try again in a moment or use your password.",
+    "googleScriptBlocked": "The Google sign-in button could not be loaded. A content blocker or the network may be stopping it."
   },
   "dashboard": {
     "greeting": "Hello, {{name}}",
@@ -193,7 +201,20 @@
     "deleteAction": "Delete account…",
     "deleteConfirmPassword": "Confirm with your password",
     "deleteConfirm": "Permanently delete",
-    "wrongPassword": "The password is incorrect."
+    "wrongPassword": "The password is incorrect.",
+    "signInMethodsTitle": "Sign-in methods",
+    "signInMethodsBody": "How you can sign in to this account.",
+    "methodPassword": "Password",
+    "methodPasswordSet": "Set",
+    "methodPasswordNone": "Not set: this account signs in with Google only.",
+    "methodGoogle": "Google",
+    "googleConnected": "Connected",
+    "googleNotConnected": "Not connected. Connect it to sign in with one click.",
+    "googleDisconnect": "Disconnect",
+    "googleOnlyMethod": "Google is the only way to sign in to this account, so it cannot be disconnected.",
+    "googleInUse": "This Google account is already connected to another MevaCare account.",
+    "deleteConfirmGoogle": "This account has no password. Confirm with Google once more.",
+    "deleteGoogleOff": "This account has no password and Google sign-in is switched off on the server, so it cannot be confirmed here."
   },
   "aiSettings": {
     "title": "AI Settings",

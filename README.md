@@ -134,6 +134,7 @@ Configuration is layered: `appsettings.json` (safe defaults) → `appsettings.De
 | `Ai:ToolsEnabled`, `Ai:MaxToolIterations` | turn tool calling off (models without tool support) / cap model-tool round trips |
 | `Knowledge:Enabled`, `Knowledge:Embeddings:*`, `Knowledge:VectorStore:*`, `Knowledge:Chunking:*`, `Knowledge:Retrieval:*` | medical-knowledge RAG; defaults work offline (Lexical embeddings, Qdrant on `localhost:6333`). See [docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md#configuration-knowledge) |
 | `Integrations:Whoop:ClientId` / `ClientSecret` / `RedirectUri`, `Integrations:Sync:*`, `Integrations:DataProtectionKeysPath` | WHOOP connection and synchronization; without credentials the integration shows "not set up". See [docs/integrations/whoop.md](docs/integrations/whoop.md) |
+| `Auth:Google:ClientId` | turns on **Sign in with Google** (public client id, no secret; empty = off). `./scripts/setup-google-signin.ps1`; see [docs/integrations/google-sign-in.md](docs/integrations/google-sign-in.md) |
 | `Auth:*`, `RateLimiting:*`, `Cors:AllowedOrigins` | see `appsettings.json` |
 
 Examples:
@@ -209,7 +210,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
-- State after the chat-first actions ([ADR-0017](docs/decisions/0017-chat-first-actions.md)): 420 unit tests, 210 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 19 evaluation tests (+4 live-model tests skipped), 124 frontend tests; all pass. The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
+- State after Sign in with Google ([ADR-0018](docs/decisions/0018-sign-in-with-google.md); earlier: chat-first actions, [ADR-0017](docs/decisions/0017-chat-first-actions.md)): 437 unit tests, 223 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 19 evaluation tests (+4 live-model tests skipped), 140 frontend tests; all pass. Google's own side was never exercised (stand-in only). The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.
@@ -226,7 +227,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - [Architecture overview](docs/architecture/overview.md) · [Security and privacy](docs/architecture/security-and-privacy.md)
 - [Architecture decision records](docs/decisions/)
 - [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
-- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md)
+- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md) · [Sign in with Google](docs/integrations/google-sign-in.md)
 - [Insights (trends, comparisons, rules)](docs/architecture/insights.md) · [AI explanations of insights](docs/ai/insight-explanations.md)
 - **[What remains to be done](docs/remaining-work.md)**
 - AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·

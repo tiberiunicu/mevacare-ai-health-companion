@@ -13,7 +13,15 @@ public sealed record RegisterRequest(
 
 public sealed record LoginRequest(string Email, string Password);
 
-public sealed record UserDto(Guid Id, string Email, string DisplayName, IReadOnlyCollection<string> Roles);
+/// <param name="HasPassword">False for an account created with Google: it can sign in only with Google.</param>
+/// <param name="LinkedProviders">Outside sign-in providers connected to the account, e.g. "Google".</param>
+public sealed record UserDto(
+    Guid Id,
+    string Email,
+    string DisplayName,
+    IReadOnlyCollection<string> Roles,
+    bool HasPassword,
+    IReadOnlyCollection<string> LinkedProviders);
 
 public sealed record AuthResponse(string AccessToken, DateTime ExpiresAtUtc, UserDto User);
 
@@ -23,7 +31,8 @@ public sealed record AuthSession(AuthResponse Response, string RefreshToken, Dat
 internal static class UserMapping
 {
     public static UserDto ToDto(this User user) =>
-        new(user.Id, user.Email, user.DisplayName, user.Roles.Select(r => r.Role).Order().ToArray());
+        new(user.Id, user.Email, user.DisplayName, user.Roles.Select(r => r.Role).Order().ToArray(),
+            user.HasPassword, user.ExternalLogins.Select(l => l.Provider).Order().ToArray());
 }
 
 public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest>

@@ -69,7 +69,8 @@ public sealed class AuthService(
         var now = clock.GetUtcNow().UtcDateTime;
         var options = authOptions.Value;
         var normalized = User.Normalize(request.Email);
-        var user = await db.Set<User>().Include(u => u.Roles).SingleOrDefaultAsync(u => u.NormalizedEmail == normalized, ct);
+        var user = await db.Set<User>().Include(u => u.Roles).Include(u => u.ExternalLogins)
+            .SingleOrDefaultAsync(u => u.NormalizedEmail == normalized, ct);
 
         if (user is null)
         {
@@ -86,7 +87,18 @@ public sealed class AuthService(
             throw InvalidCredentials;
         }
 
-        var verification = hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
+        // An account created with Google has no password: verify against the dummy hash so it costs the same time and looks the same.
+        PasswordVerificationResult verification;
+        if (user.PasswordHash is { } storedHash)
+        {
+            verification = hasher.VerifyHashedPassword(user, storedHash, request.Password);
+        }
+        else
+        {
+            hasher.VerifyHashedPassword(null!, DummyHash, request.Password);
+            verification = PasswordVerificationResult.Failed;
+        }
+
         if (verification == PasswordVerificationResult.Failed)
         {
             user.RegisterFailedLogin(now, options.MaxFailedLogins, TimeSpan.FromMinutes(options.LockoutMinutes));
@@ -139,7 +151,8 @@ public sealed class AuthService(
             throw new UnauthorizedException("Refresh token expired.");
         }
 
-        var user = await db.Set<User>().Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == stored.UserId, ct);
+        var user = await db.Set<User>().Include(u => u.Roles).Include(u => u.ExternalLogins)
+            .SingleOrDefaultAsync(u => u.Id == stored.UserId, ct);
         if (user is null || !user.IsActive)
         {
             throw new UnauthorizedException("Invalid refresh token.");
@@ -174,7 +187,8 @@ public sealed class AuthService(
 
     public async Task<UserDto> GetCurrentUserAsync(Guid userId, CancellationToken ct)
     {
-        var user = await db.Set<User>().AsNoTracking().Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == userId, ct)
+        var user = await db.Set<User>().AsNoTracking().Include(u => u.Roles).Include(u => u.ExternalLogins)
+            .SingleOrDefaultAsync(u => u.Id == userId, ct)
             ?? throw new UnauthorizedException();
         return user.ToDto();
     }

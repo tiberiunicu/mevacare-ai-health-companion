@@ -49,6 +49,8 @@ The detailed list lives in [architecture/security-and-privacy.md](architecture/s
 8. **Food search at scale**: ~1.05 million Open Food Facts products are imported for eight countries and the substring search takes ~0.5 s. Add a real index (SQL Server full-text or a dedicated search index) before more countries or several concurrent users. S–M
 9. **Consent wording and policy version**: the *External integrations* text was extended to cover the online food lookup (Open Food Facts) without bumping `ConsentPolicy.CurrentVersion`; bump it (which asks everyone to consent again) and have the wording reviewed before real users. Also decide whether to keep the ODbL attribution/share-alike obligations in mind if the food table is ever published ([ADR-0016](decisions/0016-open-food-facts-products.md)). S
 
+10. **Sign in with Google** ([ADR-0018](decisions/0018-sign-in-with-google.md), [guide](integrations/google-sign-in.md)) is built and tested with a stand-in, **never run against the real Google**: create the OAuth client, run `scripts/setup-google-signin.ps1`, sign in once in a browser (register origin `http://localhost:5173`). Still open: a single-use **nonce** against replay of a stolen ID token, a way to **set a password** on an account created with Google, allowing Google in the Content-Security-Policy (item 3), other providers. S–M
+
 ## 4. Operating it (nothing below exists yet)
 
 | Task | Effort |

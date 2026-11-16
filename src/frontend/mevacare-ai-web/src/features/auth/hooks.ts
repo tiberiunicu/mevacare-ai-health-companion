@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, refreshSession } from '../../lib/api'
-import type { AuthResponse } from '../../lib/types'
+import type { AuthProviders, AuthResponse, User } from '../../lib/types'
 import { useAuthStore } from '../../stores/auth'
 
 export interface RegisterInput {
@@ -45,6 +45,50 @@ export function useRegister() {
   return useMutation({
     mutationFn: (input: RegisterInput) => api<AuthResponse>('/api/auth/register', { method: 'POST', body: input }),
     onSuccess: (response) => useAuthStore.getState().setSession(response),
+  })
+}
+
+/** Which outside sign-in providers the server has switched on (and the public Google client id). A failure just hides the buttons. */
+export function useAuthProviders() {
+  return useQuery({
+    queryKey: ['auth', 'providers'],
+    queryFn: () => api<AuthProviders>('/api/auth/providers'),
+    staleTime: Infinity,
+    retry: false,
+  })
+}
+
+export interface GoogleSignInInput {
+  idToken: string
+  /** Needed only when the Google identity has no account yet (the same consents as the registration form). */
+  acceptTerms?: boolean
+  healthDataConsent?: boolean
+  aiProcessingConsent?: boolean
+}
+
+export function useGoogleSignIn() {
+  return useMutation({
+    mutationFn: (input: GoogleSignInInput) => api<AuthResponse>('/api/auth/google', { method: 'POST', body: input }),
+    onSuccess: (response) => useAuthStore.getState().setSession(response),
+  })
+}
+
+async function reloadUser() {
+  useAuthStore.getState().setUser(await api<User>('/api/auth/me'))
+}
+
+/** Connects the Google identity in the ID token to the signed-in account. */
+export function useLinkGoogle() {
+  return useMutation({
+    mutationFn: (idToken: string) => api<void>('/api/auth/google/link', { method: 'POST', body: { idToken } }),
+    onSuccess: reloadUser,
+  })
+}
+
+export function useUnlinkGoogle() {
+  return useMutation({
+    mutationFn: () => api<void>('/api/auth/google', { method: 'DELETE' }),
+    onSuccess: reloadUser,
   })
 }
 

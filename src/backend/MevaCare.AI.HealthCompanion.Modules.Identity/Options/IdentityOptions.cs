@@ -17,6 +17,24 @@ public sealed class JwtOptions
     [Range(1, 90)] public int RefreshTokenDays { get; init; } = 14;
 }
 
+/// <summary>
+/// "Sign in with Google". The browser obtains a signed Google ID token (Google Identity Services); the API verifies its signature,
+/// issuer, audience and expiry. Only the OAuth client ID is needed, and it is public (it is sent to every browser), so there is no secret.
+/// Leave <see cref="ClientId"/> empty to switch the feature off: the button is not shown and the endpoints answer 404.
+/// </summary>
+public sealed class GoogleAuthOptions
+{
+    public const string SectionName = "Auth:Google";
+
+    /// <summary>OAuth 2.0 client ID of type "Web application", e.g. 1234-abc.apps.googleusercontent.com.</summary>
+    public string ClientId { get; init; } = "";
+
+    /// <summary>Where Google publishes its signing keys (OpenID Connect discovery document). Only tests change this.</summary>
+    public string DiscoveryUrl { get; init; } = "https://accounts.google.com/.well-known/openid-configuration";
+
+    public bool Enabled => !string.IsNullOrWhiteSpace(ClientId);
+}
+
 public sealed class AuthOptions
 {
     public const string SectionName = "Auth";

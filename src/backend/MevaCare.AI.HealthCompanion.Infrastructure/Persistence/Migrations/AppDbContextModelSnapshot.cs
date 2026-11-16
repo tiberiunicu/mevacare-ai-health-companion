@@ -315,6 +315,42 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.ExternalLogin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Provider", "Subject")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("ExternalLogins", "identity");
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -388,7 +424,6 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("PasswordHash")
-                        .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
@@ -1287,6 +1322,15 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.ExternalLogin", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.RefreshToken", b =>
                 {
                     b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
@@ -1438,6 +1482,8 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", b =>
                 {
+                    b.Navigation("ExternalLogins");
+
                     b.Navigation("Roles");
                 });
 

@@ -12,12 +12,32 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Email).HasMaxLength(256).IsRequired();
         builder.Property(u => u.NormalizedEmail).HasMaxLength(256).IsRequired();
-        builder.Property(u => u.PasswordHash).HasMaxLength(512).IsRequired();
+        builder.Property(u => u.PasswordHash).HasMaxLength(512);
+        builder.Ignore(u => u.HasPassword);
         builder.Property(u => u.DisplayName).HasMaxLength(100).IsRequired();
         builder.HasIndex(u => u.NormalizedEmail).IsUnique();
 
         builder.HasMany(u => u.Roles).WithOne().HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(u => u.Roles).HasField("_roles").UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(u => u.ExternalLogins).WithOne().HasForeignKey(l => l.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(u => u.ExternalLogins).HasField("_externalLogins").UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+internal sealed class ExternalLoginConfiguration : IEntityTypeConfiguration<ExternalLogin>
+{
+    public void Configure(EntityTypeBuilder<ExternalLogin> builder)
+    {
+        builder.ToTable("ExternalLogins", "identity");
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.Provider).HasMaxLength(32).IsRequired();
+        builder.Property(l => l.Subject).HasMaxLength(255).IsRequired();
+        builder.Property(l => l.Email).HasMaxLength(256);
+
+        // One provider identity belongs to exactly one account, and one account has at most one identity per provider.
+        builder.HasIndex(l => new { l.Provider, l.Subject }).IsUnique();
+        builder.HasIndex(l => new { l.UserId, l.Provider }).IsUnique();
     }
 }
 

@@ -9,16 +9,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MevaCare.AI.HealthCompanion.Modules.Identity.Features.Account;
 
-public sealed record DeleteAccountRequest(string Password);
+/// <summary>Re-authentication for deleting the account: the password, or, for an account created with Google (no password), a fresh Google ID token.</summary>
+public sealed record DeleteAccountRequest(string? Password = null, string? GoogleIdToken = null);
 
 public sealed class DeleteAccountRequestValidator : AbstractValidator<DeleteAccountRequest>
 {
-    public DeleteAccountRequestValidator() => RuleFor(x => x.Password).NotEmpty().MaximumLength(256);
+    public DeleteAccountRequestValidator()
+    {
+        RuleFor(x => x.Password).MaximumLength(256);
+        RuleFor(x => x.GoogleIdToken).MaximumLength(8192);
+        RuleFor(x => x).Must(x => !string.IsNullOrEmpty(x.Password) || !string.IsNullOrEmpty(x.GoogleIdToken))
+            .WithName("Password").WithMessage("Confirm with your password or with Google.");
+    }
 }
 
 public sealed class AccountService(
     AppDbContext db,
     IPasswordHasher<User> hasher,
+    Auth.Google.GoogleAuthService googleAuth,
     ConsentService consents,
     IEnumerable<IUserDataExporter> exporters,
     IAuditLog audit,
@@ -51,16 +59,24 @@ public sealed class AccountService(
     /// GDPR art. 17: permanently deletes the account and, through cascading foreign keys, all personal data
     /// of every module. The audit trail keeps only the pseudonymous user id. Re-authentication is required.
     /// </summary>
-    public async Task DeleteAsync(Guid userId, string password, CancellationToken ct)
+    public async Task DeleteAsync(Guid userId, DeleteAccountRequest request, CancellationToken ct)
     {
         var user = await db.Set<User>().SingleOrDefaultAsync(u => u.Id == userId, ct)
             ?? throw new NotFoundException();
 
-        if (hasher.VerifyHashedPassword(user, user.PasswordHash, password) == PasswordVerificationResult.Failed)
+        // An account with a password is confirmed with the password; a Google-only account with a fresh Google sign-in of the same identity.
+        var confirmed = user.PasswordHash is { } storedHash
+            ? !string.IsNullOrEmpty(request.Password)
+              && hasher.VerifyHashedPassword(user, storedHash, request.Password) != PasswordVerificationResult.Failed
+            : !string.IsNullOrEmpty(request.GoogleIdToken)
+              && await googleAuth.ConfirmsAccountAsync(userId, request.GoogleIdToken, ct);
+
+        if (!confirmed)
         {
-            audit.Record("account.delete_rejected", userId, "wrong_password");
+            audit.Record("account.delete_rejected", userId, user.HasPassword ? "wrong_password" : "google_not_confirmed");
             await db.SaveChangesAsync(ct);
-            throw new BadRequestException("invalid_password", "The password is incorrect.");
+            throw new BadRequestException("invalid_password",
+                user.HasPassword ? "The password is incorrect." : "Google could not confirm that this is your account.");
         }
 
         audit.Record("account.deleted", userId);

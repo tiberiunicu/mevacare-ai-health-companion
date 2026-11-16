@@ -8,12 +8,15 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 |---|---|
 | `POST /api/auth/register` *anonymous, rate limited* | create account (+ initial consents); sets the refresh cookie |
 | `POST /api/auth/login` *anonymous, rate limited* | sign in; sets the refresh cookie |
+| `GET /api/auth/providers` *anonymous* | which outside sign-in providers are on, with the public Google client id (`{google: {clientId} \| null}`) |
+| `POST /api/auth/google` `{idToken, acceptTerms?, healthDataConsent?, aiProcessingConsent?}` *anonymous, rate limited* | sign in with a Google ID token (verified by the API); creates the account (201) when `acceptTerms` is true, else `409 registration_required`; `409 google_account_not_linked` when the e-mail belongs to a password account; sets the refresh cookie. See [ADR-0018](../decisions/0018-sign-in-with-google.md) |
+| `POST /api/auth/google/link` `{idToken}` · `DELETE /api/auth/google` | connect / disconnect the signed-in account's Google identity (`google_in_use`, `google_already_linked`, `password_required`) |
 | `POST /api/auth/refresh` *anonymous, rate limited* | new access token from the httpOnly cookie (rotates it) |
 | `POST /api/auth/logout` *anonymous* | revoke the refresh-token family, clear the cookie |
-| `GET /api/auth/me` | current user |
+| `GET /api/auth/me` | current user (`hasPassword`, `linkedProviders`) |
 | `GET /api/consents` · `PUT /api/consents/{type}` `{granted}` | list / change consent (`TermsOfService` cannot be withdrawn) |
 | `GET /api/account/export` | GDPR export (JSON) |
-| `POST /api/account/delete` `{password}` | GDPR erasure |
+| `POST /api/account/delete` `{password}` or, for an account without a password, `{googleIdToken}` | GDPR erasure |
 | `GET/PUT /api/health-profile` | profile (needs `HealthDataProcessing`) |
 | `GET/POST /api/health-goals` · `DELETE /api/health-goals/{id}` | goals, max 5 (needs `HealthDataProcessing`) |
 | `GET/PUT /api/health-preferences` | language, units, theme (no consent needed) |

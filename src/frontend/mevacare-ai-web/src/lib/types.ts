@@ -5,6 +5,15 @@ export interface User {
   email: string
   displayName: string
   roles: string[]
+  /** False for an account created with Google: it signs in with Google only. */
+  hasPassword: boolean
+  /** Outside sign-in providers connected to the account, e.g. "Google". */
+  linkedProviders: string[]
+}
+
+export interface AuthProviders {
+  /** Null when Sign in with Google is not switched on at the server. */
+  google: { clientId: string } | null
 }
 
 export interface AuthResponse {

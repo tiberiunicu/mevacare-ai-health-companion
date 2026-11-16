@@ -5,6 +5,8 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Alert, Button, Field, Spinner, TextInput } from '../../components/ui'
 import { ApiError } from '../../lib/api'
 import { useAuthStore } from '../../stores/auth'
+import { ConsentCheckbox } from './ConsentCheckbox'
+import { GoogleAuthSection } from './GoogleAuthSection'
 import { useLogin, useRegister } from './hooks'
 
 export function RequireAuth() {
@@ -90,6 +92,7 @@ export function LoginPage() {
           {login.isPending ? t('auth.signingIn') : t('auth.signIn')}
         </Button>
       </form>
+      <GoogleAuthSection variant="signin" />
       <p className="text-sm text-muted">
         {t('auth.noAccount')}{' '}
         <Link to="/register" className="font-semibold text-primary hover:underline">
@@ -180,6 +183,10 @@ export function RegisterPage() {
           {register.isPending ? t('auth.creating') : t('auth.createAccount')}
         </Button>
       </form>
+      <GoogleAuthSection
+        variant="signup"
+        defaults={{ acceptTerms: form.acceptTerms, healthDataConsent: form.healthDataConsent, aiProcessingConsent: form.aiProcessingConsent }}
+      />
       <p className="text-sm text-muted">
         {t('auth.haveAccount')}{' '}
         <Link to="/login" className="font-semibold text-primary hover:underline">
@@ -187,36 +194,5 @@ export function RegisterPage() {
         </Link>
       </p>
     </AuthLayout>
-  )
-}
-
-function ConsentCheckbox({
-  label,
-  checked,
-  onChange,
-  error,
-}: {
-  label: string
-  checked: boolean
-  onChange: (value: boolean) => void
-  error?: string
-}) {
-  return (
-    <div>
-      <label className="flex cursor-pointer items-start gap-3 text-sm">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="mt-0.5 size-5 shrink-0 accent-[var(--primary)]"
-        />
-        <span>{label}</span>
-      </label>
-      {error && (
-        <p role="alert" className="ml-8 mt-1 text-sm text-danger">
-          {error}
-        </p>
-      )}
-    </div>
   )
 }

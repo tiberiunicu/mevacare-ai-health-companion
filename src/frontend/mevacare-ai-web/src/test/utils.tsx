@@ -21,7 +21,7 @@ export function signIn() {
   useAuthStore.getState().setSession({
     accessToken: 'test-token',
     expiresAtUtc: new Date(Date.now() + 600_000).toISOString(),
-    user: { id: '00000000-0000-0000-0000-000000000001', email: 'user@example.test', displayName: 'Synthetic User', roles: ['User'] },
+    user: { id: '00000000-0000-0000-0000-000000000001', email: 'user@example.test', displayName: 'Synthetic User', roles: ['User'], hasPassword: true, linkedProviders: [] },
   })
 }
 

@@ -10,6 +10,7 @@ is closed.
 |---|---|
 | Passwords | PBKDF2-HMAC-SHA512 through ASP.NET's `PasswordHasher` (210,000 iterations, configurable, transparent re-hash on login); length-based policy (10–128 characters, no composition rules); never logged or returned |
 | Sessions | 15-minute JWT (HS256, pinned algorithm, 30 s skew) with only `sub`, `jti` and roles; rotating refresh token in an httpOnly, SameSite=Strict, path-scoped cookie; only a SHA-256 hash is stored; reuse of a rotated token after a grace window revokes the whole token family |
+| Sign in with Google | the browser delivers Google's signed ID token; the API verifies signature, issuer, audience, expiry, RS256 and a verified e-mail, then issues its own session. No client secret. An e-mail that matches a password account is **not** merged automatically (our e-mails are unverified); the owner connects Google in Settings. Accounts created with Google have no password. See [ADR-0018](../decisions/0018-sign-in-with-google.md); not yet run against real Google, no replay nonce |
 | Brute force | per-account lockout (5 failures → 15 min), per-IP rate limit on register/login/refresh, identical errors and equalised timing for unknown user vs wrong password |
 | Authorization | secure by default: the fallback policy requires authentication; the caller id comes only from the validated token (`ICurrentUser`); every query filters by it; foreign ids answer 404 |
 | Mass assignment | endpoints bind to dedicated request records, never to entities; tests post extra fields (`roles`, `userId`, `id`) and assert they are ignored |
@@ -27,7 +28,7 @@ is closed.
 |---|---|
 | Lawful basis, consent (art. 6, 7, 9) | `UserConsents`: `TermsOfService` (required), `HealthDataProcessing`, `AiProcessing`, `ExternalIntegrations`. Health-data endpoints answer **403 `consent_required`** until granted and again after withdrawal; chat requires `AiProcessing`. Optional consents default to *off* and are separate checkboxes at sign-up. Each change is audited with the policy version. |
 | Access and portability (art. 15, 20) | `GET /api/account/export` returns one JSON document: account, consents and a section from every module's `IUserDataExporter` (health profile, goals, preferences, chat history). New modules must register an exporter. |
-| Erasure (art. 17) | `POST /api/account/delete` (re-authentication by password) deletes the user; every module's rows go away through cascading foreign keys (integration tests assert profile and chat data are gone). Only the pseudonymous audit trail remains. |
+| Erasure (art. 17) | `POST /api/account/delete` (re-authentication by password, or by a fresh Google sign-in for an account without a password) deletes the user; every module's rows go away through cascading foreign keys (integration tests assert profile and chat data are gone). Only the pseudonymous audit trail remains. |
 | Withdrawal | withdrawing a consent blocks further processing immediately; existing data stays until the user deletes it (a delete-data-per-consent action is future work). |
 | Records of processing | `core.AuditEvents` and this document. |
 

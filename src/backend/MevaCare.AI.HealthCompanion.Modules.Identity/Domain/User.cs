@@ -11,12 +11,17 @@ public static class Roles
 public sealed class User : AuditableEntity
 {
     private readonly List<UserRole> _roles = [];
+    private readonly List<ExternalLogin> _externalLogins = [];
 
     private User() { }
 
     public string Email { get; private set; } = null!;
     public string NormalizedEmail { get; private set; } = null!;
-    public string PasswordHash { get; private set; } = null!;
+
+    /// <summary>Null for an account created with an outside provider (Google) that never set a password.</summary>
+    public string? PasswordHash { get; private set; }
+    public bool HasPassword => PasswordHash is not null;
+    public IReadOnlyCollection<ExternalLogin> ExternalLogins => _externalLogins;
     public string DisplayName { get; private set; } = null!;
     public bool IsActive { get; private set; } = true;
     public int FailedLoginCount { get; private set; }
@@ -38,6 +43,24 @@ public sealed class User : AuditableEntity
         user._roles.Add(new UserRole(user.Id, Domain.Roles.User));
         return user;
     }
+
+    /// <summary>An account created by signing in with an outside provider: no password, the provider proves the identity.</summary>
+    public static User RegisterExternal(string email, string displayName, string provider, string subject, DateTime nowUtc)
+    {
+        var user = new User
+        {
+            Email = email.Trim(),
+            NormalizedEmail = Normalize(email),
+            DisplayName = displayName.Trim(),
+            PasswordHash = null,
+        };
+        user._roles.Add(new UserRole(user.Id, Domain.Roles.User));
+        user._externalLogins.Add(new ExternalLogin(user.Id, provider, subject, email.Trim(), nowUtc));
+        return user;
+    }
+
+    /// <summary>Records a sign-in made with an outside provider. Unlike a password sign-in it does not clear a password lockout.</summary>
+    public void RegisterExternalSignIn(DateTime nowUtc) => LastLoginAtUtc = nowUtc;
 
     public bool IsLockedOut(DateTime nowUtc) => LockoutEndUtc is { } end && end > nowUtc;
 

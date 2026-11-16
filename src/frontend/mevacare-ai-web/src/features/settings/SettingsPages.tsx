@@ -11,6 +11,8 @@ import { useAuthStore } from '../../stores/auth'
 import { SETTINGS_NAV } from '../profile/navigation'
 import { useKnowledgeSources } from '../chat/hooks'
 import { useConsents, usePreferences, useSetConsent, useUpdatePreferences } from '../profile/hooks'
+import { GoogleSignInButton } from '../auth/GoogleSignInButton'
+import { useAuthProviders, useLinkGoogle, useUnlinkGoogle } from '../auth/hooks'
 
 export function PreferencesPage() {
   const { t } = useTranslation()
@@ -115,6 +117,7 @@ export function PrivacyPage() {
               </div>
             ))}
           </Card>
+          <SignInMethodsCard />
           <ExportCard />
           <DeleteAccountCard />
         </div>
@@ -160,20 +163,79 @@ function ExportCard() {
   )
 }
 
+function SignInMethodsCard() {
+  const { t } = useTranslation()
+  const user = useAuthStore((s) => s.user)
+  const providers = useAuthProviders()
+  const link = useLinkGoogle()
+  const unlink = useUnlinkGoogle()
+  const clientId = providers.data?.google?.clientId
+  const googleLinked = user?.linkedProviders.includes('Google') ?? false
+
+  // Nothing to manage when Google sign-in is off and was never connected.
+  if (!user || (!googleLinked && !clientId)) return null
+
+  const error = link.error ?? unlink.error
+  const errorText = !error
+    ? null
+    : error instanceof ApiError && error.code === 'google_in_use'
+      ? t('privacy.googleInUse')
+      : error instanceof ApiError && error.code === 'password_required'
+        ? t('privacy.googleOnlyMethod')
+        : t('common.genericError')
+
+  return (
+    <Card className="space-y-4">
+      <div>
+        <h2 className="font-semibold">{t('privacy.signInMethodsTitle')}</h2>
+        <p className="mt-1 text-sm text-muted">{t('privacy.signInMethodsBody')}</p>
+      </div>
+      <dl className="divide-y divide-line text-sm">
+        <div className="flex items-center justify-between gap-4 py-3">
+          <dt className="font-medium">{t('privacy.methodPassword')}</dt>
+          <dd className="text-muted">{user.hasPassword ? t('privacy.methodPasswordSet') : t('privacy.methodPasswordNone')}</dd>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+          <dt className="font-medium">{t('privacy.methodGoogle')}</dt>
+          <dd className="flex items-center gap-3 text-muted">
+            {googleLinked ? (
+              <>
+                <span>{t('privacy.googleConnected')}</span>
+                {user.hasPassword && (
+                  <Button variant="secondary" onClick={() => unlink.mutate()} loading={unlink.isPending}>
+                    {t('privacy.googleDisconnect')}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <span>{t('privacy.googleNotConnected')}</span>
+            )}
+          </dd>
+        </div>
+      </dl>
+      {googleLinked && !user.hasPassword && <p className="text-xs text-muted">{t('privacy.googleOnlyMethod')}</p>}
+      {!googleLinked && clientId && <GoogleSignInButton clientId={clientId} text="continue_with" onCredential={(idToken) => link.mutate(idToken)} />}
+      {errorText && <p role="alert" className="text-sm text-danger">{errorText}</p>}
+    </Card>
+  )
+}
+
 function DeleteAccountCard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const hasPassword = useAuthStore((s) => s.user?.hasPassword ?? true)
+  const providers = useAuthProviders()
   const [open, setOpen] = useState(false)
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const googleClientId = providers.data?.google?.clientId
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault()
+  const remove = async (body: { password?: string; googleIdToken?: string }) => {
     setBusy(true)
     setError(null)
     try {
-      await api<void>('/api/account/delete', { method: 'POST', body: { password } })
+      await api<void>('/api/account/delete', { method: 'POST', body })
       useAuthStore.getState().clear()
       navigate('/login', { replace: true })
     } catch (e) {
@@ -183,11 +245,26 @@ function DeleteAccountCard() {
     }
   }
 
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    void remove({ password })
+  }
+
+  const close = () => {
+    setOpen(false)
+    setPassword('')
+    setError(null)
+  }
+
   return (
     <Card className="border-danger/40">
       <h2 className="font-semibold text-danger">{t('privacy.deleteTitle')}</h2>
       <p className="mb-4 mt-1 text-sm text-muted">{t('privacy.deleteBody')}</p>
-      {open ? (
+      {!open ? (
+        <Button variant="danger" onClick={() => setOpen(true)}>
+          {t('privacy.deleteAction')}
+        </Button>
+      ) : hasPassword ? (
         <form onSubmit={submit} className="max-w-sm space-y-3">
           <Field label={t('privacy.deleteConfirmPassword')} error={error ?? undefined}>
             {(p) => <TextInput {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />}
@@ -196,15 +273,23 @@ function DeleteAccountCard() {
             <Button type="submit" variant="danger" loading={busy} disabled={!password}>
               {t('privacy.deleteConfirm')}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => { setOpen(false); setPassword(''); setError(null) }}>
+            <Button type="button" variant="ghost" onClick={close}>
               {t('common.cancel')}
             </Button>
           </div>
         </form>
       ) : (
-        <Button variant="danger" onClick={() => setOpen(true)}>
-          {t('privacy.deleteAction')}
-        </Button>
+        <div className="max-w-sm space-y-3">
+          <p className="text-sm">{googleClientId ? t('privacy.deleteConfirmGoogle') : t('privacy.deleteGoogleOff')}</p>
+          {googleClientId && (
+            <GoogleSignInButton clientId={googleClientId} text="continue_with" onCredential={(idToken) => void remove({ googleIdToken: idToken })} />
+          )}
+          {busy && <Spinner label={t('common.loading')} />}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+          <Button type="button" variant="ghost" onClick={close}>
+            {t('common.cancel')}
+          </Button>
+        </div>
       )}
     </Card>
   )

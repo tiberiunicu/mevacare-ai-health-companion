@@ -6,6 +6,7 @@ using MevaCare.AI.HealthCompanion.Contracts.Validation;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Domain;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Account;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth;
+using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth.Google;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Consents;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +40,12 @@ public sealed class IdentityModule : IModule
             hasher.IterationCount = auth.Value.PasswordHashIterations;
         });
         services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+
+        services.AddOptions<GoogleAuthOptions>().Bind(configuration.GetSection(GoogleAuthOptions.SectionName));
+        services.AddHttpClient(GoogleSigningKeys.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddSingleton<IGoogleSigningKeys, GoogleSigningKeys>();
+        services.AddSingleton<IGoogleIdTokenValidator, GoogleIdTokenValidator>();
+        services.AddScoped<GoogleAuthService>();
 
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<AuthService>();
@@ -101,6 +108,32 @@ public sealed class IdentityModule : IModule
         auth.MapGet("/me", async (ICurrentUser user, AuthService service, CancellationToken ct) =>
             TypedResults.Ok(await service.GetCurrentUserAsync(user.UserId, ct)));
 
+        // Which outside sign-in providers are switched on, and the public client id the browser needs. No secrets.
+        auth.MapGet("/providers", (GoogleAuthService service) => TypedResults.Ok(service.Providers())).AllowAnonymous();
+
+        auth.MapPost("/google", async (GoogleSignInRequest request, GoogleAuthService service, HttpContext http, IOptions<AuthOptions> options, CancellationToken ct) =>
+            {
+                var (session, created) = await service.SignInAsync(request, ct);
+                WriteRefreshCookie(http, session, options.Value);
+                return created
+                    ? Results.Created("/api/auth/me", session.Response)
+                    : Results.Ok(session.Response);
+            })
+            .AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth).WithValidation<GoogleSignInRequest>();
+
+        auth.MapPost("/google/link", async (GoogleLinkRequest request, ICurrentUser user, GoogleAuthService service, CancellationToken ct) =>
+            {
+                await service.LinkAsync(user.UserId, request.IdToken, ct);
+                return TypedResults.NoContent();
+            })
+            .RequireRateLimiting(RateLimitPolicies.Auth).WithValidation<GoogleLinkRequest>();
+
+        auth.MapDelete("/google", async (ICurrentUser user, GoogleAuthService service, CancellationToken ct) =>
+        {
+            await service.UnlinkAsync(user.UserId, ct);
+            return TypedResults.NoContent();
+        });
+
         var consents = app.MapGroup("/api/consents").WithTags("Consents");
 
         consents.MapGet("/", async (ICurrentUser user, ConsentService service, CancellationToken ct) =>
@@ -123,7 +156,7 @@ public sealed class IdentityModule : IModule
 
         account.MapPost("/delete", async (DeleteAccountRequest request, ICurrentUser user, AccountService service, HttpContext http, IOptions<AuthOptions> options, CancellationToken ct) =>
             {
-                await service.DeleteAsync(user.UserId, request.Password, ct);
+                await service.DeleteAsync(user.UserId, request, ct);
                 DeleteRefreshCookie(http, options.Value);
                 return TypedResults.NoContent();
             })
