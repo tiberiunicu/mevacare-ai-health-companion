@@ -80,7 +80,9 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
   const response = await apiFetchRaw(path, options)
   if (!response.ok) throw await toApiError(response)
   if (response.status === 204) return undefined as T
-  return (await response.json()) as T
+  // Some answers (202 Accepted) carry no body at all.
+  const text = await response.text()
+  return (text ? JSON.parse(text) : undefined) as T
 }
 
 export { toApiError }

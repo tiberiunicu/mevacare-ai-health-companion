@@ -74,7 +74,7 @@ if ($exists -eq 'yes') {
 }
 
 # 2. Copied from the local user-secrets ---------------------------------------------------------------------------------------------
-$wanted = @('Ai:', 'Knowledge:Embeddings:', 'Knowledge:Retrieval:', 'Integrations:Whoop:ClientId', 'Integrations:Whoop:ClientSecret', 'Integrations:Whoop:ClientAuthentication', 'Auth:Google:ClientId')
+$wanted = @('Ai:', 'Knowledge:Embeddings:', 'Knowledge:Retrieval:', 'Integrations:Whoop:ClientId', 'Integrations:Whoop:ClientSecret', 'Integrations:Whoop:ClientAuthentication', 'Auth:Google:ClientId', 'Email:')
 $lines = New-Object System.Collections.Generic.List[string]
 $names = New-Object System.Collections.Generic.List[string]
 foreach ($entry in (& dotnet user-secrets list --project $project)) {

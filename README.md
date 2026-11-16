@@ -134,6 +134,7 @@ Configuration is layered: `appsettings.json` (safe defaults) → `appsettings.De
 | `Ai:ToolsEnabled`, `Ai:MaxToolIterations` | turn tool calling off (models without tool support) / cap model-tool round trips |
 | `Knowledge:Enabled`, `Knowledge:Embeddings:*`, `Knowledge:VectorStore:*`, `Knowledge:Chunking:*`, `Knowledge:Retrieval:*` | medical-knowledge RAG; defaults work offline (Lexical embeddings, Qdrant on `localhost:6333`). See [docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md#configuration-knowledge) |
 | `Integrations:Whoop:ClientId` / `ClientSecret` / `RedirectUri`, `Integrations:Sync:*`, `Integrations:DataProtectionKeysPath` | WHOOP connection and synchronization; without credentials the integration shows "not set up". See [docs/integrations/whoop.md](docs/integrations/whoop.md) |
+| `Email:Host` / `Port` / `UseStartTls` / `Username` / `Password` / `FromAddress`, `Auth:PublicBaseUrl` | SMTP for e-mail (today: password reset) and the public web address used in e-mail links. Without `Email:Host` the "Forgot your password?" link is not shown. See [docs/decisions/0020-password-reset-by-e-mail.md](docs/decisions/0020-password-reset-by-e-mail.md) |
 | `Auth:Google:ClientId` | turns on **Sign in with Google** (public client id, no secret; empty = off). `./scripts/setup-google-signin.ps1`; see [docs/integrations/google-sign-in.md](docs/integrations/google-sign-in.md) |
 | `Auth:*`, `RateLimiting:*`, `Cors:AllowedOrigins` | see `appsettings.json` |
 
@@ -210,7 +211,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
-- State after Sign in with Google ([ADR-0018](docs/decisions/0018-sign-in-with-google.md); earlier: chat-first actions, [ADR-0017](docs/decisions/0017-chat-first-actions.md)): 437 unit tests, 225 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 19 evaluation tests (+4 live-model tests skipped), 140 frontend tests; all pass. Google's own side was never exercised (stand-in only). The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
+- State after Sign in with Google ([ADR-0018](docs/decisions/0018-sign-in-with-google.md); earlier: chat-first actions, [ADR-0017](docs/decisions/0017-chat-first-actions.md)): 444 unit tests, 243 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 19 evaluation tests (+4 live-model tests skipped), 151 frontend tests; all pass. Google's own side was never exercised (stand-in only). The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.

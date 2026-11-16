@@ -51,6 +51,15 @@ public sealed class AuthOptions
     /// <summary>Set to false only for plain-http local development.</summary>
     public bool RefreshCookieSecure { get; init; } = true;
 
+    /// <summary>
+    /// The public address of the web app, used to build the links in e-mails (never taken from the request, so a forged Host header
+    /// cannot point a reset link at another site). Set it to https://your-domain in production.
+    /// </summary>
+    [Url] public string PublicBaseUrl { get; init; } = "http://localhost:5173";
+
+    /// <summary>How long a password-reset link works.</summary>
+    [Range(5, 1440)] public int PasswordResetMinutes { get; init; } = 30;
+
     /// <summary>PBKDF2 iterations for new password hashes (OWASP guidance for PBKDF2-HMAC-SHA512 is 210,000).</summary>
     [Range(100_000, 5_000_000)] public int PasswordHashIterations { get; init; } = 210_000;
 }

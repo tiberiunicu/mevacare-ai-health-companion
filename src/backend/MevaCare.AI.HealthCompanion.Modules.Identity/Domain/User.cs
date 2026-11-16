@@ -82,6 +82,17 @@ public sealed class User : AuditableEntity
     }
 
     public void UpdatePasswordHash(string passwordHash) => PasswordHash = passwordHash;
+
+    /// <summary>
+    /// Sets a new password after the person proved control of the e-mail address. Also lifts a lockout: the lockout protects the old
+    /// password from guessing, and that password no longer exists. For an account created with Google this adds a password.
+    /// </summary>
+    public void SetPasswordAfterReset(string passwordHash)
+    {
+        PasswordHash = passwordHash;
+        FailedLoginCount = 0;
+        LockoutEndUtc = null;
+    }
 }
 
 public sealed class UserRole(Guid userId, string role)

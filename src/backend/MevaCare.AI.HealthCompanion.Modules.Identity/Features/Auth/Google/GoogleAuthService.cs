@@ -19,7 +19,8 @@ public sealed record GoogleSignInRequest(
 
 public sealed record GoogleLinkRequest(string IdToken);
 
-public sealed record AuthProvidersResponse(GoogleProviderInfo? Google);
+/// <param name="PasswordReset">True when a mail server is configured, so "forgot my password" can work.</param>
+public sealed record AuthProvidersResponse(GoogleProviderInfo? Google, bool PasswordReset = false);
 
 public sealed record GoogleProviderInfo(string ClientId);
 

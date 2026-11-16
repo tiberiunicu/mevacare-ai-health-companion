@@ -14,6 +14,8 @@ export interface User {
 export interface AuthProviders {
   /** Null when Sign in with Google is not switched on at the server. */
   google: { clientId: string } | null
+  /** True when the server can send e-mail, so "forgot my password" works. */
+  passwordReset?: boolean
 }
 
 export interface AuthResponse {

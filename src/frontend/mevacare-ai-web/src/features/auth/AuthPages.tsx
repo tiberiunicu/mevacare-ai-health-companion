@@ -7,7 +7,7 @@ import { ApiError } from '../../lib/api'
 import { useAuthStore } from '../../stores/auth'
 import { ConsentCheckbox } from './ConsentCheckbox'
 import { GoogleAuthSection } from './GoogleAuthSection'
-import { useLogin, useRegister } from './hooks'
+import { useAuthProviders, useLogin, useRegister } from './hooks'
 
 export function RequireAuth() {
   const { t } = useTranslation()
@@ -18,7 +18,7 @@ export function RequireAuth() {
   return <Outlet />
 }
 
-function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   const { t } = useTranslation()
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -64,6 +64,7 @@ export function LoginPage() {
   const status = useAuthStore((s) => s.status)
   const location = useLocation()
   const login = useLogin()
+  const providers = useAuthProviders()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -88,6 +89,13 @@ export function LoginPage() {
             <TextInput {...p} type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           )}
         </Field>
+        {providers.data?.passwordReset && (
+          <p className="-mt-2 text-sm">
+            <Link to="/forgot-password" className="font-semibold text-primary hover:underline">
+              {t('auth.forgotPassword')}
+            </Link>
+          </p>
+        )}
         <Button type="submit" className="w-full" loading={login.isPending}>
           {login.isPending ? t('auth.signingIn') : t('auth.signIn')}
         </Button>

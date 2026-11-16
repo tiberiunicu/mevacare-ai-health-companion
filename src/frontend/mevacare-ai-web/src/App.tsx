@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { LoginPage, RegisterPage, RequireAuth } from './features/auth/AuthPages'
+import { ForgotPasswordPage, ResetPasswordPage } from './features/auth/PasswordResetPages'
 import { useBootstrapSession } from './features/auth/hooks'
 import { ChatProvider } from './features/chat/ChatContext'
 import { ChatPage } from './features/chat/ChatPage'
@@ -26,6 +27,8 @@ function Authenticated() {
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
   {
     element: <RequireAuth />,
     children: [

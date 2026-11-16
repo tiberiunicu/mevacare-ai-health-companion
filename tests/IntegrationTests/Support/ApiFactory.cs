@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth.Google;
 using MevaCare.AI.HealthCompanion.Modules.Integrations.Providers.Whoop;
@@ -33,6 +34,9 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     /// <summary>Wraps the real embedding service so a test can simulate an outage of the embedding provider.</summary>
     public FlakyEmbeddingService Embeddings { get; } = new();
+
+    /// <summary>Stand-in for the mail queue: every e-mail the application "sends" is kept here.</summary>
+    public CapturingEmailQueue Mail { get; } = new();
 
     /// <summary>Scripted stand-in for the WHOOP service; see <see cref="FakeWhoopHandler"/>.</summary>
     public FakeWhoopHandler Whoop { get; } = new();
@@ -73,8 +77,11 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Integrations:Whoop:ClientSecret", WhoopConfigured ? "test-client-secret" : "");
         builder.UseSetting("Integrations:Whoop:RedirectUri", "http://localhost:5080/api/integrations/whoop/callback");
         builder.UseSetting("Auth:Google:ClientId", "test-client.apps.googleusercontent.com");
+        builder.UseSetting("Auth:PublicBaseUrl", "https://app.example.test");
         builder.ConfigureTestServices(services =>
         {
+            services.RemoveAll<IEmailQueue>();
+            services.AddSingleton<IEmailQueue>(Mail);
             services.RemoveAll<IGoogleIdTokenValidator>();
             services.AddSingleton<IGoogleIdTokenValidator, FakeGoogleIdTokenValidator>();
             services.RemoveAll<IChatClient>();

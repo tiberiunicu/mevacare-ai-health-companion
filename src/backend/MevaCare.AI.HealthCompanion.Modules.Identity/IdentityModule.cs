@@ -7,6 +7,7 @@ using MevaCare.AI.HealthCompanion.Modules.Identity.Domain;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Account;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth.Google;
+using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Auth.PasswordReset;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Features.Consents;
 using MevaCare.AI.HealthCompanion.Modules.Identity.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -49,6 +50,7 @@ public sealed class IdentityModule : IModule
 
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<AuthService>();
+        services.AddScoped<PasswordResetService>();
         services.AddScoped<ConsentService>();
         services.AddScoped<IConsentService>(sp => sp.GetRequiredService<ConsentService>());
         services.AddScoped<AccountService>();
@@ -109,7 +111,24 @@ public sealed class IdentityModule : IModule
             TypedResults.Ok(await service.GetCurrentUserAsync(user.UserId, ct)));
 
         // Which outside sign-in providers are switched on, and the public client id the browser needs. No secrets.
-        auth.MapGet("/providers", (GoogleAuthService service) => TypedResults.Ok(service.Providers())).AllowAnonymous();
+        auth.MapGet("/providers", (GoogleAuthService service, IEmailQueue mail) =>
+                TypedResults.Ok(service.Providers() with { PasswordReset = mail.IsConfigured }))
+            .AllowAnonymous();
+
+        // Always answers 202, whether or not the address has an account (and whether or not e-mail is configured).
+        auth.MapPost("/forgot-password", async (ForgotPasswordRequest request, PasswordResetService service, CancellationToken ct) =>
+            {
+                await service.RequestAsync(request, ct);
+                return TypedResults.Accepted((string?)null);
+            })
+            .AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth).WithValidation<ForgotPasswordRequest>();
+
+        auth.MapPost("/reset-password", async (ResetPasswordRequest request, PasswordResetService service, CancellationToken ct) =>
+            {
+                await service.ResetAsync(request, ct);
+                return TypedResults.NoContent();
+            })
+            .AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth).WithValidation<ResetPasswordRequest>();
 
         auth.MapPost("/google", async (GoogleSignInRequest request, GoogleAuthService service, HttpContext http, IOptions<AuthOptions> options, CancellationToken ct) =>
             {

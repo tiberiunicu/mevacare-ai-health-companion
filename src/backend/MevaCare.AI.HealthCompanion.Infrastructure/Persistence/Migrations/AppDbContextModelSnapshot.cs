@@ -351,6 +351,43 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                     b.ToTable("ExternalLogins", "identity");
                 });
 
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("UsedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "CreatedAtUtc");
+
+                    b.ToTable("PasswordResetTokens", "identity");
+                });
+
             modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1326,6 +1363,15 @@ namespace MevaCare.AI.HealthCompanion.Infrastructure.Persistence.Migrations
                 {
                     b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
                         .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.PasswordResetToken", b =>
+                {
+                    b.HasOne("MevaCare.AI.HealthCompanion.Modules.Identity.Domain.User", null)
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

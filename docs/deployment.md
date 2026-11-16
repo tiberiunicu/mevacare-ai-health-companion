@@ -66,6 +66,8 @@ cp ~/mevacare-hc/src/deploy/vps/renew-certs.sh ~/mevacare_v1_2026/renew-certs.sh
 - Foods: copy the Open Food Facts dump (`.local/off/*.csv.gz`, 0.8 GB) to `~/mevacare-hc/data/off` and run
   `... run --rm api import-openfoodfacts /data/off/en.openfoodfacts.org.products.csv.gz romania` (add countries as wanted; all eight countries are about 1.05 million products and a lot for this server, Romania alone is 4,028). The generic USDA foods matter most for sentences such as "two eggs and toast": download "SR Legacy" (CSV zip, ~6 MB) from fdc.nal.usda.gov, copy `food.csv food_nutrient.csv nutrient.csv food_portion.csv measure_unit.csv food_category.csv sr_legacy_food.csv` to `~/mevacare-hc/data/usda` and run `... run --rm api import-usda /data/usda`. The imports are repeatable: rows already present are skipped.
 
+**7b. E-mail (password reset).** The "Forgot your password?" link appears only when the API has a mail server. To use the same Gmail mailbox as v1, run on the VPS `sh ~/mevacare-hc/src/deploy/vps/copy-v1-smtp.sh` (copies the settings on the server, prints names only), then `$C up -d api`. Any other SMTP provider: write `~/mevacare-hc/api.email.env` with `Email__Host`, `Email__Port`, `Email__UseStartTls`, `Email__Username`, `Email__Password`, `Email__FromAddress` (mode 600). With Gmail the sender must be the mailbox itself, and an app password is needed.
+
 **8. Check.** `https://health-companion.mevacare.com/health/ready` answers `Healthy`; the login page shows the Google button; register, sign in, log a meal in chat.
 
 ## Operating it

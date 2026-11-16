@@ -55,12 +55,15 @@ services:
     env_file:
       - ../../api.generated.env
       - ../../api.copied.env
+      - path: ../../api.email.env       # SMTP settings (optional: without them password reset is switched off)
+        required: false
     # Fixed settings; they win over env_file, so a value copied from a developer machine can never point production at localhost.
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       Database__MigrateOnStartup: "true"
       Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?missing in .env}
       Auth__RefreshCookieSecure: "true"
+      Auth__PublicBaseUrl: ${PUBLIC_ORIGIN}   # the address inside e-mail links (password reset)
       Knowledge__Enabled: "true"
       Knowledge__VectorStore__Provider: Qdrant
       Knowledge__VectorStore__Url: http://qdrant:6333

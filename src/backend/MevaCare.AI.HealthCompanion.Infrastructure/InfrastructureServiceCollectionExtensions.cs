@@ -1,10 +1,12 @@
 using System.Reflection;
 using MevaCare.AI.HealthCompanion.Contracts.Abstractions;
 using MevaCare.AI.HealthCompanion.Infrastructure.Auditing;
+using MevaCare.AI.HealthCompanion.Infrastructure.Email;
 using MevaCare.AI.HealthCompanion.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace MevaCare.AI.HealthCompanion.Infrastructure;
 
@@ -40,6 +42,15 @@ public static class InfrastructureServiceCollectionExtensions
         });
 
         services.AddScoped<IAuditLog, AuditLog>();
+
+        // E-mail: a queue the application writes to and a background service that delivers (SMTP when Email:Host is set, otherwise a logger).
+        services.AddOptions<EmailOptions>().Bind(configuration.GetSection(EmailOptions.SectionName)).ValidateDataAnnotations().ValidateOnStart();
+        services.AddSingleton<EmailQueue>();
+        services.AddSingleton<IEmailQueue>(sp => sp.GetRequiredService<EmailQueue>());
+        services.AddSingleton<IEmailTransport>(sp => sp.GetRequiredService<IOptions<EmailOptions>>().Value.Enabled
+            ? ActivatorUtilities.CreateInstance<SmtpEmailTransport>(sp)
+            : ActivatorUtilities.CreateInstance<LoggingEmailTransport>(sp));
+        services.AddHostedService<EmailDispatcher>();
         return services;
     }
 }

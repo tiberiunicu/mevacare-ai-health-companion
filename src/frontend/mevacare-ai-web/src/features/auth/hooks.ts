@@ -92,6 +92,20 @@ export function useUnlinkGoogle() {
   })
 }
 
+/** Asks for a password-reset e-mail. The server always answers the same, whether or not the address has an account. */
+export function useForgotPassword(language: string) {
+  return useMutation({
+    mutationFn: (email: string) => api<void>('/api/auth/forgot-password', { method: 'POST', body: { email, language } }),
+  })
+}
+
+export function useResetPassword(language: string) {
+  return useMutation({
+    mutationFn: (input: { token: string; newPassword: string }) =>
+      api<void>('/api/auth/reset-password', { method: 'POST', body: { ...input, language } }),
+  })
+}
+
 export function useLogout() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()

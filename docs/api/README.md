@@ -8,9 +8,11 @@ Errors are RFC 9457 problem documents with an extra `code` (stable, for programs
 |---|---|
 | `POST /api/auth/register` *anonymous, rate limited* | create account (+ initial consents); sets the refresh cookie |
 | `POST /api/auth/login` *anonymous, rate limited* | sign in; sets the refresh cookie |
-| `GET /api/auth/providers` *anonymous* | which outside sign-in providers are on, with the public Google client id (`{google: {clientId} \| null}`) |
+| `GET /api/auth/providers` *anonymous* | which outside sign-in providers are on, with the public Google client id (`{google: {clientId} \| null, passwordReset}`; `passwordReset` is true when a mail server is configured) |
 | `POST /api/auth/google` `{idToken, acceptTerms?, healthDataConsent?, aiProcessingConsent?}` *anonymous, rate limited* | sign in with a Google ID token (verified by the API); creates the account (201) when `acceptTerms` is true, else `409 registration_required`; `409 google_account_not_linked` when the e-mail belongs to a password account; sets the refresh cookie. See [ADR-0018](../decisions/0018-sign-in-with-google.md) |
 | `POST /api/auth/google/link` `{idToken}` · `DELETE /api/auth/google` | connect / disconnect the signed-in account's Google identity (`google_in_use`, `google_already_linked`, `password_required`) |
+| `POST /api/auth/forgot-password` `{email, language?}` *anonymous, rate limited* | always `202`, whatever the address; if the account exists and a mail server is configured, e-mails a one-time link (30 min) built from `Auth:PublicBaseUrl`. See [ADR-0020](../decisions/0020-password-reset-by-e-mail.md) |
+| `POST /api/auth/reset-password` `{token, newPassword, language?}` *anonymous, rate limited* | sets the password, ends every session, lifts a lockout; `400 invalid_reset_token` for a used, expired or unknown link |
 | `POST /api/auth/refresh` *anonymous, rate limited* | new access token from the httpOnly cookie (rotates it) |
 | `POST /api/auth/logout` *anonymous* | revoke the refresh-token family, clear the cookie |
 | `GET /api/auth/me` | current user (`hasPassword`, `linkedProviders`) |
