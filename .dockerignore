@@ -1,0 +1,16 @@
+# Build context of deploy/*.Dockerfile is the repository root: keep it small and free of local data.
+.git
+.local
+.vs
+.vscode
+**/bin
+**/obj
+**/node_modules
+**/dist
+tests
+docs
+*.md
+.env
+.env.*
+**/appsettings.Development.json
+**/appsettings.Local.json

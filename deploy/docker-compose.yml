@@ -1,0 +1,96 @@
+# MevaCare AI Health Companion: the whole application on one Docker host.
+#
+#   web  (nginx: single-page app + /api proxy)  <- the VPS edge proxy forwards health-companion.mevacare.com here
+#   api  (.NET 10)
+#   sqlserver (SQL Server 2022 Express)         <- relational data, source of truth
+#   qdrant                                       <- vector index of the medical knowledge
+#
+# Only `web` is reachable from outside the stack (through the shared network `hc_edge`); SQL Server and Qdrant are not published.
+# Secrets are NOT in this file or in the repository: see docs/deployment.md (the server keeps them in two files outside the source tree).
+#
+# Run from the server's application folder (~/mevacare-hc):
+#   docker compose -p mevacare-hc --env-file .env -f src/deploy/docker-compose.yml up -d --build
+name: mevacare-hc
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express            # free for production use; limits: 10 GB per database, about 1.4 GB buffer pool
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?missing in .env}
+      MSSQL_MEMORY_LIMIT_MB: "1400" # keeps SQL Server from taking the memory the other containers need
+    mem_limit: 2g
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  qdrant:
+    image: qdrant/qdrant:v1.20.0
+    restart: unless-stopped
+    mem_limit: 512m
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    mem_limit: 900m
+    # Two files outside the source tree (the server's ~/mevacare-hc): the generated secrets (JWT signing key, database connection string;
+    # written once) and the settings copied from the developer's user-secrets (AI provider, embeddings, WHOOP, Google; rewritten by
+    # scripts/deploy-secrets.ps1 whenever they change).
+    env_file:
+      - ../../api.generated.env
+      - ../../api.copied.env
+    # Fixed settings; they win over env_file, so a value copied from a developer machine can never point production at localhost.
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__MigrateOnStartup: "true"
+      Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?missing in .env}
+      Auth__RefreshCookieSecure: "true"
+      Knowledge__Enabled: "true"
+      Knowledge__VectorStore__Provider: Qdrant
+      Knowledge__VectorStore__Url: http://qdrant:6333
+      Integrations__FrontendBaseUrl: ${PUBLIC_ORIGIN}
+      Integrations__Whoop__RedirectUri: ${PUBLIC_ORIGIN}/api/integrations/whoop/callback
+      Integrations__DataProtectionKeysPath: /app/keys
+      Integrations__Sync__BackgroundEnabled: "true"
+    volumes:
+      - api-keys:/app/keys        # encrypts the stored wearable tokens: losing it means reconnecting every device
+      - ${HOME}/mevacare-hc/data:/data:ro
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    container_name: hc-web          # the edge proxy reaches it by this name on the shared network
+    restart: unless-stopped
+    depends_on:
+      - api
+    mem_limit: 128m
+    networks:
+      - default
+      - edge
+
+networks:
+  edge:
+    external: true
+    name: hc_edge
+
+volumes:
+  sqlserver-data:
+  qdrant-data:
+  api-keys:

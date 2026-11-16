@@ -210,7 +210,7 @@ dotnet test tests/AIEvaluationTests                    # emergency-screen and re
 cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 ```
 
-- State after Sign in with Google ([ADR-0018](docs/decisions/0018-sign-in-with-google.md); earlier: chat-first actions, [ADR-0017](docs/decisions/0017-chat-first-actions.md)): 437 unit tests, 223 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 19 evaluation tests (+4 live-model tests skipped), 140 frontend tests; all pass. Google's own side was never exercised (stand-in only). The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
+- State after Sign in with Google ([ADR-0018](docs/decisions/0018-sign-in-with-google.md); earlier: chat-first actions, [ADR-0017](docs/decisions/0017-chat-first-actions.md)): 437 unit tests, 225 integration tests (+7 Qdrant tests skipped without `MEVACARE_QDRANT_URL`; they pass against Qdrant 1.20.0), 19 evaluation tests (+4 live-model tests skipped), 140 frontend tests; all pass. Google's own side was never exercised (stand-in only). The Open Food Facts tests use a scripted stand-in for the service; the real service (search and product lookup) was checked by hand once, through the UI.
 - Integration tests boot the real API on a temporary database created **through the migrations**. The SQL Server comes
   from `MEVACARE_TEST_SQL` or, if unset, from the API's `ConnectionStrings:Default` user-secret (database name replaced).
 - No test calls a paid or non-deterministic model: chat tests use a scripted `IChatClient`; knowledge tests use the offline Lexical embeddings and an in-memory vector store.
@@ -227,7 +227,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - [Architecture overview](docs/architecture/overview.md) · [Security and privacy](docs/architecture/security-and-privacy.md)
 - [Architecture decision records](docs/decisions/)
 - [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
-- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md) · [Sign in with Google](docs/integrations/google-sign-in.md)
+- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md) · [Sign in with Google](docs/integrations/google-sign-in.md) · [Deployment on the VPS (written, not yet run)](docs/deployment.md)
 - [Insights (trends, comparisons, rules)](docs/architecture/insights.md) · [AI explanations of insights](docs/ai/insight-explanations.md)
 - **[What remains to be done](docs/remaining-work.md)**
 - AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·

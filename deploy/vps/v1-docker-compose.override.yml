@@ -1,0 +1,14 @@
+# Copy to ~/mevacare_v1_2026/docker-compose.override.yml on the VPS (docker compose reads it automatically next to docker-compose.yml).
+# It leaves the v1 files untouched and only (1) adds the health-companion proxy block to the v1 `web` container and (2) puts that container
+# on the network shared with the health-companion stack. Remove the file and run `docker compose up -d web` to undo it.
+services:
+  web:
+    volumes:
+      - ./edge/health-companion.conf:/etc/nginx/conf.d/health-companion.conf:ro
+    networks:
+      - default
+      - hc_edge
+
+networks:
+  hc_edge:
+    external: true

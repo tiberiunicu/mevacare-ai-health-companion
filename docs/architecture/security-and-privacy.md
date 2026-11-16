@@ -86,8 +86,7 @@ These must be resolved before real personal health data is used:
 1. **E-mail verification and password reset** — accounts are not verified; registration reveals whether an e-mail
    exists (409), a deliberate trade-off until e-mail verification exists.
 2. **Multi-factor authentication.**
-3. **Transport security in deployment** — HTTPS termination, certificate management and a reverse-proxy configuration
-   (forwarded headers, SSE buffering off) are not provided; a Content-Security-Policy for the SPA host is not set.
+3. **Transport security in deployment** — a demo deployment is written ([deployment.md](../deployment.md): Let's Encrypt on the shared nginx, forwarded headers trusted only from private networks, SSE unbuffered) but **not yet run**; a Content-Security-Policy for the SPA host is not set.
 4. **Encryption at rest** for the database (TDE or disk encryption) and a key-management story. Provider tokens are already encrypted at the application level; the Data Protection key ring location and its backup are still an operator task.
 5. **Retention jobs** (expired refresh tokens, old audit events) and backups with matching retention.
 6. **Legal texts**: the Terms of Service and Privacy Policy referenced by the consent screen are not written; the

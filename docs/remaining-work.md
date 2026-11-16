@@ -41,7 +41,7 @@ The detailed list lives in [architecture/security-and-privacy.md](architecture/s
 
 1. **Legal**: Terms of Service and Privacy Policy texts (the consent screen references placeholders), a DPIA, processor agreements with the AI provider (and region / zero-retention choice) and with any hosting provider. *Needs you / a lawyer.*
 2. **Account security**: e-mail verification, password reset, multi-factor authentication (registration currently reveals whether an e-mail exists — a deliberate interim trade-off). M–L
-3. **Transport and browser security**: HTTPS termination and a reverse-proxy configuration (forwarded headers, SSE buffering off, only `/api` and the API's own `/health/live|ready|knowledge` proxied), Content-Security-Policy for the SPA host. M
+3. **Transport and browser security**: the demo deployment on the VPS is written ([deployment.md](deployment.md): shared nginx with Let's Encrypt, forwarded headers, SSE unbuffered, only `/api` and the API's own `/health/live|ready|knowledge` proxied) and **has not been run yet**; still open: Content-Security-Policy for the SPA host, a real production setup (not the shared demo VPS), backups, monitoring. M
 4. **Secrets and keys in production**: a real secret store; a persistent, protected, backed-up **Data Protection key ring** (`Integrations:DataProtectionKeysPath`) — losing it forces every wearable to be reconnected; database encryption at rest; key rotation. M
 5. **Retention and backups**: jobs for expired refresh tokens and old audit events; backup/restore with matching retention; verify GDPR deletion against backups. M
 6. **Admin tooling and role-based authorization** (roles exist in the token, no admin endpoint does) — needed to operate the knowledge corpus without a shell. M

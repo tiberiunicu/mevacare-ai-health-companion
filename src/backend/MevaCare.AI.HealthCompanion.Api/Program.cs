@@ -44,6 +44,7 @@ try
     builder.Services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecurityTransformer>());
 
     builder.Services.AddHealthChecks().AddDbContextCheck<AppDbContext>("database", tags: ["ready"]);
+    ForwardedHeadersSetup.Configure(builder.Services, configuration);
 
     var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
     builder.Services.AddCors(o => o.AddDefaultPolicy(policy =>
@@ -134,6 +135,11 @@ try
         await scope.ServiceProvider.GetRequiredService<IDocumentIngestionService>().RetireAsync(retireId, CancellationToken.None);
         Log.Information("Source {SourceId} retired", retireId);
         return 0;
+    }
+
+    if (ForwardedHeadersSetup.IsEnabled(configuration))
+    {
+        app.UseForwardedHeaders(); // first: everything below (rate limits, HSTS, logging) must see the real client address and scheme
     }
 
     app.UseExceptionHandler();
