@@ -1,6 +1,6 @@
 # ADR-0019: Demo deployment on the existing VPS, behind the v1 nginx
 
-**Status:** Accepted; the files are written and the application behaviour it depends on is tested, but nothing has been built or started on the server yet ([deployment.md](../deployment.md)).
+**Status:** Accepted and deployed (2026-11-16): the stack runs on the VPS behind the v1 nginx with its own certificate ([deployment.md](../deployment.md)).
 
 **Context.** The owner wants a demo of the application at `health-companion.mevacare.com` on the Romarg VPS that already runs the v1 MevaCare stack (nginx on ports 80/443, certificates in a Docker volume, MySQL). The VPS has 3.9 GB of RAM and no swap. This application needs SQL Server, Qdrant, the .NET API and the static frontend. There is no Docker on the development machine and no Git remote.
 

@@ -1,6 +1,6 @@
 # Deployment (demo on the existing VPS)
 
-Status: **written, not yet run.** There is no Docker on the development machine, so none of the images has been built here; the first build on the server will show what is wrong, and this guide will be corrected from that. The application code, the migration and the forwarded-headers behaviour are tested (see the tests), the container and proxy files are not.
+Status: **run on 2026-11-16 and working**: `https://health-companion.mevacare.com` is live over HTTPS (Let's Encrypt), the images built on the first try, the migration created the database, the five knowledge documents are indexed with the real embedding model (`/health/knowledge` reports 5 active sources), and the Google button appears. There is no Docker on the development machine, so everything was built on the server. What the first run found and fixed: the key-ring folder was not writable by the non-root API user (commit `1a4a519`). Not done yet: the Open Food Facts import (step 7), a real sign-in and chat on the live site, a restart test.
 
 Target: `https://health-companion.mevacare.com`, on the Romarg VPS (Ubuntu 24.04, 2 vCPU, **3.9 GB RAM, no swap**, 40 GB free) that already runs the v1 MevaCare stack (`~/mevacare_v1_2026`: nginx `web` on ports 80/443, `api`, MySQL). Both apps are used only for demos.
 
@@ -29,7 +29,7 @@ Internet ──443──►  v1 `web` (nginx, certificates for both names)      
 2. Google Cloud Console: `https://health-companion.mevacare.com` is already in the OAuth client's authorized JavaScript origins (done).
 3. WHOOP (optional, later): add `https://health-companion.mevacare.com/api/integrations/whoop/callback` as a redirect URL in the WHOOP developer dashboard.
 
-**1. Swap (once, on the VPS).** `ssh -i ~/.ssh/mevacare_vps root@89.44.124.202 'sh -s' < deploy/vps/add-swap.sh`
+**1. Swap (once, on the VPS).** Run `deploy/vps/add-swap.sh` on the server (from PowerShell: pipe the file into `ssh ... "tr -d '' | sh -s"`; `Get-Content -Raw` may add a harmless BOM that makes the first line fail).
 
 **2. Secrets (once, in the Terminal panel).** `./scripts/deploy-secrets.ps1`
 
@@ -84,6 +84,8 @@ cp ~/mevacare-hc/src/deploy/vps/renew-certs.sh ~/mevacare_v1_2026/renew-certs.sh
 
 - **Never built or run.** See the status line. Expect a first round of fixes.
 - **SQL Server runs as `sa`** (inside the private network, not published) to let the migration create the database. A dedicated login with fewer rights is a hardening step.
+- **Data Protection keys are stored unencrypted** in the `api-keys` volume (ASP.NET logs "No XML encryptor configured"): anyone who can read the Docker volumes on the server can decrypt the stored WHOOP tokens. Acceptable for a demo; use a certificate or a key vault for real use.
+- **PowerShell 5.1 and `deploy.ps1`:** do not redirect its output with `2>&1` — Docker writes build progress to stderr and PowerShell then aborts the script.
 - **No automatic backups**, no monitoring or alerts, no log shipping, no staging environment; one server, one instance (the hourly WHOOP sync runs inside the API).
 - **No Content-Security-Policy yet**; Google sign-in needs `accounts.google.com/gsi/` allowed when one is added ([integrations/google-sign-in.md](integrations/google-sign-in.md)).
 - Demo data only: the legal texts, DPIA and processor agreements listed in [remaining-work.md](remaining-work.md) are not done, so no real person's health data belongs on this server.

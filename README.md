@@ -227,7 +227,7 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 - [Architecture overview](docs/architecture/overview.md) · [Security and privacy](docs/architecture/security-and-privacy.md)
 - [Architecture decision records](docs/decisions/)
 - [Nutrition module](docs/architecture/nutrition.md) (data source and licence, rules, matching, limitations)
-- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md) · [Sign in with Google](docs/integrations/google-sign-in.md) · [Deployment on the VPS (written, not yet run)](docs/deployment.md)
+- [Measurements and wearables](docs/architecture/measurements-and-wearables.md) · [WHOOP setup and assumptions](docs/integrations/whoop.md) · [Sign in with Google](docs/integrations/google-sign-in.md) · [Deployment on the VPS (demo, live)](docs/deployment.md)
 - [Insights (trends, comparisons, rules)](docs/architecture/insights.md) · [AI explanations of insights](docs/ai/insight-explanations.md)
 - **[What remains to be done](docs/remaining-work.md)**
 - AI: [index](docs/ai/README.md) · [LLM integration](docs/ai/llm-integration.md) · [tool calling](docs/ai/tool-calling.md) ·

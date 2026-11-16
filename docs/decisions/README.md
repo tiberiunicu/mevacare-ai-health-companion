@@ -19,5 +19,5 @@
 | [0015](0015-computed-insights-ai-only-explains.md) | Insights computed on request by plain rules; the AI only explains them, with a number check | Accepted |
 | [0016](0016-open-food-facts-products.md) | Packaged products from Open Food Facts: bulk import by country plus an explicit online lookup | Accepted |
 | [0017](0017-chat-first-actions.md) | Chat-first actions: one assistant panel on every page; the user still saves with one tap | Accepted and built |
-| [0019](0019-deployment-on-the-shared-vps.md) | Demo deployment on the existing VPS: Docker compose, the v1 nginx as edge, secrets copied without being shown | Accepted (written, not yet run) |
+| [0019](0019-deployment-on-the-shared-vps.md) | Demo deployment on the existing VPS: Docker compose, the v1 nginx as edge, secrets copied without being shown | Accepted and deployed (demo) |
 | [0018](0018-sign-in-with-google.md) | Sign in with Google: ID token verified by the API, no secret, no automatic merging by e-mail | Accepted and built (not yet run against real Google) |
