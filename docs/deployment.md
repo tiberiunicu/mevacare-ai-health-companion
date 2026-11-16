@@ -1,6 +1,6 @@
 # Deployment (demo on the existing VPS)
 
-Status: **run on 2026-11-16 and working**: `https://health-companion.mevacare.com` is live over HTTPS (Let's Encrypt), the images built on the first try, the migration created the database, the five knowledge documents are indexed with the real embedding model (`/health/knowledge` reports 5 active sources), and the Google button appears. There is no Docker on the development machine, so everything was built on the server. What the first run found and fixed: the key-ring folder was not writable by the non-root API user (commit `1a4a519`). Not done yet: the Open Food Facts import (step 7), a real sign-in and chat on the live site, a restart test.
+Status: **run on 2026-11-16 and working**: `https://health-companion.mevacare.com` is live over HTTPS (Let's Encrypt), the images built on the first try, the migration created the database, the five knowledge documents are indexed with the real embedding model (`/health/knowledge` reports 5 active sources), and the Google button appears. There is no Docker on the development machine, so everything was built on the server. What the first run found and fixed: the key-ring folder was not writable by the non-root API user (commit `1a4a519`). Data loaded: 5 knowledge documents (21 chunks), USDA SR Legacy (7,793 generic foods, the figures in the nutrition docs) and the Romanian Open Food Facts products (4,028 accepted of 5,278 candidates; the import took about 20 seconds). Not done yet: a real sign-in and chat on the live site, a restart test, the other Open Food Facts countries.
 
 Target: `https://health-companion.mevacare.com`, on the Romarg VPS (Ubuntu 24.04, 2 vCPU, **3.9 GB RAM, no swap**, 40 GB free) that already runs the v1 MevaCare stack (`~/mevacare_v1_2026`: nginx `web` on ports 80/443, `api`, MySQL). Both apps are used only for demos.
 
@@ -64,7 +64,7 @@ cp ~/mevacare-hc/src/deploy/vps/renew-certs.sh ~/mevacare_v1_2026/renew-certs.sh
   `docker compose -p mevacare-hc --env-file .env -f src/deploy/docker-compose.yml run --rm api ingest-knowledge /data/corpus`
   (needs the embedding settings copied in step 2; embeddings are made by the real model).
 - Foods: copy the Open Food Facts dump (`.local/off/*.csv.gz`, 0.8 GB) to `~/mevacare-hc/data/off` and run
-  `... run --rm api import-openfoodfacts /data/off/en.openfoodfacts.org.products.csv.gz romania` (add countries as wanted; all eight countries are about 1.05 million products and a lot for this server, Romania alone is small). The USDA foods come with `import-usda <folder>` the same way.
+  `... run --rm api import-openfoodfacts /data/off/en.openfoodfacts.org.products.csv.gz romania` (add countries as wanted; all eight countries are about 1.05 million products and a lot for this server, Romania alone is 4,028). The generic USDA foods matter most for sentences such as "two eggs and toast": download "SR Legacy" (CSV zip, ~6 MB) from fdc.nal.usda.gov, copy `food.csv food_nutrient.csv nutrient.csv food_portion.csv measure_unit.csv food_category.csv sr_legacy_food.csv` to `~/mevacare-hc/data/usda` and run `... run --rm api import-usda /data/usda`. The imports are repeatable: rows already present are skipped.
 
 **8. Check.** `https://health-companion.mevacare.com/health/ready` answers `Healthy`; the login page shows the Google button; register, sign in, log a meal in chat.
 
