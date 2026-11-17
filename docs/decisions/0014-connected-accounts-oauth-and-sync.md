@@ -20,4 +20,4 @@ The credentials are as sensitive as the data; the callback is a browser redirect
 a queue/worker service (more moving parts than one hourly job justifies now); letting the SPA hold provider tokens (never).
 
 **Consequences.** Production needs a persistent, protected Data Protection key location (and backups of it) — documented and listed under "not yet done". The worker must not run on several instances without a distributed lock.
-Everything provider-specific is unverified until a real WHOOP developer app is used; the unverified assumptions are listed in [whoop.md](../integrations/whoop.md) with their one-line fixes.
+Everything provider-specific was written from documentation. A real WHOOP account was connected later and confirmed the connection assumptions; the remaining open ones are listed in [whoop.md](../integrations/whoop.md#assumptions) with their one-line fixes.

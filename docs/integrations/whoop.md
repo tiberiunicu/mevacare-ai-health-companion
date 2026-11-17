@@ -1,10 +1,12 @@
 # WHOOP integration
 
 > **Verification status — read this first.** The integration was written from WHOOP's public developer documentation
-> (https://developer.whoop.com, API v2) and is tested against a **scripted stand-in** that answers with the documented response
-> shapes, rotating refresh tokens, paging and failures. **It has never been run against the real WHOOP service**: no WHOOP developer
-> app or WHOOP device was available while building it. The first real connection may reveal differences; the places most likely
-> to differ are listed under [Unverified assumptions](#unverified-assumptions).
+> (https://developer.whoop.com, API v2) and the automated tests use a **scripted stand-in** that answers with the documented response
+> shapes, rotating refresh tokens, paging and failures.
+> **The owner has since connected a real WHOOP member account from a local installation** (registered developer app, OAuth connection,
+> and a synchronization started from the application and from the chat). That confirmed the connection assumptions listed as
+> *confirmed* under [Assumptions](#assumptions). **Not done:** a comparison of the imported values with the WHOOP app one by one,
+> a long-running check of the refresh token, and a connection from the live demo (its redirect URL is not registered at WHOOP).
 
 ## What it does
 
@@ -90,19 +92,19 @@ Rules (code: `Providers/Whoop/WhoopMapper.cs`, covered by unit tests):
 - **Webhooks** (WHOOP can push `recovery`/`sleep`/`workout` updates) are not implemented; polling every hour is the design. Webhooks would need a public HTTPS URL.
 - **Disconnecting** asks WHOOP to revoke the access (best effort), deletes the stored tokens and optionally the imported data. Deleting the MevaCare account removes everything.
 
-## Unverified assumptions
+## Assumptions
 
-These come from gaps or inconsistencies in WHOOP's documentation and need a check with a real app. Each has a cheap fix.
+These come from gaps or inconsistencies in WHOOP's documentation. Each has a cheap fix. The *Status* column says what the real connection showed.
 
-| Assumption | If wrong |
-|---|---|
-| Token requests are accepted as `application/x-www-form-urlencoded` (WHOOP's refresh example shows a JSON body) | change the content type in `WhoopProvider.RequestTokensAsync` |
-| Client credentials in the form body (`Post`) are accepted | set `Whoop:ClientAuthentication=Basic` |
-| `http://localhost…` redirect URLs can be registered | use an HTTPS tunnel and set `RedirectUri`/`FrontendBaseUrl` |
-| `offline` in the scope list yields a refresh token on the first exchange | the connection is refused with `no_refresh_token` |
-| Rate-limit reset is signalled with `X-RateLimit-Reset` (seconds) | only affects the log/retry hint |
-| A cycle's local date is the date of its `start` | cycles may sit one day off in the Activity page |
-| Refresh-token lifetime is long enough for hourly use | accounts flip to *needs to be reconnected* |
+| Assumption | Status | If wrong |
+|---|---|---|
+| Token requests are accepted as `application/x-www-form-urlencoded` (WHOOP's refresh example shows a JSON body) | **Confirmed** by the real connection (the first token exchange succeeded) | change the content type in `WhoopProvider.RequestTokensAsync` |
+| Client credentials in the form body (`Post`) are accepted | **Confirmed**: the real connection works with the default `Post` | set `Whoop:ClientAuthentication=Basic` |
+| `http://localhost…` redirect URLs can be registered | **Confirmed**, when the registered URL is identical, character by character, to `RedirectUri` (a mismatch gives `invalid_request … redirect_uri`) | use an HTTPS tunnel and set `RedirectUri`/`FrontendBaseUrl` |
+| `offline` in the scope list yields a refresh token on the first exchange | **Confirmed**: the connection was not refused with `no_refresh_token` | the connection is refused with `no_refresh_token` |
+| Rate-limit reset is signalled with `X-RateLimit-Reset` (seconds) | Not checked | only affects the log/retry hint |
+| A cycle's local date is the date of its `start` | Not checked against the WHOOP app | cycles may sit one day off in the Activity page |
+| Refresh-token lifetime is long enough for hourly use | Not checked over a long time | accounts flip to *needs to be reconnected* |
 
 ## Testing without a WHOOP account
 

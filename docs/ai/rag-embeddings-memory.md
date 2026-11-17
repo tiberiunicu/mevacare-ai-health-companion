@@ -5,9 +5,10 @@
 > with the repository**: the corpus is supplied and licence-reviewed by an operator.
 >
 > Verification status, stated plainly: the pipeline is tested end to end with the offline *Lexical* embeddings against an
-> in-memory store (CI) and against a **real Qdrant 1.19.2** (opt-in tests). The **OpenAI and Ollama embedding providers are
-> implemented but have never been run against a real service** (no key / no Ollama was available), so retrieval quality with
-> real embeddings is **unmeasured**. The Lexical baseline matches words, not meaning (see *Limitations*).
+> in-memory store (CI) and against a **real Qdrant** (opt-in tests; first 1.19.2, later 1.20.0). The **OpenAI embedding provider has
+> since been run for real** with Azure OpenAI `text-embedding-3-small`: on the small sample corpus the right passage was in the first three
+> results for 100 % of the questions, against 83 % for the Lexical baseline (numbers and limits in [ai-evaluation.md](ai-evaluation.md)).
+> The **Ollama embedding provider has never been run against a real service.** The Lexical baseline matches words, not meaning (see *Limitations*).
 
 ## What problem it solves
 
