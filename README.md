@@ -4,10 +4,21 @@ An AI-powered personal health companion: AI chat as the main interface, with tra
 dashboard, nutrition, measurements, profile and privacy. It gives **wellness information only** — it does not
 diagnose, prescribe or replace a physician, and it is not an emergency service.
 
-This is a brand-new, standalone product. It shares nothing (code, database, infrastructure) with any other MevaCare
-application.
+This is a brand-new, standalone product. It shares no code or database with any other MevaCare application.
 
-> **Status: Phase 1 (foundation), Phase 2 (AI chat), Phase 3 (nutrition), Phase 4 (medical knowledge RAG), Phase 5 (measurements and WHOOP wearable integration) and Phase 6 (health intelligence) are implemented and tested — **all six planned phases are done**. What is *not* verified or not built is listed in [docs/remaining-work.md](docs/remaining-work.md): above all, nothing has run against a real AI model or the real WHOOP service.**
+**Live demo: https://health-companion.mevacare.com** — a demonstration with synthetic data only. Please do not enter real health data
+(the legal texts and the data-protection impact assessment are not done; see [docs/remaining-work.md](docs/remaining-work.md)).
+Deployment is described in [docs/deployment.md](docs/deployment.md).
+
+**What it shows, in short:**
+
+- **RAG** over approved medical documents: chunking, embeddings (`text-embedding-3-small`), the Qdrant vector database, answers with numbered citations ([docs/ai/rag-embeddings-memory.md](docs/ai/rag-embeddings-memory.md)).
+- **An OpenAI model in Microsoft Foundry** (Azure OpenAI) behind `Microsoft.Extensions.AI`, so the provider is a configuration choice. It also works with Ollama.
+- **Tool calling with confirmed writes**: the model proposes a change, the user confirms it, only then it is saved ([ADR-0009](docs/decisions/0009-tool-calling-and-confirmed-writes.md)).
+- **Measured quality**: labelled evaluation sets for tool selection and retrieval ([docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md)).
+
+> **Status: all six planned phases are implemented and tested** (foundation, AI chat, nutrition, medical-knowledge RAG, measurements with the WHOOP wearable, health intelligence). Sign in with Google, password reset by e-mail and deployment on a server were added afterwards.
+> Chat, tool calling, streaming and RAG with real embeddings were verified against Microsoft Foundry and a real Qdrant. What is *not* verified or not built is listed in [docs/remaining-work.md](docs/remaining-work.md).
 > See [What works today](#what-works-today) and [Roadmap](#roadmap).
 
 ## What works today
@@ -16,24 +27,27 @@ application.
 |---|---|
 | Modular monolith, .NET 10, EF Core 10 (SQL Server), OpenAPI, Serilog, health checks, rate limiting | Done |
 | Accounts: register, sign in (JWT access token + rotating httpOnly refresh cookie), lockout, sign out | Done |
+| Sign in with Google (ID token verified by the API), password reset by e-mail (one-time hashed link) | Done; live. Google and the mail server were used for real on the demo ([ADR-0018](docs/decisions/0018-sign-in-with-google.md), [ADR-0020](docs/decisions/0020-password-reset-by-e-mail.md)) |
+| Deployment: Docker Compose (nginx, API, SQL Server, Qdrant) on a VPS with HTTPS | Done; live ([docs/deployment.md](docs/deployment.md)). No automatic backups or monitoring yet |
 | Consent model (terms, health data, AI processing, external integrations), audit log | Done |
 | GDPR export and account deletion | Done |
 | Health profile, goals, display preferences | Done |
-| AI chat: `IChatClient` with OpenAI or Ollama, SSE streaming, persisted history, safety screen, rate limit | Done (see *AI provider testing* below) |
+| AI chat: `IChatClient` with OpenAI or Ollama, SSE streaming, persisted history, safety screen, rate limit | Done; verified with Azure OpenAI / Microsoft Foundry (see *AI provider testing* below) |
 | Nutrition: USDA food data import, deterministic nutrient calculation, food journal, daily/range summaries, targets, custom (estimated) items | Done |
-| AI meal logging: structured extraction → food match → proposal card → user confirmation → journal (tool calling) | Done (scripted-model tests and a mock OpenAI server; see *AI provider testing*) |
-| Medical knowledge RAG: operator-run ingestion of approved, licensed documents → chunking → embeddings → Qdrant, grounded answers with numbered citations, retrieval evaluation | Done; **no documents are shipped**, you supply a corpus (see *Medical knowledge* below). Real OpenAI/Ollama embeddings never run |
+| AI meal logging: structured extraction → food match → proposal card → user confirmation → journal (tool calling) | Done; automated tests use a scripted model, and the flow was checked live with the real model (see *AI provider testing*) |
+| Medical knowledge RAG: operator-run ingestion of approved, licensed documents → chunking → embeddings → Qdrant, grounded answers with numbered citations, retrieval evaluation | Done; **no documents are shipped**, you supply a corpus (see *Medical knowledge* below). Verified with real embeddings (`text-embedding-3-small`) and a real Qdrant; the Ollama embedding provider was never run |
 | React app: sign in/up, dashboard (real calories and macros), profile, preferences, privacy, AI settings (incl. the approved sources list), chat with tool status, meal cards and source citations, nutrition pages; light/dark; English + Romanian | Done |
 | Measurements: manual weight (kg/lb), weight evolution, sleep sessions, recovery, day strain, workouts, with provenance and local-day handling; historical queries; assistant tools `GetWeightHistory` and `GetSleepAndRecovery` | Done |
 | Wearables: connected-account infrastructure, WHOOP OAuth, hourly + on-demand synchronization, normalization, sleep/recovery/activity pages and dashboard cards, connect/synchronize/disconnect UI | Done, **but never run against the real WHOOP service** (scripted stand-in only; see [docs/integrations/whoop.md](docs/integrations/whoop.md)) |
 | Health intelligence: weight, nutrition, sleep and recovery trends, comparison with the previous period, combined insights (for example *why did my weight loss slow down*, as associations, never causes), computed on request by deterministic rules; insights page and dashboard card | Done |
-| AI-assisted explanation of the insights (button on the insights page) and the chat tool `GetHealthInsights`; the model only words the computed numbers and its answer is checked for numbers that are not in the data | Done with a scripted model; **never run against a real model** |
+| AI-assisted explanation of the insights (button on the insights page) and the chat tool `GetHealthInsights`; the model only words the computed numbers and its answer is checked for numbers that are not in the data | Done; automated tests use a scripted model, and the explanations were checked live with the real model |
 | AI memory, other wearables (Apple Health, Garmin, Oura …) | **Not implemented.** See [docs/remaining-work.md](docs/remaining-work.md) |
 
-**AI provider testing.** Automated tests use a scripted fake model. The OpenAI provider code path was additionally
-exercised end-to-end (SDK → HTTP → streaming → browser, including **tool calls and JSON-schema structured output**) against a local OpenAI-compatible mock server. It has **not**
-been run against the real OpenAI API or a real Ollama model, because no API key or Ollama installation was available
-while building it. Run the [live evaluation](#tests) once you configure a provider.
+**AI provider testing.** Automated tests use a scripted fake model, so they are fast, free and repeatable. The OpenAI provider path
+(SDK → HTTP → streaming → browser, including **tool calls and JSON-schema structured output**) was also run against a local OpenAI-compatible mock server, and then
+against the real **Azure OpenAI / Microsoft Foundry** service with a reasoning model (`gpt-6-luna`): chat, tool calling, streaming, meal extraction and the live evaluations
+(details and limits in [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md)). It has **not** been run against a real Ollama model, because Ollama did not work on the author's computer.
+Run the [live evaluation](#tests) after you configure a provider.
 
 ## Repository layout
 
@@ -70,7 +84,7 @@ together with its tables.
 ## Quick start (Windows, PowerShell)
 
 ```powershell
-git clone <your-clone-url> mevacare-ai-health-companion
+git clone https://github.com/tiberiunicu/mevacare-ai-health-companion.git
 cd mevacare-ai-health-companion
 
 # 1. Tools
@@ -174,7 +188,7 @@ The assistant answers reference questions ("what is HRV?", "how much activity do
 3. Ingest: `dotnet run --project src/backend/MevaCare.AI.HealthCompanion.Api -- ingest-knowledge "C:\path\to\corpus"` (re-running is safe; changed content becomes a new version). Other commands: `reindex-knowledge [--recreate]` (after changing the embedding model) and `retire-knowledge <source-guid>`.
 4. Ask the assistant a reference question; the sources appear under the answer and in *Settings → AI*.
 
-The default embeddings are an **offline lexical baseline** (matches words, not meaning). For better retrieval set `Knowledge:Embeddings:Provider` to `OpenAI` or `Ollama` plus `Model` and `Dimensions`, run `reindex-knowledge --recreate`, and re-calibrate `Knowledge:Retrieval:MinScore` with the retrieval evaluation. With Azure OpenAI the same endpoint and key as the chat are used (`Ai:OpenAI:*`); only the embedding deployment name is new: `Knowledge:Embeddings:Provider=OpenAI`, `Knowledge:Embeddings:Model=<deployment, e.g. text-embedding-3-small>`, `Knowledge:Retrieval:MinScore=0.30` (calibrated for that model, see [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md); the lexical default of 0.15 is too low for it). Retrieval was verified with these embeddings against the in-memory store; running them end to end against Qdrant is still open. The Ollama embedding provider was **not run** against a real service.
+The default embeddings are an **offline lexical baseline** (matches words, not meaning). For better retrieval set `Knowledge:Embeddings:Provider` to `OpenAI` or `Ollama` plus `Model` and `Dimensions`, run `reindex-knowledge --recreate`, and re-calibrate `Knowledge:Retrieval:MinScore` with the retrieval evaluation. With Azure OpenAI the same endpoint and key as the chat are used (`Ai:OpenAI:*`); only the embedding deployment name is new: `Knowledge:Embeddings:Provider=OpenAI`, `Knowledge:Embeddings:Model=<deployment, e.g. text-embedding-3-small>`, `Knowledge:Retrieval:MinScore=0.30` (calibrated for that model, see [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md); the lexical default of 0.15 is too low for it). These embeddings were verified end to end against a real Qdrant (v1.20.0): on the small sample corpus the right passage was in the first three results for 100 % of the questions, against 83 % for the lexical baseline (a small test set; see [docs/ai/ai-evaluation.md](docs/ai/ai-evaluation.md)). The Ollama embedding provider was **not run** against a real service.
 
 ### Wearables (WHOOP)
 
@@ -241,7 +255,12 @@ cd src/frontend/mevacare-ai-web; npm test; npm run build; npm run lint
 1. ✅ Foundation  2. ✅ AI chat  3. ✅ Nutrition vertical slice (food data, meal logging via tools and confirmation)
 4. ✅ Medical knowledge RAG (Qdrant, citations)  5. ✅ Wearables (WHOOP first) and measurements  6. ✅ Health intelligence (trends, insights)
 
-All planned phases are implemented; the next work is making the AI and WHOOP parts real and hardening for real users — see [docs/remaining-work.md](docs/remaining-work.md).
+All planned phases are implemented and the application runs online as a demonstration. The next work is hardening for real users (backups, monitoring, legal texts, e-mail verification) and checking the WHOOP integration more — see [docs/remaining-work.md](docs/remaining-work.md).
+
+## License
+
+[MIT](LICENSE). The code is free to use. Food data comes from USDA FoodData Central (public domain) and Open Food Facts (ODbL); see [docs/architecture/nutrition.md](docs/architecture/nutrition.md).
+The medical documents used by the assistant are not part of this repository.
 
 ## Troubleshooting
 
